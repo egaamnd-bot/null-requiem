@@ -21,8 +21,11 @@ const game = new Phaser.Game({
   width: VIEW.width,
   height: VIEW.height,
   backgroundColor: '#05060c',
-  pixelArt: true,
-  roundPixels: true,
+  // Render the 480x270 world at device-pixel resolution; keep world units stable while
+  // avoiding the blurry/low-resolution canvas on modern high-density phone screens.
+  resolution: Math.min(3, Math.max(1, Math.round(window.devicePixelRatio || 1))),
+  pixelArt: false,
+  roundPixels: false,
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
