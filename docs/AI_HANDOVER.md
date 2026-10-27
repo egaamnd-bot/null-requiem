@@ -20,8 +20,11 @@ docs, not executed; **[unverified]** = not checked.
 
 - Current milestone: **Milestone 1.5 — playable Android test build** (touch input fix). Milestone 1 (vertical slice) is merged.
 - `main`: `4cad5d6` (merge of PR #2, vertical slice) [verified via `git log` on the fresh clone].
-- Active branch: `chore/android-debug-apk-pipeline` = PR #3 "Add Android debug APK build pipeline" (open). Head SHA, CI run URLs and
-  APK artifact are recorded in **QA_STATUS.md → "Latest CI evidence"** and in the last DEVLOG entry.
+- Active branch: `chore/android-debug-apk-pipeline` = PR #3 "Add Android debug APK build pipeline" (open). Last code commit
+  built and verified in CI: `31f1ce477fa9450b7d2257b637dc3fbffb9d57c7` (green; APK artifact
+  `null-requiem-android-debug-31f1ce477fa9450b7d2257b637dc3fbffb9d57c7`, run https://github.com/egaamnd-bot/null-requiem/actions/runs/40583546432)
+  [verified via the Actions API]. A docs-only commit sits on top; run `git log` for the real HEAD and check its CI run.
+  Details: **QA_STATUS.md → "Latest CI evidence"**.
 - Note: the Task-27 commit `fe97104` is the parent of `1bb6878`; both are already in `main` [verified]. Older prompts list them in
   the opposite order.
 - Working (automated evidence only, see QA_STATUS): simulation, three rooms, enemies, miniboss, Backtrace, save/continue; title,
@@ -94,5 +97,9 @@ docs, not executed; **[unverified]** = not checked.
 
 ## Handover verification
 
-- See the final DEVLOG entry for the UTC time, agent, branch, HEAD SHA and command results. Explicitly unverified: all physical-device
-  behaviour, gamepad hardware, audio on Android, performance on device, and the immersive-mode/cutout presentation.
+- Completed 2026-10-28 (UTC evening of the 27th into the 28th in the sandbox; Producer timezone Asia/Jakarta) by Claude (Sonnet 5.5).
+- Branch `chore/android-debug-apk-pipeline`; code commit `31f1ce4` (CI green); docs-only commit(s) on top. Working tree clean after push.
+- Results: local `npm run typecheck` pass, `npm test` 145/145, `npm run build` pass; CI (Actions API): Playwright touch smoke, APK build,
+  built-APK landscape check, artifact upload all success. See QA_STATUS for URLs.
+- Explicitly unverified: all physical-device behaviour (touch feel, gamepad, audio on Android, performance), the immersive-mode/cutout
+  presentation on real hardware, and per-test Playwright counts (retries=1 in CI).

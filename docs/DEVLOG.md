@@ -44,3 +44,15 @@ CI outcome and artifact: see QA_STATUS "Latest CI evidence" (updated at the end 
 
 Unfinished
 - Producer device test. Anything touch-related on hardware is unverified.
+
+### Session close addendum (2026-10-28, Claude)
+
+Further commits after `2980676`: `c37b996` (fixed my e2e helper: CDP `touchEnd` lists the points being released) and `31f1ce4`
+(landscape-on-built-APK check accepts enum name or raw value and reports details). Results, all from the GitHub Actions API:
+- Run on `31f1ce4`: success (push run 40583546432, PR run 40583554319, CI 40583554474). Artifact
+  `null-requiem-android-debug-31f1ce477fa9450b7d2257b637dc3fbffb9d57c7` present, 14-day retention.
+- Technique worth keeping: raw job logs are not downloadable from the Claude sandbox (403), so smoke-test/verification steps write their
+  failure tail into `::error` annotations, readable with `gh api repos/<repo>/check-runs/<job_id>/annotations`.
+- Docs-only commit follows (QA/handover/devlog updated with the above); it re-triggers CI on identical code.
+
+Next action for the next agent: see `docs/AI_HANDOVER.md` -> "Next action".

@@ -6,7 +6,25 @@ Automated results below are NOT physical-device verification.
 ## Latest CI evidence
 
 <!-- CI_EVIDENCE_START -->
-(filled in at the end of the session — see below)
+Code commit built and verified: **`31f1ce477fa9450b7d2257b637dc3fbffb9d57c7`** (branch `chore/android-debug-apk-pipeline`, PR #3).
+
+| Check | Result (verified from GitHub Actions API) |
+|---|---|
+| "Android Debug APK" push run | **success** — https://github.com/egaamnd-bot/null-requiem/actions/runs/40583546432 |
+| "Android Debug APK" pull_request run | success — https://github.com/egaamnd-bot/null-requiem/actions/runs/40583554319 |
+| "CI" (pull_request) | success — https://github.com/egaamnd-bot/null-requiem/actions/runs/40583554474 |
+| Steps inside the push run | typecheck, unit tests, web build, Playwright Chromium install, **browser touch smoke tests**, Capacitor `cap add android`, landscape manifest patch, immersive `MainActivity` patch, `assembleDebug`, APK existence check, **built-APK landscape check**, checksum, artifact upload: all success |
+| APK artifact | `null-requiem-android-debug-31f1ce477fa9450b7d2257b637dc3fbffb9d57c7`, 6,897,708 bytes (zip), expires 2026-11-10 (14-day retention). Download from the run page above, section **Artifacts**; the zip contains `app-debug.apk` |
+
+Caveats: the Playwright run uses `retries: 1` in CI, so a test that failed once and passed on retry would still be green (the
+per-test counts are not readable from the sandbox, because raw job logs return 403). Unit-test counts come from the local run
+(145); the CI step only reports pass/fail here. The exact orientation text found in the built manifest is not recorded (the step
+fails unless it is confirmed, and it passed).
+
+Earlier runs on this branch this session (history): `c2b6335` first CI run failed at Playwright install (runner moved to Ubuntu 26);
+`2980676` and `c37b996` failed at e2e helper bug / orientation-check formatting respectively; both fixed in `31f1ce4`.
+
+A docs-only commit follows `31f1ce4` on the same branch and triggers its own rebuild of identical code; check the PR #3 checks for that run.
 <!-- CI_EVIDENCE_END -->
 
 ## Local sandbox results (2026-10-28, Claude)
