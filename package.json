@@ -1,0 +1,26 @@
+{
+  "name": "null-requiem",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NULL REQUIEM — an original 2D urban-cyberpunk action Metroidvania with a personal rewind (Backtrace), built with Phaser 4.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "phaser": "4.2.1"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vite": "8.3.5",
+    "vitest": "5.0.5"
+  }
+}
