@@ -1,0 +1,36 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Player.gd" id="1_script"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_player"]
+radius = 12.0
+
+[node name="Player" type="CharacterBody2D" groups=["player"]]
+script = ExtResource("1_script")
+
+[node name="BodyShape" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_player")
+
+[node name="Silhouette" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-13, -9, 4, -9, 13, 0, 4, 9, -13, 9, -9, 0)
+color = Color(0, 0.898, 1, 1)
+
+[node name="Core" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-1, -4, 5, -2, 5, 2, -1, 4)
+color = Color(0.96, 0.98, 1, 1)
+
+[node name="AttackArc" type="Polygon2D" parent="."]
+visible = false
+position = Vector2(24, 0)
+polygon = PackedVector2Array(-1, -18, 17, -24, 32, -12, 36, 0, 32, 12, 17, 24, -1, 18, 10, 0)
+color = Color(0.82, 1, 1, 0.85)
+
+[node name="ParryRing" type="Polygon2D" parent="."]
+visible = false
+polygon = PackedVector2Array(-19, -13, -9, -20, 7, -20, 19, -12, 22, 0, 19, 12, 7, 20, -9, 20, -19, 13, -22, 0)
+color = Color(1, 0.72, 0.2, 0.6)
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position_smoothing_enabled = true
+position_smoothing_speed = 6.0
+
