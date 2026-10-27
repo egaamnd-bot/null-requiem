@@ -72,7 +72,7 @@ jobs:
           import re
           manifest = Path("android/app/src/main/AndroidManifest.xml")
           text = manifest.read_text()
-          activity = re.search(r'<activity\\b[^>]*>', text)
+          activity = re.search(r'<activity\b[^>]*>', text)
           if not activity:
               raise SystemExit("Could not find Android launcher activity in manifest")
           tag = activity.group(0)
