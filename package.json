@@ -1,8 +1,8 @@
 {
-  "name": "emberveil",
+  "name": "null-requiem",
   "version": "0.1.0",
   "private": true,
-  "description": "EMBERVEIL — an original 2D action-adventure Metroidvania prototype built with Phaser 4.",
+  "description": "NULL REQUIEM — an original 2D urban-cyberpunk action Metroidvania with a personal rewind (Backtrace), built with Phaser 4.",
   "type": "module",
   "engines": {
     "node": ">=22.12.0"

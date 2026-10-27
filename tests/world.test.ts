@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BOSS, COMBAT, ENEMIES, FLOW, PLAYER, TILE_SIZE, VIEW } from '../src/config/tuning';
-import { Ashgrub } from '../src/core/enemies/ashgrub';
+import { ScrapHound } from '../src/core/enemies/scrapHound';
 import type { GameEvent } from '../src/core/events';
 import { Tile, TileGrid } from '../src/core/tiles';
 import { ROOMS, START_ROOM } from '../src/world/rooms';
@@ -70,9 +70,9 @@ describe('Room data', () => {
   });
 });
 
-/** Simulate a run-and-jump at the gallery's pit. Returns true if the player lands across. */
+/** Simulate a run-and-jump at the transit's pit. Returns true if the player lands across. */
 function attemptPitCrossing(jumpAt: number, dashAt: number | null): boolean {
-  const world = worldAt('gallery', 36, 25);
+  const world = worldAt('transit', 36, 25);
   world.room.enemies = [];
   const farLedgeX = 49 * TILE_SIZE;
   for (let i = 0; i < 120 * 3; i++) {
@@ -88,7 +88,7 @@ function attemptPitCrossing(jumpAt: number, dashAt: number | null): boolean {
   return false;
 }
 
-describe('Gallery pit (dash traversal challenge)', () => {
+describe('Transit Stacks pit (dash traversal challenge)', () => {
   it('cannot be crossed by any run-and-jump timing without dashing', () => {
     for (let jumpAt = 0; jumpAt <= 90; jumpAt++) {
       expect(attemptPitCrossing(jumpAt, null), `jump at step ${jumpAt}`).toBe(false);
@@ -118,7 +118,7 @@ const GATE_RIGHT = 75 * TILE_SIZE;
  * gets past the gate. Asserts the strike really opened the gate so the test can't pass vacuously.
  */
 function raceTheGate(strikeDelay: number, dashOffset: number, jumpEvery: number | null): boolean {
-  const world = worldAt('gallery', 51, 25);
+  const world = worldAt('transit', 51, 25);
   world.room.enemies = [];
   stepWorld(world, 2, () => input({ moveX: -1 }));
   stepWorld(world, strikeDelay);
@@ -146,7 +146,7 @@ function raceTheGate(strikeDelay: number, dashOffset: number, jumpEvery: number 
   return false;
 }
 
-describe('Ability-gated route (Gallery timed gate)', () => {
+describe('Ability-gated route (Transit Stacks timed gate)', () => {
   it('cannot be beaten by any sprint/dash/jump timing without Backtrace', () => {
     for (const strikeDelay of [0, 10, 30]) {
       for (let dashOffset = 0; dashOffset <= 40; dashOffset += 3) {
@@ -158,7 +158,7 @@ describe('Ability-gated route (Gallery timed gate)', () => {
   });
 
   it('can be beaten with Backtrace: stand at the gate, run back, strike, snap back, walk through', () => {
-    const world = worldAt('gallery', 72, 25, (p) => p.unlock('backtrace'));
+    const world = worldAt('transit', 72, 25, (p) => p.unlock('backtrace'));
     world.room.enemies = [];
     stepWorld(world, 60); // wait at the gate: this is where the echo will be
     let steps = 0;
@@ -173,11 +173,11 @@ describe('Ability-gated route (Gallery timed gate)', () => {
     const through = stepWorld(world, 90, () => input({ moveX: 1 }));
     expect(world.player.body.x).toBeGreaterThan(GATE_RIGHT);
     expect(through.some((e) => e.type === 'gateLatched')).toBe(true);
-    expect(world.progression.latchedGates.has('gallery:timedGate')).toBe(true);
+    expect(world.progression.latchedGates.has('transit:timedGate')).toBe(true);
   });
 
   it('never closes on top of the player, and closes once they step out', () => {
-    const world = worldAt('gallery', 72, 25);
+    const world = worldAt('transit', 72, 25);
     world.room.enemies = [];
     world.room.switches[0]!.takeHit();
     stepWorld(world, 30, () => input({ moveX: 1 })); // step into the gate column
@@ -194,7 +194,7 @@ describe('Ability-gated route (Gallery timed gate)', () => {
   });
 
   it('stays open for good once passed, across death and retry', () => {
-    const world = worldAt('gallery', 76, 25);
+    const world = worldAt('transit', 76, 25);
     world.room.enemies = [];
     const events = stepWorld(world, 2);
     expect(events.some((e) => e.type === 'gateLatched')).toBe(true);
@@ -206,7 +206,7 @@ describe('Ability-gated route (Gallery timed gate)', () => {
   });
 
   it('the Backtrace module unlocks the ability, which survives death and retry', () => {
-    const world = worldAt('gallery', 31, 7);
+    const world = worldAt('transit', 31, 7);
     expect(world.progression.has('backtrace')).toBe(false);
     const events = stepWorld(world, 2);
     expect(events.some((e) => e.type === 'abilityUnlocked')).toBe(true);
@@ -221,9 +221,9 @@ describe('Ability-gated route (Gallery timed gate)', () => {
 });
 
 describe('Checkpoints, death and retry', () => {
-  it('activates a hearth lantern on touch, heals, saves, and respawns there after death', () => {
+  it('activates a sync relay on touch, heals, saves, and respawns there after death', () => {
     let saved = 0;
-    const world = worldAt('ashfall', 9, 19, undefined, () => saved++);
+    const world = worldAt('alley', 9, 19, undefined, () => saved++);
     world.room.enemies = [];
     world.player.takeDamage(2, 0, () => {});
     stepWorld(world, 130); // wait out stun / invulnerability
@@ -232,7 +232,7 @@ describe('Checkpoints, death and retry', () => {
     expect(cp).toBeDefined();
     expect(saved).toBe(1);
     expect(world.player.health.current).toBe(PLAYER.maxHealth);
-    expect(world.progression.checkpoint).toEqual({ roomId: 'ashfall', x: tileX(13), y: tileFeet(19) });
+    expect(world.progression.checkpoint).toEqual({ roomId: 'alley', x: tileX(13), y: tileFeet(19) });
 
     // Walk away, die, and come back.
     stepWorld(world, 60, () => input({ moveX: 1 }));
@@ -253,7 +253,7 @@ describe('Checkpoints, death and retry', () => {
   });
 
   it('death while attacking leaves a clean, controllable player after retry', () => {
-    const world = worldAt('ashfall', 9, 19);
+    const world = worldAt('alley', 9, 19);
     world.room.enemies = [];
     stepWorld(world, 1 + Math.ceil(COMBAT.attack.startup / DT), (i) => input({ attackPressed: i === 0 }));
     expect(world.player.attackPhase).toBe('active');
@@ -267,23 +267,23 @@ describe('Checkpoints, death and retry', () => {
   });
 
   it('constant overlap with an enemy only deals damage once per invulnerability window', () => {
-    const world = worldAt('ashfall', 9, 19);
-    const grub = world.room.enemies[0] as Ashgrub;
-    world.room.enemies = [grub];
+    const world = worldAt('alley', 9, 19);
+    const hound = world.room.enemies[0] as ScrapHound;
+    world.room.enemies = [hound];
     const hurts: GameEvent[] = [];
     const seconds = 2.5;
     for (let i = 0; i < Math.round(seconds / DT); i++) {
       // Pin the enemy onto the player every step.
-      grub.body.x = world.player.body.x;
-      grub.body.y = world.player.body.y + world.player.body.h - grub.body.h;
+      hound.body.x = world.player.body.x;
+      hound.body.y = world.player.body.y + world.player.body.h - hound.body.h;
       world.step(input(), DT);
       hurts.push(...world.drainEvents().filter((e) => e.type === 'playerHurt'));
     }
     expect(hurts.length).toBe(Math.floor(seconds / PLAYER.hurt.invulnerability) + 1);
   });
 
-  it('an ember pit costs one mask and returns the player to safe ground', () => {
-    const world = worldAt('gallery', 38, 25);
+  it('a live-current pit costs one integrity and returns the player to safe ground', () => {
+    const world = worldAt('transit', 38, 25);
     world.room.enemies = [];
     let respawned = false;
     for (let i = 0; i < 240 && !respawned; i++) {
@@ -301,64 +301,64 @@ describe('Checkpoints, death and retry', () => {
 
 describe('Combat integration', () => {
   it('each swing hits a target at most once', () => {
-    const world = worldAt('ashfall', 9, 19);
-    const grub = new Ashgrub('test-grub', world.player.feetX + 20, world.player.feetY);
-    world.room.enemies = [grub];
+    const world = worldAt('alley', 9, 19);
+    const hound = new ScrapHound('test-hound', world.player.feetX + 20, world.player.feetY);
+    world.room.enemies = [hound];
     world.player.facing = 1;
     world.player.health.grantInvulnerability(5);
     stepWorld(world, ATTACK_CYCLE_STEPS, (i) => input({ attackPressed: i === 0 }));
-    expect(grub.health.current).toBe(ENEMIES.ashgrub.health - 1);
+    expect(hound.health.current).toBe(ENEMIES.scrapHound.health - 1);
   });
 
   it('enemies die after enough hits and are removed', () => {
-    const world = worldAt('ashfall', 9, 19);
-    const grub = new Ashgrub('test-grub', world.player.feetX + 20, world.player.feetY);
-    world.room.enemies = [grub];
+    const world = worldAt('alley', 9, 19);
+    const hound = new ScrapHound('test-hound', world.player.feetX + 20, world.player.feetY);
+    world.room.enemies = [hound];
     world.player.health.grantInvulnerability(30);
     const events: GameEvent[] = [];
-    for (let swing = 0; swing < 6 && grub.isAlive(); swing++) {
-      // Re-centre the grub in front of the player each swing (knockback pushes it away).
-      grub.body.x = world.player.body.x + world.player.body.w + 4;
-      grub.body.vx = 0;
+    for (let swing = 0; swing < 6 && hound.isAlive(); swing++) {
+      // Re-centre the hound in front of the player each swing (knockback pushes it away).
+      hound.body.x = world.player.body.x + world.player.body.w + 4;
+      hound.body.vx = 0;
       world.player.facing = 1;
       events.push(...stepWorld(world, ATTACK_CYCLE_STEPS, (i) => input({ attackPressed: i === 0 })));
     }
-    expect(grub.isAlive()).toBe(false);
+    expect(hound.isAlive()).toBe(false);
     expect(world.room.enemies).toHaveLength(0);
     expect(events.some((e) => e.type === 'enemyDied')).toBe(true);
   });
 
   it('attacks do not connect through walls', () => {
-    // The breakable wall at col 5 in Ashfall separates the start area from the secret alcove.
-    const world = worldAt('ashfall', 7, 19);
-    const grub = new Ashgrub('alcove-grub', tileX(4), tileFeet(19));
-    world.room.enemies = [grub];
+    // The breakable wall at col 5 in the alley separates the start area from the secret alcove.
+    const world = worldAt('alley', 7, 19);
+    const hound = new ScrapHound('alcove-hound', tileX(4), tileFeet(19));
+    world.room.enemies = [hound];
     world.room.walls = []; // treat the wall as plain rock for this test
     stepWorld(world, 2, () => input({ moveX: -1 }));
     stepWorld(world, ATTACK_CYCLE_STEPS, (i) => input({ attackPressed: i === 0 }));
-    expect(grub.health.current).toBe(ENEMIES.ashgrub.health);
+    expect(hound.health.current).toBe(ENEMIES.scrapHound.health);
   });
 
   it('a downward strike on an enemy bounces the player (pogo)', () => {
-    const world = worldAt('ashfall', 9, 19);
-    const grub = new Ashgrub('pogo-grub', world.player.feetX, world.player.feetY);
-    world.room.enemies = [grub];
+    const world = worldAt('alley', 9, 19);
+    const hound = new ScrapHound('pogo-hound', world.player.feetX, world.player.feetY);
+    world.room.enemies = [hound];
     world.player.health.grantInvulnerability(30);
     world.player.body.y -= 40;
     let pogo = false;
     for (let i = 0; i < 60 && !pogo; i++) {
       world.step(input({ moveY: 1, attackPressed: i === 2 }), DT);
       pogo = world.drainEvents().some((e) => e.type === 'playerPogo');
-      grub.body.x = world.player.centerX - grub.body.w / 2;
+      hound.body.x = world.player.centerX - hound.body.w / 2;
     }
     expect(pogo).toBe(true);
     expect(world.player.body.vy).toBeLessThan(0);
   });
 });
 
-describe('Secret: cracked wall and Heartcoal', () => {
-  it('breaks after three strikes, reveals a Heartcoal (+1 max health), and stays broken', () => {
-    const world = worldAt('ashfall', 7, 19);
+describe('Secret: cracked wall and Integrity Cell', () => {
+  it('breaks after three strikes, reveals an Integrity Cell (+1 max health), and stays broken', () => {
+    const world = worldAt('alley', 7, 19);
     world.room.enemies = [];
     stepWorld(world, 2, () => input({ moveX: -1 }));
     expect(world.player.facing).toBe(-1);
@@ -375,22 +375,22 @@ describe('Secret: cracked wall and Heartcoal', () => {
     world.retry();
     expect(world.player.health.max).toBe(PLAYER.maxHealth + 1);
     expect(world.room.grid.get(5, 18)).toBe(Tile.Empty);
-    expect(world.room.pickups.find((p) => p.kind === 'heartcoal')?.taken).toBe(true);
+    expect(world.room.pickups.find((p) => p.kind === 'cell')?.taken).toBe(true);
   });
 });
 
 describe('Room transitions', () => {
-  it('walking through the east door of Ashfall Hollow leads to the Lantern Gallery', () => {
-    const world = worldAt('ashfall', 60, 19);
+  it('walking through the east door of Rainline Alley leads to Transit Stacks', () => {
+    const world = worldAt('alley', 60, 19);
     world.room.enemies = [];
     for (let i = 0; i < 120 && !world.pendingTransition; i++) world.step(input({ moveX: 1 }), DT);
-    expect(world.pendingTransition).toEqual({ room: 'gallery', entry: 'west' });
+    expect(world.pendingTransition).toEqual({ room: 'transit', entry: 'west' });
     // The simulation holds still while the screen fades.
     const x = world.player.body.x;
     world.step(input({ moveX: 1 }), DT);
     expect(world.player.body.x).toBe(x);
     world.completeTransition();
-    expect(world.room.def.id).toBe('gallery');
+    expect(world.room.def.id).toBe('transit');
     expect(world.player.feetX).toBeCloseTo(tileX(3), 5);
     expect(world.drainEvents().some((e) => e.type === 'roomEntered')).toBe(true);
   });
@@ -398,21 +398,21 @@ describe('Room transitions', () => {
 
 describe('Game flow', () => {
   it('pausing freezes the simulation and resuming continues it', () => {
-    const world = worldAt('ashfall', 9, 19);
+    const world = worldAt('alley', 9, 19);
     stepWorld(world, 10);
     expect(world.pause()).toBe(true);
     const x = world.player.body.x;
-    const grubX = world.room.enemies[0]!.body.x;
+    const houndX = world.room.enemies[0]!.body.x;
     stepWorld(world, 120, () => input({ moveX: 1 }));
     expect(world.player.body.x).toBe(x);
-    expect(world.room.enemies[0]!.body.x).toBe(grubX);
+    expect(world.room.enemies[0]!.body.x).toBe(houndX);
     expect(world.resume()).toBe(true);
     stepWorld(world, 30, () => input({ moveX: 1 }));
     expect(world.player.body.x).toBeGreaterThan(x);
   });
 
   it('pause menu "restart" respawns at the checkpoint', () => {
-    const world = worldAt('ashfall', 9, 19);
+    const world = worldAt('alley', 9, 19);
     world.room.enemies = [];
     stepWorld(world, 30, () => input({ moveX: -1 })); // walk away from the checkpoint at col 13
     world.pause();
@@ -422,7 +422,7 @@ describe('Game flow', () => {
   });
 
   it('rejects illegal transitions', () => {
-    const world = worldAt('ashfall', 9, 19);
+    const world = worldAt('alley', 9, 19);
     expect(world.retry()).toBe(false); // can't retry while playing
     expect(world.resume()).toBe(false);
     world.player.takeDamage(99, 0, () => {});
@@ -431,8 +431,8 @@ describe('Game flow', () => {
     expect(world.retry()).toBe(false); // must wait for the game-over prompt
   });
 
-  it('defeating the Kiln Warden seals then reopens the gate and leads to victory', () => {
-    const world = worldAt('sanctum', 2, 15);
+  it('defeating BULWARK-9 seals then reopens the gate and leads to victory', () => {
+    const world = worldAt('precinct', 2, 15);
     const run = (frames: number, f: (i: number) => InputFrame = () => input()) => stepWorld(world, frames, f);
     world.player.health.grantInvulnerability(999);
     const events = run(120, () => input({ moveX: 1 }));
@@ -453,12 +453,12 @@ describe('Game flow', () => {
     expect(world.room.gateClosed).toBe(false);
     expect(world.progression.bossDefeated).toBe(true);
     expect(world.flow.state).toBe('playing');
-    run(Math.ceil(BOSS.kilnWarden.victoryDelay / DT) + 2);
+    run(Math.ceil(BOSS.bulwarkUnit.victoryDelay / DT) + 2);
     expect(world.flow.state).toBe('victory');
   });
 
   it('dying to the boss resets the encounter on retry', () => {
-    const world = worldAt('sanctum', 2, 15);
+    const world = worldAt('precinct', 2, 15);
     stepWorld(world, 120, () => input({ moveX: 1 }));
     expect(world.room.boss?.isActive).toBe(true);
     world.player.takeDamage(99, 0, () => {});

@@ -53,11 +53,11 @@ describe('Save data', () => {
   it('round-trips progression through a store', () => {
     const p = new Progression();
     p.unlock('backtrace');
-    p.latchedGates.add('gallery:timedGate');
-    p.secrets.add('ashfall:H:2,19');
-    p.brokenWalls.add('ashfall:wall:5,16');
+    p.latchedGates.add('transit:timedGate');
+    p.secrets.add('alley:H:2,19');
+    p.brokenWalls.add('alley:wall:5,16');
     p.maxHealthBonus = 1;
-    p.checkpoint = { roomId: 'gallery', x: 904, y: 416 };
+    p.checkpoint = { roomId: 'transit', x: 904, y: 416 };
     p.bossDefeated = true;
     p.deaths = 3;
     p.playTime = 123.5;

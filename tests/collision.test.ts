@@ -66,7 +66,7 @@ describe('Tile collision', () => {
         expect(b.x).toBeGreaterThanOrEqual(0);
         expect(b.x + b.w).toBeLessThanOrEqual(grid.widthPx);
         expect(b.y + b.h).toBeLessThanOrEqual(grid.heightPx);
-        // Respawn if the fuzzer falls into the ember pit (hazards are handled by the world, not the body).
+        // Respawn if the fuzzer falls into the live-current pit (hazards are handled by the world, not the body).
         if (grid.rectOverlapsHazard(b)) p.placeAt(tileX(start.col), tileFeet(start.row));
       }
     }

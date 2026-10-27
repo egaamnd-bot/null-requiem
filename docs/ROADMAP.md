@@ -1,36 +1,44 @@
-# Emberveil — Roadmap
+# Null Requiem — Roadmap
 
 Principle: **don't add breadth until the current slice is stable and enjoyable.** Each milestone ends with a playtest and a go/no-go on feel.
 
 ## Milestone 1 — Vertical slice (this PR)
-Player controller, two enemies, three rooms, checkpoint, ability gate, secret, miniboss, title/pause/game over/victory, CI, tests.
+- Player controller and Backtrace
+- Two enemies and three rooms
+- Checkpoints, a Backtrace-gated puzzle and a secret
+- Miniboss
+- Title, pause, game over and victory screens
+- CI and tests
 
-## Milestone 2 — Feel pass (recommended next)
+## Milestone 2 — Feel pass and Backtrace depth (recommended next)
 Driven by human playtest data, not new content.
-- Tune `tuning.ts` from recorded playtests: jump arc, dash distance, enemy wind-ups, boss HP and punish windows.
-- Real animation frames for the Kindler (run cycle, attack smear, land) and enemies; keep texture keys stable.
-- A small debug overlay (hitboxes, state names, FPS) toggled with a key.
-- Healing resource (design decision needed: on-hit charge vs. lantern-only).
-- Verify gamepad on hardware; add rebinding UI.
-- Accessibility basics: reduced screen shake/flash toggles.
+- Tune `tuning.ts` from recorded playtests: jump arc, dash, enemy wind-ups, boss HP, and the Backtrace window and cooldown.
+- One or two more Backtrace puzzle patterns that reuse world-state persistence. For example:
+  - a pressure plate that only holds while something stands on it;
+  - an enemy lured onto your echo for the arrival burst.
+- Real animation frames for the Courier and enemies; keep texture keys stable.
+- Debug overlay (hitboxes, state names, echo path, FPS).
+- Verify gamepad on hardware; add a rebinding UI.
+- Accessibility basics: toggles for screen shake, flash and rain density.
 
-## Milestone 3 — First real area
-- 8–12 rooms forming one biome with a loop back to the start (shortcut doors).
-- Two more enemy archetypes; one more ability that opens alternate routes.
-- Map screen with explored-room reveal; save multiple checkpoints.
-- Original music (ambient bed + boss theme) and recorded SFX.
+## Milestone 3 — First district
+- 8–12 rooms forming one district, with a loop back to the start (shortcut doors).
+- Two more enemy archetypes. Bell-shielded and ceiling-ambush concepts are on file in the asset branch.
+- One more traversal ability that opens alternate routes.
+- Map screen with explored-room reveal.
+- Original music (ambient bed and boss theme) and recorded SFX.
 
 ## Milestone 4 — Content and polish
-- Second biome and boss; boss checkpoints (respawn outside the arena).
-- Collectibles, lore tablets, optional challenge rooms.
+- Second district and boss; boss checkpoints.
+- Collectibles, lore terminals, optional challenge rooms.
 - Difficulty balancing, accessibility options (assist modes).
 
 ## Later
-- Optional touch controls (the input layer already produces a device-agnostic `HeldInput`).
-- Performance budget and browser compatibility matrix; bundle splitting.
-- Packaging decision (web-only vs. desktop wrapper) — Producer call.
+- Optional touch controls. The input layer already produces a device-agnostic `HeldInput`.
+- Performance budget, browser compatibility matrix, bundle splitting.
+- Packaging decision (web-only vs. desktop wrapper). Producer call.
 
 ## Open decisions for the Producer
-- Repository visibility (affects free GitHub Pages hosting).
+- Whether to merge this PR into `main`, which moves the Godot prototype to `legacy/`.
 - License.
-- Healing design, and whether pogo should extend to hazards later (it is currently disabled to protect the ability gate).
+- Healing design, and whether Backtrace should also restore dash or attack state.

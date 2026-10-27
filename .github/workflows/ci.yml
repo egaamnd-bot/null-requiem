@@ -41,7 +41,7 @@ jobs:
       - name: Upload playable build
         uses: actions/upload-artifact@v6
         with:
-          name: emberveil-build-${{ github.sha }}
+          name: null-requiem-build-${{ github.sha }}
           path: dist
           if-no-files-found: error
           retention-days: 30
