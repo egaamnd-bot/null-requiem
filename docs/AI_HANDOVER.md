@@ -81,19 +81,19 @@ docs, not executed; **[unverified]** = not checked.
 - GitHub job logs cannot be downloaded from the Claude sandbox (blob host returns 403); the workflow's smoke-test steps emit the
   failure tail as an annotation readable through `gh api repos/.../check-runs/<job_id>/annotations`.
 
-## Next action (for ChatGPT or Claude)
+## Next action
 
-**Close the loop on device feedback for PR #3.**
+Producer feedback arrived after the prior touch-fix APK:
+1. The fixed-position left movement pad feels awkward. It has now been changed on branch `feature/floating-touch-and-visual-pass` to a floating joystick: touch anywhere in the lower-left movement zone to anchor it under the thumb, then drag to steer. Automated regression tests cover touch-down anchoring, directions, release, and multi-touch.
+2. The game looks low-resolution. The renderer now uses device-pixel resolution (capped at 3x), pixel-art scaling is no longer forced, and CSS no longer forces nearest-neighbour scaling.
+3. The producer's visual target is the supplied reference image: vivid purple/magenta atmospheric city, luminous cyan/green details, layered industrial bridges, painterly action-platformer presentation. Current actors/terrain are still procedural placeholder sprites; a new illustrated multi-layer skyline/bridge backdrop is in progress, but a complete hand-painted character/enemy sprite pack is still required for a faithful match.
 
-1. Inspect: PR #3 head SHA, latest "Android Debug APK" run (QA_STATUS has the URL), and the device checklist in `QA_STATUS.md`.
-2. If CI is red, fix the failing step first (read annotations as described above). If green, ask the Producer to install the artifact
-   and fill the device checklist.
-3. For each failed device item, reproduce with a regression test where possible (pure modules in `tests/`, flows in `e2e/touch.spec.ts`)
-   and fix it in small commits on this branch.
-4. Expected outcome: Producer can install the APK, tap Start, move/jump/attack/dash/rewind/talk/pause on the touchscreen.
-5. Acceptance: CI green on the final commit (typecheck, unit tests, Playwright, APK build, built-APK landscape check, artifact present);
-   every row of the device checklist marked pass by the Producer; docs updated; only then propose merging PR #3. Do not start Milestone 2
-   content before that.
+Next:
+- Inspect CI on the feature branch and fix any typecheck/test/build failures.
+- Verify the backdrop texture scales to the full viewport and performs acceptably on Android.
+- Produce a fresh APK from the final head.
+- Producer must test joystick feel, readability, and visual direction on the actual phone. Do not claim device verification without feedback.
+- Do not merge or start new content until this pass is reviewed.
 
 ## Handover verification
 
@@ -103,3 +103,11 @@ docs, not executed; **[unverified]** = not checked.
   built-APK landscape check, artifact upload all success. See QA_STATUS for URLs.
 - Explicitly unverified: all physical-device behaviour (touch feel, gamepad, audio on Android, performance), the immersive-mode/cutout
   presentation on real hardware, and per-test Playwright counts (retries=1 in CI).
+
+
+## Successor addendum — visual and touch pass (2026-10-28)
+
+- Producer requested a floating movement joystick, clearer rendering, and a visual direction closer to the supplied colorful purple/cyan action-platformer reference.
+- Branch: `feature/floating-touch-and-visual-pass`, based on PR #3 head `983e4287786a23308c73aa930b88a9ffe1c2c443`.
+- Changes: floating joystick state/layout; high-DPI renderer and non-pixelated canvas scaling; procedural illustrated purple neon-city skyline and curved industrial bridge layers; regression tests.
+- This is an implementation in progress until CI verifies the current head and the Producer tests the APK. The procedural character/enemy art is still not a replacement for a proper illustrated sprite pack.
