@@ -190,13 +190,33 @@ jobs:
       - name: Verify landscape orientation in built APK
         shell: bash
         run: |
+          set +e
           APK="android/app/build/outputs/apk/debug/app-debug.apk"
-          TOOL=$(command -v apkanalyzer || find "${ANDROID_HOME:-$ANDROID_SDK_ROOT}" -name apkanalyzer -type f 2>/dev/null | head -n 1)
-          test -n "$TOOL" || { echo "apkanalyzer not found"; exit 1; }
-          "$TOOL" manifest print "$APK" > built-manifest.xml
-          echo "applicationId: $("$TOOL" manifest application-id "$APK")"
-          grep -n 'screenOrientation' built-manifest.xml
-          grep -q 'android:screenOrientation="landscape"' built-manifest.xml
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          TOOL=$(command -v apkanalyzer || find "$SDK" -name apkanalyzer -type f 2>/dev/null | head -n 1)
+          AAPT2=$(find "$SDK/build-tools" -name aapt2 -type f 2>/dev/null | sort -V | tail -n 1)
+          echo "apkanalyzer=$TOOL aapt2=$AAPT2"
+          OK=0
+          LINES=""
+          if [ -n "$TOOL" ]; then
+            "$TOOL" manifest print "$APK" > built-manifest.xml 2> apkanalyzer.err
+            echo "applicationId: $("$TOOL" manifest application-id "$APK")"
+            LINES="$(grep -n 'screenOrientation' built-manifest.xml | head -n 3 | tr '\n' '|')"
+            echo "apkanalyzer: $LINES"
+            # Enum attributes may print as their name or as the raw value (0 == landscape).
+            grep -Eq 'android:screenOrientation="(landscape|0)"' built-manifest.xml && OK=1
+          fi
+          if [ "$OK" -ne 1 ] && [ -n "$AAPT2" ]; then
+            "$AAPT2" dump xmltree --file AndroidManifest.xml "$APK" > aapt2-manifest.txt 2> aapt2.err
+            L2="$(grep -n 'screenOrientation' aapt2-manifest.txt | head -n 3 | tr '\n' '|')"
+            echo "aapt2: $L2"
+            LINES="$LINES aapt2: $L2"
+            grep -Eq 'screenOrientation.*(=0x0|=0 |=landscape|\(0x0\)|\)0x0$)' aapt2-manifest.txt && OK=1
+          fi
+          if [ "$OK" -ne 1 ]; then
+            echo "::error title=landscape not confirmed in built APK::tool=$TOOL aapt2=$AAPT2 | $LINES | $(head -c 300 apkanalyzer.err 2>/dev/null) | $(head -n 25 built-manifest.xml 2>/dev/null | tr '\n' '|' | cut -c1-1500)"
+            exit 1
+          fi
           echo "Built APK manifest declares landscape orientation"
 
       - name: Record APK checksum
