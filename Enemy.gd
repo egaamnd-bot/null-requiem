@@ -91,5 +91,3 @@ func restore_snapshot(saved_position: Vector2, saved_health: int) -> void:
 	else:
 		state = "approach"
 		shell.color = Color(0.72, 0.25, 0.38, 1.0)
-
-

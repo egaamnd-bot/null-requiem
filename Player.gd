@@ -100,4 +100,3 @@ func restore_snapshot(saved_position: Vector2, saved_health: int) -> void:
 	invulnerability_timer = 0.0
 	parry_timer = 0.0
 	body.color = Color(0.0, 0.898, 1.0, 1.0)
-
