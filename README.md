@@ -116,3 +116,25 @@ See [`docs/PLAYTEST_CHECKLIST.md`](docs/PLAYTEST_CHECKLIST.md) for manual verifi
 - Finishing the slice clears the save.
 - **Bundle size** is about 1.5 MB, mostly Phaser, and isn't split.
 - **No license chosen yet.** All code and art here is original to this project.
+
+
+## Android phone testing
+
+The project can be packaged as an installable **Android debug APK** using GitHub Actions. The APK is for testing, not a Play Store release.
+
+### Build and download
+
+1. Open the repository's **Actions** tab.
+2. Select **Android Debug APK**.
+3. Open a successful run for the commit you want to test. Pushes to `main` and the Android pipeline branch trigger a build; pull requests also run the checks.
+4. Under **Artifacts**, download `null-requiem-android-debug-<commit-sha>`.
+5. Extract the downloaded ZIP and locate `app-debug.apk`.
+6. Transfer/open the APK on your Android phone and approve installation from that source if Android asks.
+7. Install and launch **NULL REQUIEM**. The app is configured for landscape orientation.
+
+### Important notes
+
+- The workflow runs TypeScript checks, automated tests, the web production build, and the Android debug packaging step before uploading the APK.
+- A debug APK is signed for development/testing. It is not a production release.
+- Test the APK on a physical device for WebGL rendering, touch controls, app pause/resume, audio, and performance. A successful CI build alone does not prove all device behaviour.
+- Each workflow artifact is retained for 14 days. Build a new APK after new code changes; an older APK does not update itself.
