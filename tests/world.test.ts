@@ -7,7 +7,7 @@ import { ROOMS, START_ROOM } from '../src/world/rooms';
 import { DT, input, stepWorld, tileFeet, tileX, worldAt } from './helpers';
 import type { InputFrame } from '../src/core/input';
 
-const KNOWN_MARKERS = new Set(['P', 'K', 'C', 'W', 'A', 'H', 'X', 'D']);
+const KNOWN_MARKERS = new Set(['P', 'K', 'C', 'W', 'A', 'H', 'X', 'D', 'T', 'S']);
 const ATTACK_CYCLE_STEPS = Math.ceil((COMBAT.attack.startup + COMBAT.attack.active + COMBAT.attack.recovery) / DT) + 2;
 
 describe('Room data', () => {
@@ -70,11 +70,9 @@ describe('Room data', () => {
   });
 });
 
-/** Simulate a run-and-jump at the gallery's ember pit. Returns true if the player lands across. */
-function attemptPitCrossing(jumpAt: number, dashAt: number | null, veilstep: boolean): boolean {
-  const world = worldAt('gallery', 36, 25, (p) => {
-    if (veilstep) p.unlock('veilstep');
-  });
+/** Simulate a run-and-jump at the gallery's pit. Returns true if the player lands across. */
+function attemptPitCrossing(jumpAt: number, dashAt: number | null): boolean {
+  const world = worldAt('gallery', 36, 25);
   world.room.enemies = [];
   const farLedgeX = 49 * TILE_SIZE;
   for (let i = 0; i < 120 * 3; i++) {
@@ -90,44 +88,135 @@ function attemptPitCrossing(jumpAt: number, dashAt: number | null, veilstep: boo
   return false;
 }
 
-describe('Ability-gated route (Lantern Gallery ember pit)', () => {
-  it('cannot be crossed by any run-and-jump timing without Veilstep', () => {
+describe('Gallery pit (dash traversal challenge)', () => {
+  it('cannot be crossed by any run-and-jump timing without dashing', () => {
     for (let jumpAt = 0; jumpAt <= 90; jumpAt++) {
-      expect(attemptPitCrossing(jumpAt, null, false), `jump at step ${jumpAt}`).toBe(false);
+      expect(attemptPitCrossing(jumpAt, null), `jump at step ${jumpAt}`).toBe(false);
     }
   });
 
-  it('cannot be crossed by pressing dash without the ability either', () => {
-    for (let jumpAt = 20; jumpAt <= 60; jumpAt += 2) {
-      for (let d = 0; d <= 40; d += 4) expect(attemptPitCrossing(jumpAt, jumpAt + d, false)).toBe(false);
-    }
-  });
-
-  it('can be crossed with a jump + Veilstep, with a forgiving timing window', () => {
+  it('can be crossed with a jump + dash, with a forgiving timing window', () => {
     let successes = 0;
     let attempts = 0;
     for (let jumpAt = 0; jumpAt <= 90; jumpAt += 2) {
       for (let d = 0; d <= 60; d += 3) {
         attempts++;
-        if (attemptPitCrossing(jumpAt, jumpAt + d, true)) successes++;
+        if (attemptPitCrossing(jumpAt, jumpAt + d)) successes++;
       }
     }
     expect(successes).toBeGreaterThan(40);
     expect(successes).toBeLessThan(attempts);
   });
+});
 
-  it('touching the shrine unlocks Veilstep, and it survives death and retry', () => {
+const GATE_RIGHT = 75 * TILE_SIZE;
+
+/**
+ * From just east of the override switch: face it, strike it, then sprint for the gate using
+ * dash as soon as it is ready (starting `dashOffset` steps after the strike lands — dashing
+ * earlier would cancel the swing). Returns true if the player
+ * gets past the gate. Asserts the strike really opened the gate so the test can't pass vacuously.
+ */
+function raceTheGate(strikeDelay: number, dashOffset: number, jumpEvery: number | null): boolean {
+  const world = worldAt('gallery', 51, 25);
+  world.room.enemies = [];
+  stepWorld(world, 2, () => input({ moveX: -1 }));
+  stepWorld(world, strikeDelay);
+  let opened = false;
+  let hitAt = -1;
+  for (let i = 0; i < 120 * 4; i++) {
+    const run = i >= 1;
+    world.step(
+      input({
+        attackPressed: i === 0,
+        moveX: run ? 1 : 0,
+        dashPressed: hitAt >= 0 && i >= hitAt + dashOffset,
+        jumpPressed: jumpEvery !== null && run && i % jumpEvery === 0,
+        jumpHeld: jumpEvery !== null,
+      }),
+      DT,
+    );
+    if (world.drainEvents().some((e) => e.type === 'switchHit')) {
+      opened = true;
+      hitAt = i;
+    }
+    if (world.player.body.x >= GATE_RIGHT) return true;
+  }
+  expect(opened, 'strike should open the gate').toBe(true);
+  return false;
+}
+
+describe('Ability-gated route (Gallery timed gate)', () => {
+  it('cannot be beaten by any sprint/dash/jump timing without Backtrace', () => {
+    for (const strikeDelay of [0, 10, 30]) {
+      for (let dashOffset = 0; dashOffset <= 40; dashOffset += 3) {
+        for (const jumpEvery of [null, 30, 60]) {
+          expect(raceTheGate(strikeDelay, dashOffset, jumpEvery), `delay ${strikeDelay} dash ${dashOffset} jump ${jumpEvery}`).toBe(false);
+        }
+      }
+    }
+  });
+
+  it('can be beaten with Backtrace: stand at the gate, run back, strike, snap back, walk through', () => {
+    const world = worldAt('gallery', 72, 25, (p) => p.unlock('backtrace'));
+    world.room.enemies = [];
+    stepWorld(world, 60); // wait at the gate: this is where the echo will be
+    let steps = 0;
+    while (world.player.centerX > 51.6 * TILE_SIZE && steps++ < 600) stepWorld(world, 1, () => input({ moveX: -1 }));
+    stepWorld(world, 30); // settle
+    expect(world.player.facing).toBe(-1);
+    const strike = stepWorld(world, 8, (i) => input({ attackPressed: i === 0 }));
+    expect(strike.some((e) => e.type === 'switchHit')).toBe(true);
+    const snap = stepWorld(world, 1, () => input({ backtracePressed: true }));
+    expect(snap.some((e) => e.type === 'backtrace')).toBe(true);
+    expect(world.player.feetX).toBeGreaterThan(70 * TILE_SIZE);
+    const through = stepWorld(world, 90, () => input({ moveX: 1 }));
+    expect(world.player.body.x).toBeGreaterThan(GATE_RIGHT);
+    expect(through.some((e) => e.type === 'gateLatched')).toBe(true);
+    expect(world.progression.latchedGates.has('gallery:timedGate')).toBe(true);
+  });
+
+  it('never closes on top of the player, and closes once they step out', () => {
+    const world = worldAt('gallery', 72, 25);
+    world.room.enemies = [];
+    world.room.switches[0]!.takeHit();
+    stepWorld(world, 30, () => input({ moveX: 1 })); // step into the gate column
+    const gate = world.room.timedGate!;
+    expect(world.player.body.x + world.player.body.w).toBeGreaterThan(gate.rect.x);
+    // Hold position inside the doorway well past the timer.
+    world.player.body.x = gate.rect.x + 2;
+    stepWorld(world, Math.ceil(2 / DT));
+    expect(gate.open).toBe(true);
+    expect(world.room.grid.rectOverlapsSolid(world.player.body)).toBe(false);
+    stepWorld(world, 60, () => input({ moveX: -1 }));
+    expect(gate.open).toBe(false);
+    expect(world.room.grid.isSolid(74, 24)).toBe(true);
+  });
+
+  it('stays open for good once passed, across death and retry', () => {
+    const world = worldAt('gallery', 76, 25);
+    world.room.enemies = [];
+    const events = stepWorld(world, 2);
+    expect(events.some((e) => e.type === 'gateLatched')).toBe(true);
+    world.player.takeDamage(99, 0, () => {});
+    stepWorld(world, Math.ceil(FLOW.deathAnimation / DT) + 2);
+    world.retry();
+    expect(world.room.timedGate?.latched).toBe(true);
+    expect(world.room.grid.isSolid(74, 24)).toBe(false);
+  });
+
+  it('the Backtrace module unlocks the ability, which survives death and retry', () => {
     const world = worldAt('gallery', 31, 7);
-    expect(world.progression.has('veilstep')).toBe(false);
+    expect(world.progression.has('backtrace')).toBe(false);
     const events = stepWorld(world, 2);
     expect(events.some((e) => e.type === 'abilityUnlocked')).toBe(true);
-    expect(world.progression.has('veilstep')).toBe(true);
+    expect(world.progression.has('backtrace')).toBe(true);
     world.player.takeDamage(99, 0, () => {});
     stepWorld(world, Math.ceil(FLOW.deathAnimation / DT) + 2);
     expect(world.flow.state).toBe('gameover');
     expect(world.retry()).toBe(true);
-    expect(world.progression.has('veilstep')).toBe(true);
-    expect(world.room.pickups.find((p) => p.kind === 'veilstep')?.taken).toBe(true);
+    expect(world.progression.has('backtrace')).toBe(true);
+    expect(world.room.pickups.find((p) => p.kind === 'backtrace')?.taken).toBe(true);
   });
 });
 

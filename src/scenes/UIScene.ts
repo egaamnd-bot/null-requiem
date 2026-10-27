@@ -222,8 +222,8 @@ export class UIScene extends Phaser.Scene {
 
     // Veilstep indicator.
     const vx = 14 + hud.maxHealth * 13 + 6;
-    this.veilIcon.setVisible(hud.hasVeilstep).setPosition(vx, 14);
-    this.veilFill.setVisible(hud.hasVeilstep && hud.dashCooldown > 0).setPosition(vx, 22).setSize(16, 16 * hud.dashCooldown);
+    this.veilIcon.setVisible(hud.hasBacktrace).setPosition(vx, 14);
+    this.veilFill.setVisible(hud.hasBacktrace && hud.dashCooldown > 0).setPosition(vx, 22).setSize(16, 16 * hud.dashCooldown);
     this.veilIcon.setAlpha(hud.dashCooldown > 0 ? 0.6 : 1);
 
     // Boss bar.

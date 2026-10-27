@@ -4,7 +4,7 @@
  */
 
 export type AttackDirection = 'side' | 'up' | 'down';
-export type Ability = 'veilstep';
+export type Ability = 'backtrace';
 
 export type GameEvent =
   | { type: 'playerJump'; x: number; y: number }
@@ -15,7 +15,12 @@ export type GameEvent =
   | { type: 'playerDied'; x: number; y: number }
   | { type: 'playerPogo'; x: number; y: number }
   | { type: 'hazardRespawn'; x: number; y: number }
-  | { type: 'hit'; x: number; y: number; target: 'enemy' | 'boss' | 'projectile' | 'wall'; killed: boolean }
+  | { type: 'hit'; x: number; y: number; target: 'enemy' | 'boss' | 'projectile' | 'wall' | 'switch'; killed: boolean }
+  | { type: 'backtrace'; fromX: number; fromY: number; toX: number; toY: number; restored: number }
+  | { type: 'switchHit'; x: number; y: number }
+  | { type: 'timedGate'; open: boolean }
+  | { type: 'gateLocked'; x: number; y: number }
+  | { type: 'gateLatched' }
   | { type: 'enemyWindup'; x: number; y: number }
   | { type: 'enemyShoot'; x: number; y: number }
   | { type: 'enemyDied'; x: number; y: number; kind: string }

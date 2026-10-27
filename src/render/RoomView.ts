@@ -203,7 +203,7 @@ export class RoomView {
     }
     for (const p of room.pickups) {
       const cx = p.rect.x + p.rect.w / 2;
-      if (p.kind === 'veilstep') {
+      if (p.kind === 'backtrace') {
         const img = this.add(s.add.image(cx, p.rect.y + p.rect.h, TEX.shrine).setOrigin(0.5, 1).setDepth(DEPTH.objects));
         const glow = this.add(
           s.add.image(cx, p.rect.y + 14, TEX.glowSoft).setTint(PALETTE.bio).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.objects - 1),
@@ -249,7 +249,7 @@ export class RoomView {
     for (const p of this.pickups) {
       const state = room.pickups.find((x) => x.id === p.id);
       const taken = state?.taken ?? true;
-      if (state?.kind === 'veilstep') {
+      if (state?.kind === 'backtrace') {
         p.img.setTexture(taken ? TEX.shrineSpent : TEX.shrine);
         p.glow.setVisible(!taken).setAlpha(0.5 + Math.sin(t * 2) * 0.15);
       } else {

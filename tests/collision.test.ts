@@ -60,7 +60,7 @@ describe('Tile collision', () => {
         } else {
           held = { ...held, jumpPressed: false, dashPressed: false, attackPressed: false };
         }
-        p.step(held, grid, DT, { veilstep: true }, () => {});
+        p.step(held, grid, DT, { dash: true }, () => {});
         const b = p.body;
         expect(grid.rectOverlapsSolid(b), `${room.id} step ${i} at ${b.x.toFixed(2)},${b.y.toFixed(2)}`).toBe(false);
         expect(b.x).toBeGreaterThanOrEqual(0);

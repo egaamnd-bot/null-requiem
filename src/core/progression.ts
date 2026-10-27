@@ -12,6 +12,7 @@ export interface ProgressionData {
   abilities: Ability[];
   secrets: string[];
   brokenWalls: string[];
+  latchedGates: string[];
   maxHealthBonus: number;
   checkpoint: CheckpointRef | null;
   bossDefeated: boolean;
@@ -24,6 +25,8 @@ export class Progression {
   readonly abilities = new Set<Ability>();
   readonly secrets = new Set<string>();
   readonly brokenWalls = new Set<string>();
+  /** Timed gates the player has passed; they stay open for good. */
+  readonly latchedGates = new Set<string>();
   maxHealthBonus = 0;
   checkpoint: CheckpointRef | null = null;
   bossDefeated = false;
@@ -46,6 +49,7 @@ export class Progression {
       abilities: [...this.abilities],
       secrets: [...this.secrets],
       brokenWalls: [...this.brokenWalls],
+      latchedGates: [...this.latchedGates],
       maxHealthBonus: this.maxHealthBonus,
       checkpoint: this.checkpoint ? { ...this.checkpoint } : null,
       bossDefeated: this.bossDefeated,
@@ -60,9 +64,10 @@ export class Progression {
     if (d.version !== 1) return null;
     const p = new Progression();
     const strings = (v: unknown): string[] => (Array.isArray(v) ? v.filter((s) => typeof s === 'string') : []);
-    for (const a of strings(d.abilities)) if (a === 'veilstep') p.abilities.add(a);
+    for (const a of strings(d.abilities)) if (a === 'backtrace') p.abilities.add(a);
     for (const s of strings(d.secrets)) p.secrets.add(s);
     for (const w of strings(d.brokenWalls)) p.brokenWalls.add(w);
+    for (const g of strings(d.latchedGates)) p.latchedGates.add(g);
     p.maxHealthBonus = typeof d.maxHealthBonus === 'number' ? Math.max(0, Math.floor(d.maxHealthBonus)) : 0;
     const cp = d.checkpoint;
     if (cp && typeof cp.roomId === 'string' && typeof cp.x === 'number' && typeof cp.y === 'number') {

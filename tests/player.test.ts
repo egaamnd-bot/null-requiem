@@ -164,12 +164,12 @@ describe('Player movement', () => {
   });
 });
 
-describe('Veilstep dash', () => {
-  it('does nothing before the ability is unlocked', () => {
+describe('Dash', () => {
+  it('does nothing when dashing is disabled', () => {
     const grid = gridFrom(flatRoom());
     const p = new Player(tileX(5), tileFeet(13));
     settle(p, grid);
-    const events = runPlayer(p, grid, 30, (i) => input({ dashPressed: i === 0 }), { veilstep: false });
+    const events = runPlayer(p, grid, 30, (i) => input({ dashPressed: i === 0 }), { dash: false });
     expect(events.some((e) => e.type === 'playerDash')).toBe(false);
     expect(p.body.vx).toBe(0);
   });
@@ -180,7 +180,7 @@ describe('Veilstep dash', () => {
     settle(p, grid);
     const startX = p.body.x;
     const steps = Math.round(PLAYER.dash.duration / DT);
-    const events = runPlayer(p, grid, steps, (i) => input({ dashPressed: i === 0 }), { veilstep: true });
+    const events = runPlayer(p, grid, steps, (i) => input({ dashPressed: i === 0 }), { dash: true });
     expect(events.filter((e) => e.type === 'playerDash')).toHaveLength(1);
     expect(p.body.x - startX).toBeCloseTo(PLAYER.dash.speed * PLAYER.dash.duration, 0);
   });
@@ -194,7 +194,7 @@ describe('Veilstep dash', () => {
       grid,
       cooldownSteps * 2,
       (i) => input({ dashPressed: i === 1 || i === cooldownSteps + 1 }),
-      { veilstep: true },
+      { dash: true },
     );
     expect(p.body.onGround).toBe(false);
     expect(events.filter((e) => e.type === 'playerDash')).toHaveLength(1);
@@ -205,7 +205,7 @@ describe('Veilstep dash', () => {
     const p = new Player(tileX(36), tileFeet(13));
     settle(p, grid);
     p.facing = 1;
-    runPlayer(p, grid, 40, (i) => input({ dashPressed: i === 0, moveX: 1 }), { veilstep: true });
+    runPlayer(p, grid, 40, (i) => input({ dashPressed: i === 0, moveX: 1 }), { dash: true });
     expect(p.body.x + p.body.w).toBeLessThanOrEqual(39 * 16 + 1e-6);
     expect(p.isDashing).toBe(false);
   });
@@ -304,7 +304,7 @@ describe('Player damage', () => {
     expect(p.attackPhase).toBe('none');
     expect(p.hitbox()).toBeNull();
     const after = runPlayer(p, grid, 60, () => input({ attackPressed: true, jumpPressed: true, moveX: 1 }), {
-      veilstep: true,
+      dash: true,
     });
     expect(after.filter((e) => e.type === 'playerAttack' || e.type === 'playerJump')).toHaveLength(0);
 

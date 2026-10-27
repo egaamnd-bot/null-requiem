@@ -174,6 +174,24 @@ export const BOSS = {
   },
 } as const;
 
+/** Backtrace: the player's personal rewind (world state is not rewound). */
+export const BACKTRACE = {
+  /** How far behind the player the echo trails, in seconds. */
+  window: 4.0,
+  cooldown: 6.0,
+  /** Minimum recorded history before it can be used (avoids a useless zero-distance snap). */
+  minHistory: 0.25,
+  /** Invulnerability granted on arrival. */
+  arrivalInvulnerability: 0.45,
+  /** Damage burst released at the arrival point. */
+  burst: { radius: 44, damage: 2 },
+} as const;
+
+export const PUZZLE = {
+  /** Seconds an override switch holds its gate open. Shorter than the fastest run from switch to gate. */
+  gateOpenTime: 1.0,
+} as const;
+
 export const FLOW = {
   /** Seconds between the killing blow and the game-over prompt. */
   deathAnimation: 1.2,

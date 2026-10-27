@@ -10,7 +10,7 @@ import type { TileGrid } from './tiles';
 export type AttackPhase = 'none' | 'startup' | 'active' | 'recovery';
 
 export interface PlayerAbilities {
-  veilstep: boolean;
+  dash: boolean;
 }
 
 /**
@@ -157,11 +157,11 @@ export class Player {
       this.facing = input.moveX;
     }
 
-    // --- Dash (Veilstep) ---
+    // --- Dash ---
     if (
       control &&
       input.dashPressed &&
-      abilities.veilstep &&
+      abilities.dash &&
       this.dashTimer <= 0 &&
       this.dashCooldown <= 0 &&
       this.dashAvailable

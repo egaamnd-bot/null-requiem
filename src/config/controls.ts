@@ -13,6 +13,7 @@ export type Action =
   | 'jump'
   | 'attack'
   | 'dash'
+  | 'backtrace'
   | 'pause'
   | 'confirm'
   | 'back'
@@ -26,13 +27,14 @@ export const KEYBOARD_BINDINGS: Readonly<Record<Action, readonly string[]>> = {
   jump: ['SPACE', 'Z'],
   attack: ['J', 'X'],
   dash: ['K', 'C', 'SHIFT'],
+  backtrace: ['L', 'V', 'Q'],
   pause: ['ESC', 'P'],
   confirm: ['ENTER', 'SPACE', 'Z'],
   back: ['ESC', 'BACKSPACE'],
   mute: ['M'],
 };
 
-/** Standard mapping: 0=A/Cross, 1=B/Circle, 2=X/Square, 3=Y/Triangle, 4/5=bumpers, 9=Start, 12-15=D-pad. */
+/** Standard mapping: 0=A/Cross, 1=B/Circle, 2=X/Square, 3=Y/Triangle, 4/5=bumpers, 6/7=triggers, 9=Start, 12-15=D-pad. */
 export const GAMEPAD_BINDINGS: Readonly<Record<Action, readonly number[]>> = {
   left: [14],
   right: [15],
@@ -41,6 +43,7 @@ export const GAMEPAD_BINDINGS: Readonly<Record<Action, readonly number[]>> = {
   jump: [0],
   attack: [2],
   dash: [1, 5, 7],
+  backtrace: [3, 4, 6],
   pause: [9],
   confirm: [0, 9],
   back: [1, 8],

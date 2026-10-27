@@ -102,6 +102,7 @@ export class InputManager {
       jump: this.isDown('jump'),
       attack: this.isDown('attack'),
       dash: this.isDown('dash'),
+      backtrace: this.isDown('backtrace'),
     };
   }
 

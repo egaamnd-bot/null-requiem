@@ -47,7 +47,7 @@ export function hitConnects(
 /** Something the player's attacks can damage. */
 export interface Damageable {
   readonly id: string;
-  readonly targetKind: 'enemy' | 'boss' | 'projectile' | 'wall';
+  readonly targetKind: 'enemy' | 'boss' | 'projectile' | 'wall' | 'switch';
   isAlive(): boolean;
   hurtbox(): Rect;
   /** Walls are checked without line of sight (the hitbox overlaps the wall itself). */

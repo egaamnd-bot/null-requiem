@@ -12,6 +12,7 @@ export interface HeldInput {
   jump: boolean;
   attack: boolean;
   dash: boolean;
+  backtrace: boolean;
 }
 
 export interface InputFrame {
@@ -23,6 +24,7 @@ export interface InputFrame {
   jumpPressed: boolean;
   attackPressed: boolean;
   dashPressed: boolean;
+  backtracePressed: boolean;
 }
 
 export const NO_INPUT: Readonly<HeldInput> = {
@@ -33,10 +35,11 @@ export const NO_INPUT: Readonly<HeldInput> = {
   jump: false,
   attack: false,
   dash: false,
+  backtrace: false,
 };
 
 export function emptyFrame(): InputFrame {
-  return { moveX: 0, moveY: 0, jumpHeld: false, jumpPressed: false, attackPressed: false, dashPressed: false };
+  return { moveX: 0, moveY: 0, jumpHeld: false, jumpPressed: false, attackPressed: false, dashPressed: false, backtracePressed: false };
 }
 
 function axis(neg: boolean, pos: boolean): -1 | 0 | 1 {
@@ -50,12 +53,14 @@ export class InputLatch {
   private jumpPressed = false;
   private attackPressed = false;
   private dashPressed = false;
+  private backtracePressed = false;
 
   /** Call once per render frame with the currently held buttons. */
   sample(held: HeldInput): void {
     if (held.jump && !this.prev.jump) this.jumpPressed = true;
     if (held.attack && !this.prev.attack) this.attackPressed = true;
     if (held.dash && !this.prev.dash) this.dashPressed = true;
+    if (held.backtrace && !this.prev.backtrace) this.backtracePressed = true;
     this.prev = { ...held };
     this.current = { ...held };
   }
@@ -69,10 +74,9 @@ export class InputLatch {
       jumpPressed: this.jumpPressed,
       attackPressed: this.attackPressed,
       dashPressed: this.dashPressed,
+      backtracePressed: this.backtracePressed,
     };
-    this.jumpPressed = false;
-    this.attackPressed = false;
-    this.dashPressed = false;
+    this.clearPresses();
     return frame;
   }
 
@@ -81,6 +85,7 @@ export class InputLatch {
     this.jumpPressed = false;
     this.attackPressed = false;
     this.dashPressed = false;
+    this.backtracePressed = false;
   }
 
   /**

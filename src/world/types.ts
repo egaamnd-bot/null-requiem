@@ -37,7 +37,8 @@ export interface RoomDef {
   /**
    * ASCII layout. Terrain: `#` rock, `.` air, `=` one-way ledge, `^` ember pit (hazard), `B` breakable wall.
    * Markers (placed on air): `P` new-game start, `K` hearth lantern (checkpoint), `C` ashgrub,
-   * `W` lantern wisp, `A` veilstep shrine, `H` heartcoal (secret), `X` boss, `D` boss gate.
+   * `W` lantern wisp, `A` Backtrace module, `H` heartcoal (secret), `X` boss, `D` boss gate,
+   * `T` timed gate tile, `S` override switch (opens the room's timed gate).
    */
   layout: readonly string[];
   /** Named arrival points (feet stand on the bottom of this tile). */

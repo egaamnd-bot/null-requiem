@@ -1,5 +1,6 @@
-import { BOSS, COMBAT, FLOW, PLAYER, TILE_SIZE } from '../config/tuning';
+import { BACKTRACE, BOSS, COMBAT, FLOW, PLAYER, PUZZLE, SIM, TILE_SIZE } from '../config/tuning';
 import type { RoomDef, TilePoint, TileRect } from '../world/types';
+import { Backtrace } from './backtrace';
 import { bodyRect } from './body';
 import { hitConnects, type Damageable, type DamageSource } from './combat';
 import { Ashgrub } from './enemies/ashgrub';
@@ -25,7 +26,7 @@ export interface CheckpointState {
 
 export interface PickupState {
   id: string;
-  kind: 'veilstep' | 'heartcoal';
+  kind: 'backtrace' | 'heartcoal';
   rect: Rect;
   taken: boolean;
 }
@@ -77,6 +78,44 @@ export class BreakableWall implements Damageable {
   }
 }
 
+/** A gate that an override switch opens for a short time. Passing it latches it open for good. */
+export interface TimedGateState {
+  id: string;
+  tiles: TilePoint[];
+  rect: Rect;
+  open: boolean;
+  /** Seconds left before it closes (while open). */
+  timer: number;
+  latched: boolean;
+}
+
+/** A wall-mounted override switch. Striking it opens the room's timed gate. */
+export class OverrideSwitch implements Damageable {
+  readonly targetKind = 'switch' as const;
+  readonly requiresLineOfSight = true;
+  readonly pogoable = false;
+
+  constructor(
+    readonly id: string,
+    readonly rect: Rect,
+    private readonly active: () => boolean,
+    private readonly onHit: () => void,
+  ) {}
+
+  isAlive(): boolean {
+    return this.active();
+  }
+
+  hurtbox(): Rect {
+    return this.rect;
+  }
+
+  takeHit(): { killed: boolean } {
+    this.onHit();
+    return { killed: false };
+  }
+}
+
 export interface RoomState {
   def: RoomDef;
   grid: TileGrid;
@@ -89,13 +128,19 @@ export interface RoomState {
   doors: DoorState[];
   gates: TilePoint[];
   gateClosed: boolean;
+  timedGate: TimedGateState | null;
+  switches: OverrideSwitch[];
 }
 
 export interface HudSnapshot {
   health: number;
   maxHealth: number;
   invulnerable: boolean;
-  hasVeilstep: boolean;
+  hasBacktrace: boolean;
+  /** 1 right after use, 0 when ready. */
+  backtraceCooldown: number;
+  /** True when Backtrace has enough history and is off cooldown. */
+  backtraceReady: boolean;
   dashCooldown: number;
   roomName: string;
   boss: { name: string; health: number; max: number; phase: number } | null;
@@ -126,6 +171,8 @@ export class GameWorld {
   /** Increments every time a room is (re)built, so views know when to rebuild. */
   roomVersion = 0;
   pendingTransition: { room: string; entry: string } | null = null;
+  /** The player's personal rewind; its echo is drawn by the presentation layer. */
+  readonly backtrace = new Backtrace(SIM.stepHz);
 
   private readonly defs = new Map<string, RoomDef>();
   private readonly parsed = new Map<string, { grid: TileGrid; markers: TileMarker[] }>();
@@ -136,6 +183,7 @@ export class GameWorld {
   private deathTimer = 0;
   private victoryTimer = -1;
   private lastSafe = { x: 0, y: 0 };
+  private gateHintShown = false;
   private readonly emit: Emit = (e) => this.eventQueue.push(e);
 
   constructor(
@@ -206,6 +254,7 @@ export class GameWorld {
     const p = this.respawnPoint();
     this.player.health.setMax(this.maxHealth);
     this.player.respawn(p.x, p.y);
+    this.backtrace.cooldown = 0;
     this.loadRoom(p.roomId, p.x, p.y);
   }
 
@@ -239,7 +288,11 @@ export class GameWorld {
       doors: def.doors.map((d) => ({ id: d.id, rect: tileRectToPx(d.area), to: d.to })),
       gates: [],
       gateClosed: false,
+      timedGate: null,
+      switches: [],
     };
+    const timedGateTiles: TilePoint[] = [];
+    const switchMarkers: TileMarker[] = [];
 
     let wispIndex = 0;
     for (const m of parsed.markers) {
@@ -274,9 +327,9 @@ export class GameWorld {
         case 'A':
           room.pickups.push({
             id,
-            kind: 'veilstep',
+            kind: 'backtrace',
             rect: { x: m.col * TILE_SIZE, y: (m.row - 1) * TILE_SIZE, w: TILE_SIZE, h: TILE_SIZE * 2 },
-            taken: this.progression.has('veilstep'),
+            taken: this.progression.has('backtrace'),
           });
           break;
         case 'H':
@@ -289,6 +342,12 @@ export class GameWorld {
           break;
         case 'D':
           room.gates.push({ col: m.col, row: m.row });
+          break;
+        case 'T':
+          timedGateTiles.push({ col: m.col, row: m.row });
+          break;
+        case 'S':
+          switchMarkers.push(m);
           break;
         case 'P':
           break;
@@ -307,11 +366,127 @@ export class GameWorld {
       }
     }
 
+    if (timedGateTiles.length > 0) this.buildTimedGate(room, timedGateTiles, switchMarkers);
+    else if (switchMarkers.length > 0) throw new Error(`Room ${roomId} has a switch but no timed gate`);
+
     this.room = room;
     this.roomVersion++;
+    this.backtrace.clear();
+    this.gateHintShown = false;
     this.player.placeAt(feetX, feetY);
     this.lastSafe = { x: feetX, y: feetY };
     this.emit({ type: 'roomEntered', roomId, name: def.name });
+  }
+
+  private buildTimedGate(room: RoomState, tiles: TilePoint[], switchMarkers: readonly TileMarker[]): void {
+    const id = `${room.def.id}:timedGate`;
+    const cols = tiles.map((t) => t.col);
+    const rows = tiles.map((t) => t.row);
+    const c0 = Math.min(...cols);
+    const r0 = Math.min(...rows);
+    const gate: TimedGateState = {
+      id,
+      tiles,
+      rect: {
+        x: c0 * TILE_SIZE,
+        y: r0 * TILE_SIZE,
+        w: (Math.max(...cols) - c0 + 1) * TILE_SIZE,
+        h: (Math.max(...rows) - r0 + 1) * TILE_SIZE,
+      },
+      open: false,
+      timer: 0,
+      latched: this.progression.latchedGates.has(id),
+    };
+    for (const t of tiles) room.grid.set(t.col, t.row, gate.latched ? Tile.Empty : Tile.Gate);
+    room.timedGate = gate;
+    room.switches = switchMarkers.map((m) => {
+      const rect = { x: m.col * TILE_SIZE + 3, y: (m.row - 1) * TILE_SIZE, w: TILE_SIZE - 6, h: TILE_SIZE * 2 };
+      return new OverrideSwitch(
+        `${room.def.id}:switch:${m.col},${m.row}`,
+        rect,
+        () => !gate.latched,
+        () => {
+          this.emit({ type: 'switchHit', x: rect.x + rect.w / 2, y: rect.y + rect.h / 2 });
+          gate.timer = PUZZLE.gateOpenTime;
+          if (!gate.open) this.setTimedGate(gate, true);
+        },
+      );
+    });
+  }
+
+  private setTimedGate(gate: TimedGateState, open: boolean): void {
+    gate.open = open;
+    for (const t of gate.tiles) this.room.grid.set(t.col, t.row, open ? Tile.Empty : Tile.Gate);
+    this.emit({ type: 'timedGate', open });
+  }
+
+  private updateTimedGate(dt: number): void {
+    const gate = this.room.timedGate;
+    if (!gate || gate.latched) return;
+    const pr = bodyRect(this.player.body);
+    // Passing through latches the gate open for good (also covers arriving from the far side).
+    if (this.player.body.x >= gate.rect.x + gate.rect.w && pr.y < gate.rect.y + gate.rect.h && pr.y + pr.h > gate.rect.y) {
+      gate.latched = true;
+      if (!gate.open) this.setTimedGate(gate, true);
+      gate.open = true;
+      this.progression.latchedGates.add(gate.id);
+      this.emit({ type: 'gateLatched' });
+      this.onSave(this.progression);
+      return;
+    }
+    if (gate.open) {
+      gate.timer -= dt;
+      // Never close on top of the player.
+      if (gate.timer <= 0 && !rectsOverlap(pr, gate.rect)) this.setTimedGate(gate, false);
+    } else if (!this.gateHintShown) {
+      const probe = { x: pr.x - 2, y: pr.y, w: pr.w + 4, h: pr.h };
+      if (rectsOverlap(probe, gate.rect)) {
+        this.gateHintShown = true;
+        this.emit({ type: 'gateLocked', x: gate.rect.x, y: pr.y });
+      }
+    }
+  }
+
+  /** Snap the player back to their echo. Returns true if it fired. */
+  private tryBacktrace(): boolean {
+    const p = this.player;
+    if (p.dead || !this.progression.has('backtrace') || !this.backtrace.ready) return false;
+    const target = this.backtrace.target(this.room.grid, p.body.w, p.body.h);
+    if (!target) return false;
+    const fromX = p.centerX;
+    const fromY = p.centerY;
+    const before = p.health.current;
+    const best = Math.min(p.health.max, this.backtrace.bestHealth());
+    p.placeAt(target.feetX, target.feetY);
+    p.facing = target.facing;
+    if (best > p.health.current) p.health.heal(best - p.health.current);
+    p.health.grantInvulnerability(BACKTRACE.arrivalInvulnerability);
+    this.backtrace.consume();
+    this.emit({ type: 'backtrace', fromX, fromY, toX: p.centerX, toY: p.centerY, restored: p.health.current - before });
+    this.backtraceBurst(p.centerX, p.centerY);
+    return true;
+  }
+
+  /** Damage released where the player arrives. Hits enemies and projectiles in range with line of sight. */
+  private backtraceBurst(cx: number, cy: number): void {
+    const room = this.room;
+    const r = BACKTRACE.burst.radius;
+    const targets: Damageable[] = [...room.enemies, ...(room.boss && room.boss.isActive ? [room.boss] : []), ...room.projectiles];
+    for (const t of targets) {
+      if (!t.isAlive()) continue;
+      const hr = t.hurtbox();
+      const nx = Math.max(hr.x, Math.min(cx, hr.x + hr.w));
+      const ny = Math.max(hr.y, Math.min(cy, hr.y + hr.h));
+      if (Math.hypot(nx - cx, ny - cy) > r) continue;
+      const tc = rectCenter(hr);
+      if (!room.grid.lineOfSight(cx, cy, tc.x, tc.y)) continue;
+      const dx = tc.x - cx;
+      const dy = tc.y - cy;
+      const len = Math.hypot(dx, dy) || 1;
+      const { killed } = t.takeHit(BACKTRACE.burst.damage, dx / len, dy / len);
+      this.emit({ type: 'hit', x: tc.x, y: tc.y, target: t.targetKind, killed });
+      if (killed && t.targetKind === 'enemy') this.emit({ type: 'enemyDied', x: tc.x, y: tc.y, kind: (t as Enemy).kind });
+    }
   }
 
   // ------------------------------------------------------------------ simulation
@@ -322,16 +497,21 @@ export class GameWorld {
     const player = this.player;
 
     if (this.flow.state === 'dying') {
-      player.step(emptyFrame(), room.grid, dt, { veilstep: false }, this.emit);
+      player.step(emptyFrame(), room.grid, dt, { dash: false }, this.emit);
       this.deathTimer -= dt;
       if (this.deathTimer <= 0) this.flow.dispatch('deathFinished');
       return;
     }
 
     this.progression.playTime += dt;
-    player.step(input, room.grid, dt, { veilstep: this.progression.has('veilstep') }, this.emit);
+    this.backtrace.tick(dt);
+    if (input.backtracePressed) this.tryBacktrace();
+    player.step(input, room.grid, dt, { dash: true }, this.emit);
 
     this.handleHazards();
+    if (!player.dead) {
+      this.backtrace.record({ feetX: player.feetX, feetY: player.feetY, facing: player.facing, health: player.health.current });
+    }
 
     const ctx: EnemyContext = {
       grid: room.grid,
@@ -352,6 +532,8 @@ export class GameWorld {
 
     room.enemies = room.enemies.filter((e) => e.isAlive());
     room.projectiles = room.projectiles.filter((p) => p.alive);
+
+    this.updateTimedGate(dt);
 
     if (!player.dead) {
       this.handleCheckpoints();
@@ -401,6 +583,7 @@ export class GameWorld {
       ...(room.boss && room.boss.isActive ? [room.boss] : []),
       ...room.projectiles,
       ...room.walls,
+      ...room.switches,
     ];
     let connected = false;
     let pogoable = false;
@@ -495,9 +678,10 @@ export class GameWorld {
       if (p.taken || !rectsOverlap(pr, p.rect)) continue;
       p.taken = true;
       const c = rectCenter(p.rect);
-      if (p.kind === 'veilstep') {
-        this.progression.unlock('veilstep');
-        this.emit({ type: 'abilityUnlocked', ability: 'veilstep', x: c.x, y: c.y });
+      if (p.kind === 'backtrace') {
+        this.progression.unlock('backtrace');
+        this.backtrace.clear();
+        this.emit({ type: 'abilityUnlocked', ability: 'backtrace', x: c.x, y: c.y });
       } else {
         this.progression.secrets.add(p.id);
         this.progression.maxHealthBonus++;
@@ -559,7 +743,9 @@ export class GameWorld {
       health: this.player.health.current,
       maxHealth: this.player.health.max,
       invulnerable: this.player.health.isInvulnerable,
-      hasVeilstep: this.progression.has('veilstep'),
+      hasBacktrace: this.progression.has('backtrace'),
+      backtraceCooldown: this.backtrace.cooldownRatio,
+      backtraceReady: this.backtrace.ready,
       dashCooldown: this.player.dashCooldownRatio,
       roomName: this.room?.def.name ?? '',
       boss:

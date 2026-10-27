@@ -52,7 +52,8 @@ describe('GameFlow state machine', () => {
 describe('Save data', () => {
   it('round-trips progression through a store', () => {
     const p = new Progression();
-    p.unlock('veilstep');
+    p.unlock('backtrace');
+    p.latchedGates.add('gallery:timedGate');
     p.secrets.add('ashfall:H:2,19');
     p.brokenWalls.add('ashfall:wall:5,16');
     p.maxHealthBonus = 1;
@@ -76,9 +77,9 @@ describe('Save data', () => {
   });
 
   it('sanitises unexpected values', () => {
-    const p = Progression.deserialize({ version: 1, abilities: ['veilstep', 'flight', 3], maxHealthBonus: -4, checkpoint: { roomId: 7 } });
+    const p = Progression.deserialize({ version: 1, abilities: ['backtrace', 'flight', 3], maxHealthBonus: -4, checkpoint: { roomId: 7 } });
     expect(p).not.toBeNull();
-    expect([...p!.abilities]).toEqual(['veilstep']);
+    expect([...p!.abilities]).toEqual(['backtrace']);
     expect(p!.maxHealthBonus).toBe(0);
     expect(p!.checkpoint).toBeNull();
   });

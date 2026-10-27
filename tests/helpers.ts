@@ -28,7 +28,7 @@ export function runPlayer(
   grid: TileGrid,
   steps: number,
   inputAt: (step: number) => InputFrame,
-  abilities: PlayerAbilities = { veilstep: false },
+  abilities: PlayerAbilities = { dash: false },
   onStep?: (step: number) => void,
 ): GameEvent[] {
   const events: GameEvent[] = [];

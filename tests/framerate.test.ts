@@ -31,6 +31,7 @@ function heldAt(t: number): HeldInput {
     jump: q === 1 || q === 4,
     attack: q === 3,
     dash: q === 4,
+    backtrace: false,
   };
 }
 
@@ -45,7 +46,7 @@ function simulate(fps: number, seconds: number) {
     const t = f / fps;
     latch.sample(heldAt(t));
     steps += stepper.advance(1 / fps, (dt) => {
-      player.step(latch.consume(), grid, dt, { veilstep: true }, () => {});
+      player.step(latch.consume(), grid, dt, { dash: true }, () => {});
     });
   }
   return { x: player.body.x, y: player.body.y, vx: player.body.vx, steps, attacks: player.attackId };
@@ -73,7 +74,7 @@ describe('Frame-rate independence', () => {
 
   it('delivers each button press to exactly one step, even with several or zero steps per frame', () => {
     const latch = new InputLatch();
-    const held = (jump: boolean): HeldInput => ({ left: false, right: false, up: false, down: false, jump, attack: false, dash: false });
+    const held = (jump: boolean): HeldInput => ({ left: false, right: false, up: false, down: false, jump, attack: false, dash: false, backtrace: false });
     latch.sample(held(true));
     const presses = [latch.consume(), latch.consume(), latch.consume()].filter((f) => f.jumpPressed);
     expect(presses).toHaveLength(1);
