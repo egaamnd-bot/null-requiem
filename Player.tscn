@@ -33,4 +33,3 @@ color = Color(1, 0.72, 0.2, 0.6)
 [node name="Camera2D" type="Camera2D" parent="."]
 position_smoothing_enabled = true
 position_smoothing_speed = 6.0
-
