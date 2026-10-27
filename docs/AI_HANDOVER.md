@@ -109,5 +109,5 @@ Next:
 
 - Producer requested a floating movement joystick, clearer rendering, and a visual direction closer to the supplied colorful purple/cyan action-platformer reference.
 - Branch: `feature/floating-touch-and-visual-pass`, based on PR #3 head `983e4287786a23308c73aa930b88a9ffe1c2c443`.
-- Changes: floating joystick state/layout; high-DPI renderer and non-pixelated canvas scaling; procedural illustrated purple neon-city skyline and curved industrial bridge layers; regression tests.
+- Changes: floating joystick state/layout; smooth antialiased canvas scaling and higher-detail artwork; procedural illustrated purple neon-city skyline and curved industrial bridge layers; regression tests.
 - This is an implementation in progress until CI verifies the current head and the Producer tests the APK. The procedural character/enemy art is still not a replacement for a proper illustrated sprite pack.
