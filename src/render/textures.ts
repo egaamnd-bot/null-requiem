@@ -234,63 +234,83 @@ interface CourierPose {
  * across the face and a long data-cable tail trailing from the collar. Drawn facing right.
  */
 function drawCourier(ctx: Ctx, pose: CourierPose): void {
-  const H = 28;
+  // 2x vector-rendered Courier: silver hair, long dark coat, magenta scarf and a cyan energy blade.
+  // The world simulation remains in logical pixels; the source texture carries finer detail.
+  ctx.save();
+  ctx.scale(2, 2);
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
   const bob = pose.bob ?? 0;
   const lean = pose.lean ?? 0;
   const flare = pose.flare ?? 0;
   const stride = pose.stride ?? 0;
   const tail = pose.tail ?? 0;
   const stretch = pose.stretch ?? 0;
-  const jacket = pose.pale ? PALETTE.chrome : 0x1c2236;
-  const hood = pose.pale ? PALETTE.white : 0x262e48;
-  const trim = PALETTE.steel;
-  const cx = 12 + lean;
+  const cx = 12 + lean * 0.5;
   const top = 3 + bob - stretch;
-  const footY = H - 2;
+  const footY = 27;
+  const coat = ctx.createLinearGradient(cx-7,top,cx+7,footY);
+  coat.addColorStop(0, pose.pale ? '#f3efff' : '#454064');
+  coat.addColorStop(0.48, '#211c3b');
+  coat.addColorStop(1, '#101427');
+  const metal = ctx.createLinearGradient(cx-5,top,cx+5,footY);
+  metal.addColorStop(0,'#f8f4ff'); metal.addColorStop(1,'#7e8bb8');
 
-  // Legs and boots
-  px(ctx, 0x10131f, cx - 3 + stride, footY - 4, 2, 5);
-  px(ctx, 0x10131f, cx + 1 - stride, footY - 4, 2, 5);
-  px(ctx, PALETTE.steel, cx - 3 + stride, footY, 3, 1, 0.8);
-  px(ctx, PALETTE.steel, cx + 1 - stride, footY, 3, 1, 0.8);
+  // Boots and articulated legs.
+  ctx.fillStyle='#111426';
+  ctx.beginPath(); ctx.moveTo(cx-4+stride,footY-6); ctx.lineTo(cx-1+stride,footY-6); ctx.lineTo(cx-1,footY-1); ctx.lineTo(cx-6,footY); ctx.lineTo(cx-7,footY-2); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(cx+1-stride,footY-6); ctx.lineTo(cx+4-stride,footY-6); ctx.lineTo(cx+7,footY-2); ctx.lineTo(cx+6,footY); ctx.lineTo(cx+1,footY-1); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#7b8aa9'; ctx.lineWidth=0.8;
+  ctx.beginPath();ctx.moveTo(cx-5+stride,footY-1);ctx.lineTo(cx-2+stride,footY-1);ctx.moveTo(cx+2-stride,footY-1);ctx.lineTo(cx+6,footY-1);ctx.stroke();
 
-  // Jacket: cropped, flares at the hem
-  poly(ctx, jacket, [
-    [cx - 4, top + 9],
-    [cx + 4, top + 9],
-    [cx + 5 + flare * 0.6, footY - 4],
-    [cx - 5 - flare - lean * 0.4, footY - 4],
-  ]);
-  px(ctx, trim, cx - 5 - flare, footY - 5, 10 + flare * 1.6, 1, 0.7);
-  // Chest light strip
-  px(ctx, PALETTE.cyan, cx + 2, top + 12, 1, 4, pose.pale ? 0.4 : 0.85);
-
-  // Hood with a high, squared collar
-  poly(ctx, hood, [
-    [cx - 5, top + 10],
-    [cx - 5, top + 3],
-    [cx - 2, top - 1],
-    [cx + 3, top - 1],
-    [cx + 5, top + 3],
-    [cx + 5, top + 10],
-  ]);
-  // Face shadow and the visor band
-  px(ctx, PALETTE.ink, cx - 1, top + 3, 6, 5);
-  const visor = pose.visor ?? 1;
-  px(ctx, PALETTE.cyan, cx - 1, top + 5, 6, 2, visor);
-  px(ctx, PALETTE.white, cx + 3, top + 5, 2, 1, visor * 0.9);
-  px(ctx, trim, cx - 5, top + 3, 1, 7, 0.7);
-
-  // Data-cable tail from the collar, glowing at the tip
-  ctx.strokeStyle = css(PALETTE.magenta, pose.pale ? 0.4 : 0.9);
-  ctx.lineWidth = 1;
+  // Long split coat, with a flowing asymmetric hem.
+  ctx.fillStyle=coat;
   ctx.beginPath();
-  ctx.moveTo(cx - 5, top + 8);
-  ctx.quadraticCurveTo(cx - 8 - tail, top + 9 - tail * 0.4, cx - 11 - tail, top + 12 - tail * 0.7);
-  ctx.stroke();
-  px(ctx, PALETTE.magenta, cx - 12 - tail, top + 11 - tail * 0.7, 2, 2, pose.pale ? 0.4 : 1);
-}
+  ctx.moveTo(cx-5,top+9); ctx.quadraticCurveTo(cx,top+7,cx+5,top+10);
+  ctx.lineTo(cx+6+flare*0.45,footY-4); ctx.lineTo(cx+1,footY-7);
+  ctx.lineTo(cx-2,footY-3); ctx.lineTo(cx-6-flare*0.4,footY-4); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#8c8bbd';ctx.lineWidth=0.65;
+  ctx.beginPath();ctx.moveTo(cx-4,top+12);ctx.lineTo(cx-3,footY-6);ctx.moveTo(cx+3,top+12);ctx.lineTo(cx+2,footY-7);ctx.stroke();
+  ctx.strokeStyle='#42f5ee';ctx.lineWidth=1.2;
+  ctx.beginPath();ctx.moveTo(cx+1,top+13);ctx.lineTo(cx+2,top+19);ctx.stroke();
 
+  // Shoulder mantle and magenta scarf, trailing behind the dash.
+  ctx.fillStyle='#17162f';
+  ctx.beginPath();ctx.moveTo(cx-5,top+9);ctx.lineTo(cx-8,top+14);ctx.lineTo(cx-5,top+19);ctx.lineTo(cx-2,top+12);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#ff57c8';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(cx-5,top+8);ctx.quadraticCurveTo(cx-10-tail*0.45,top+9-tail*0.15,cx-11-tail,top+12-tail*0.25);ctx.stroke();
+  ctx.strokeStyle='#ffb4ed';ctx.lineWidth=0.55;
+  ctx.beginPath();ctx.moveTo(cx-5,top+9);ctx.quadraticCurveTo(cx-9-tail*0.4,top+10-tail*0.15,cx-11-tail,top+12-tail*0.25);ctx.stroke();
+
+  // Head and high swept silver hair.
+  ctx.fillStyle='#14162a';
+  ctx.beginPath();ctx.ellipse(cx,top+5,5.2,6.2,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=metal;
+  ctx.beginPath();
+  ctx.moveTo(cx-5,top+5);ctx.lineTo(cx-6,top+1);ctx.lineTo(cx-2,top+2);
+  ctx.lineTo(cx,top-2);ctx.lineTo(cx+1,top+1);ctx.lineTo(cx+5,top-1);
+  ctx.lineTo(cx+4,top+3);ctx.lineTo(cx+6,top+5);ctx.lineTo(cx+3,top+7);
+  ctx.lineTo(cx-3,top+7);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#ffffff';ctx.lineWidth=0.6;
+  ctx.beginPath();ctx.moveTo(cx-3,top+2);ctx.lineTo(cx-1,top);ctx.moveTo(cx+1,top+2);ctx.lineTo(cx+4,top+1);ctx.stroke();
+  ctx.fillStyle='#17162b';
+  ctx.beginPath();ctx.moveTo(cx-4,top+5);ctx.lineTo(cx+4,top+5);ctx.lineTo(cx+3,top+10);ctx.lineTo(cx-3,top+10);ctx.closePath();ctx.fill();
+  ctx.fillStyle=pose.pale?'#ff86d4':'#55fff2';
+  ctx.fillRect(cx-2,top+6,5,1.5);
+  ctx.fillStyle='#ffffff';ctx.fillRect(cx+1,top+6,1.6,0.7);
+
+  // Signature mono-blade. It brightens in attack/dash poses.
+  const bladeAlpha = pose.pale ? 0.4 : (pose.flare || pose.lean ? 0.98 : 0.75);
+  ctx.save();
+  ctx.translate(cx+5,top+13);
+  ctx.rotate(pose.lean ? -0.58 : 0.22);
+  ctx.shadowColor='#4efff2';ctx.shadowBlur=5;
+  ctx.fillStyle='rgba(54,245,239,'+bladeAlpha+')';
+  ctx.beginPath();ctx.moveTo(-0.9,0);ctx.lineTo(2.1,0);ctx.lineTo(1.2,11);ctx.lineTo(0,14);ctx.lineTo(-0.7,10);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#f1ffff';ctx.lineWidth=0.7;ctx.beginPath();ctx.moveTo(0,1);ctx.lineTo(0.2,10);ctx.stroke();
+  ctx.restore();
+  ctx.restore();
+}
 function makePlayer(scene: Phaser.Scene): void {
   const poses: Record<PlayerFrame, CourierPose> = {
     idle0: { bob: 0, tail: 0 },
@@ -305,7 +325,7 @@ function makePlayer(scene: Phaser.Scene): void {
     attack: { lean: 2, stride: 1, tail: 2, flare: 1 },
     hurt: { pale: true, lean: -2, flare: 2, visor: 0.3 },
   };
-  for (const f of PLAYER_FRAMES) canvasTexture(scene, playerKey(f), 24, 28, (ctx) => drawCourier(ctx, poses[f]));
+  for (const f of PLAYER_FRAMES) canvasTexture(scene, playerKey(f), 48, 56, (ctx) => drawCourier(ctx, poses[f]));
 }
 
 // ---------------------------------------------------------------- Scrap Hound
