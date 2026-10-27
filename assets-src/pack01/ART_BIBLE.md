@@ -1,5 +1,7 @@
 # EMBERVEIL — Master Art & Audio Bible (v1.0.0)
 
+> Archived as delivered for the earlier working title. Reference only — superseded by Null Requiem's urban-cyberpunk direction. Protagonist entries describe a design that was not adopted; see README.md.
+
 ## 1. Color Palette & Usage Rules
 Gameplay readability is governed by a strict 4-tier contrast hierarchy: Background -> Midground Terrain -> Interactive/Actors -> Hazards/VFX.
 
