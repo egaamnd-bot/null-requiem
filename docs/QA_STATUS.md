@@ -85,7 +85,7 @@ Implementation branch: `feature/floating-touch-and-visual-pass` (based on PR #3 
 Changes on this branch:
 - Floating joystick: anchor at the first touch anywhere in the lower-left movement zone, track thumb movement, clamp the visible knob, preserve independent action-button fingers.
 - Added unit tests for dynamic anchor, directional movement, release, and multi-touch.
-- Renderer uses device-pixel resolution capped at 3x; removed forced pixelated canvas CSS and nearest-neighbour pixel-art mode.
+- Removed forced pixel-art mode and nearest-neighbour canvas CSS; the new backdrop and Courier art use 2x source textures and text retains high-resolution text textures.
 - Replaced flat block skyline textures with high-resolution procedural illustrated skyline, moon/haze, windows, rain, luminous cables, elevated rails and curved industrial bridge ribs.
 
 Validation: CI steps on code commit `3bd60098c9318a127d61e330ec37ecf15aa04cbe` completed typecheck, unit tests (12 files / 148 tests) and production build successfully; the overall run was cancelled by a newer commit after those steps completed. Run: https://github.com/egaamnd-bot/null-requiem/actions/runs/40586029025. A fresh Android APK run for the updated PR branch and the physical-device test are still pending. Do not claim readability, performance, touch feel, or final art direction is verified until the Producer tests the new APK. Important art limitation: Courier/enemy/NPC/terrain textures are still procedural placeholder art; the new backdrop is a direction-setting pass, not a complete hand-painted asset pack.
