@@ -56,8 +56,9 @@ jobs:
 
       - name: Install pinned Capacitor tooling for packaging
         run: |
-          npm install --no-save --package-lock=false @capacitor/core@7.4.3 @capacitor/android@7.4.3
-          npm install --no-save --package-lock=false @capacitor/cli@7.4.3
+          # Install all Capacitor packages in one npm operation. Separate --no-save
+          # installs prune the earlier packages because they are not in package.json.
+          npm install --no-save --package-lock=false @capacitor/core@7.4.3 @capacitor/android@7.4.3 @capacitor/cli@7.4.3
 
       - name: Generate Android project
         run: |
