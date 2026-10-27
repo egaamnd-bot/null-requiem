@@ -84,7 +84,7 @@ Implementation branch: `feature/floating-touch-and-visual-pass` (based on PR #3 
 
 Changes on this branch:
 - Floating joystick: anchor at the first touch anywhere in the lower-left movement zone, track thumb movement, clamp the visible knob, preserve independent action-button fingers.
-- Added unit tests for dynamic anchor, directional movement, release, and multi-touch.
+- Added unit tests for dynamic anchor, directional movement, release, and multi-touch; updated Playwright touch smoke tests to drag from a floating joystick origin instead of pressing the old fixed-pad coordinates.
 - Removed forced pixel-art mode and nearest-neighbour canvas CSS; the new backdrop and Courier art use 2x source textures and text retains high-resolution text textures.
 - Replaced flat block skyline textures with high-resolution procedural illustrated skyline, moon/haze, windows, rain, luminous cables, elevated rails and curved industrial bridge ribs.
 
