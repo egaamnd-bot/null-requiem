@@ -7,11 +7,12 @@ import { InputLatch } from '../core/input';
 import { saveProgression } from '../core/progression';
 import { GameWorld } from '../core/world';
 import { InputManager } from '../input/InputManager';
-import { BossView, EchoView, EnemyViewRegistry, PlayerView, ProjectileViews, type RenderPos } from '../render/ActorViews';
+import { BossView, EchoView, EnemyViewRegistry, NpcView, PanoptixView, PlayerView, ProjectileViews, type RenderPos } from '../render/ActorViews';
 import { Fx } from '../render/Fx';
 import { DEPTH, RoomView } from '../render/RoomView';
 import { TEX } from '../render/textures';
 import { ROOMS, START_ROOM } from '../world/rooms';
+import { MOBILE_SCENE } from './MobileControlsScene';
 import { SCENES, type GameSceneData, type Services, type Session, type VictoryData } from './session';
 
 /** Teleports larger than this are not interpolated (room entry, respawn, hazard return). */
@@ -34,6 +35,8 @@ export class GameScene extends Phaser.Scene {
   private enemyViews!: EnemyViewRegistry;
   private projectileViews!: ProjectileViews;
   private bossView: BossView | null = null;
+  private panoptixView: PanoptixView | null = null;
+  private npcViews: NpcView[] = [];
   private fx!: Fx;
   private bus!: Phaser.Events.EventEmitter;
   private builtRoomVersion = -1;
@@ -88,11 +91,13 @@ export class GameScene extends Phaser.Scene {
       quit: () => this.quit(),
     };
     this.scene.launch(SCENES.ui, { session });
+    this.scene.launch(MOBILE_SCENE);
 
     const onBlur = () => this.pause();
     this.game.events.on(Phaser.Core.Events.BLUR, onBlur);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.game.events.off(Phaser.Core.Events.BLUR, onBlur);
+      this.scene.stop(MOBILE_SCENE);
       this.controls.destroy();
       this.roomView?.destroy();
       this.roomView = null;
@@ -100,6 +105,10 @@ export class GameScene extends Phaser.Scene {
       this.projectileViews.clear();
       this.bossView?.destroy();
       this.bossView = null;
+      this.panoptixView?.destroy();
+      this.panoptixView = null;
+      for (const v of this.npcViews) v.destroy();
+      this.npcViews = [];
       this.playerView.destroy();
       this.echoView.destroy();
       this.fx.destroy();
@@ -197,11 +206,17 @@ export class GameScene extends Phaser.Scene {
     this.projectileViews.clear();
     this.bossView?.destroy();
     this.bossView = null;
+    this.panoptixView?.destroy();
+    this.panoptixView = null;
+    for (const v of this.npcViews) v.destroy();
+    this.npcViews = [];
     this.prevPos.clear();
 
     const room = this.world.room;
     this.roomView = new RoomView(this, this.world);
     if (room.boss) this.bossView = new BossView(this);
+    if (room.panoptix) this.panoptixView = new PanoptixView(this);
+    this.npcViews = room.npcs.map((npc) => new NpcView(this, npc));
     const w = room.grid.widthPx;
     const h = room.grid.heightPx;
     this.fx.setRoom(w, h);
@@ -275,6 +290,8 @@ export class GameScene extends Phaser.Scene {
     this.echoView.update(world, time);
     this.enemyViews.sync(room.enemies, (en) => this.renderPos(en.body, alpha), time);
     if (room.boss && this.bossView) this.bossView.update(room.boss, this.renderPos(room.boss.body, alpha), time);
+    if (room.panoptix && this.panoptixView) this.panoptixView.update(room.panoptix, time);
+    this.npcViews.forEach((v, i) => v.update(room.activeNpcIndex === i, time));
     this.projectileViews.sync(room.projectiles, time);
 
     if (world.flow.simulating && !this.transitioning) {

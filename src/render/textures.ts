@@ -41,6 +41,8 @@ export const TEX = {
   hudCellEmpty: 'hud-cell-empty',
   hudBacktrace: 'hud-backtrace',
   title: 'ui-title-emblem',
+  fragment: 'obj-fragment',
+  glitchStrikePickup: 'obj-glitch-strike',
 } as const;
 
 export const PLAYER_FRAMES = ['idle0', 'idle1', 'run0', 'run1', 'run2', 'run3', 'jump', 'fall', 'dash', 'attack', 'hurt'] as const;
@@ -58,6 +60,14 @@ export const droneKey = (f: DroneFrame): string => `drone-${f}`;
 export const BULWARK_FRAMES = ['idle', 'windup', 'charge', 'leap', 'stunned', 'dead'] as const;
 export type BulwarkFrame = (typeof BULWARK_FRAMES)[number];
 export const bulwarkKey = (f: BulwarkFrame): string => `bulwark-${f}`;
+
+export const NPC_KINDS = ['zero', 'mira', 'terminal'] as const;
+export type NpcKind = (typeof NPC_KINDS)[number];
+export const npcKey = (kind: NpcKind): string => `npc-${kind}`;
+
+export const PANOPTIX_FRAMES = ['idle', 'laser', 'stagger', 'dead'] as const;
+export type PanoptixFrame = (typeof PANOPTIX_FRAMES)[number];
+export const panoptixKey = (f: PanoptixFrame): string => `panoptix-${f}`;
 
 function canvasTexture(scene: Phaser.Scene, key: string, w: number, h: number, draw: (ctx: Ctx) => void): void {
   if (scene.textures.exists(key)) scene.textures.remove(key);
@@ -521,6 +531,255 @@ function makeObjects(scene: Phaser.Scene): void {
   };
   canvasTexture(scene, TEX.switchIdle, 16, 32, (ctx) => sw(ctx, false));
   canvasTexture(scene, TEX.switchLive, 16, 32, (ctx) => sw(ctx, true));
+
+  // Memory fragment: translucent crystal shard. 12×12px.
+  canvasTexture(scene, TEX.fragment, 12, 12, (ctx) => {
+    poly(ctx, PALETTE.cyanDeep, [[6, 0], [12, 5], [9, 12], [3, 12], [0, 5]], 0.9);
+    poly(ctx, 0x1a4a5c,         [[6, 1], [11, 5], [8, 11], [4, 11], [1, 5]], 0.8);
+    poly(ctx, PALETTE.violet,   [[6, 3], [9, 5],  [7, 10], [5, 10], [3, 5]], 0.6);
+    poly(ctx, PALETTE.cyan,     [[6, 0], [9, 4],  [6, 3],  [3, 4]],          0.45);
+    px(ctx, PALETTE.white, 5, 1, 3, 2, 0.8);
+    px(ctx, PALETTE.white, 6, 5, 1, 2, 0.9);
+    px(ctx, PALETTE.white, 5, 6, 2, 1, 0.9);
+  });
+
+  // Glitch-strike pickup: magenta lightning bolt on a pedestal. 16×32px.
+  canvasTexture(scene, TEX.glitchStrikePickup, 16, 32, (ctx) => {
+    // Pedestal base
+    poly(ctx, 0x1c2030, [[2, 24], [14, 24], [14, 32], [2, 32]]);
+    px(ctx, PALETTE.steel,       2, 24, 12, 1, 0.7);
+    px(ctx, PALETTE.magentaDeep, 4, 26,  8, 2, 0.7);
+    // Lightning bolt: top-right to bottom-left zigzag (upper 24 px)
+    poly(ctx, PALETTE.magentaDeep, [
+      [10, 0], [15, 0], [9, 13], [13, 13], [6, 24], [1, 24], [8, 11], [4, 11],
+    ], 0.9);
+    poly(ctx, PALETTE.magenta, [
+      [10, 1], [14, 1], [9, 12], [12, 12], [7, 23], [2, 23], [8, 12], [5, 12],
+    ], 0.85);
+    px(ctx, PALETTE.white, 10, 2, 3, 3, 0.7);
+    px(ctx, PALETTE.white,  8, 12, 2, 2, 0.5);
+    radial(ctx, 8, 12, 9, [
+      [0,   css(PALETTE.white,   0.25)],
+      [0.5, css(PALETTE.magenta, 0.15)],
+      [1,   css(PALETTE.magenta, 0)],
+    ]);
+  });
+}
+
+// ---------------------------------------------------------------- NPCs
+
+/** Zero: hooded data-courier, 20×28px. */
+function drawNpcZero(ctx: Ctx): void {
+  // Hood shell
+  poly(ctx, 0x1e2840, [[3, 2], [17, 2], [18, 8], [16, 11], [4, 11], [2, 8]]);
+  poly(ctx, 0x2a3850, [[4, 3], [16, 3], [17, 7], [10, 9], [3, 7]]);
+  // Cyan visor
+  px(ctx, PALETTE.cyanDeep, 6, 5, 8, 2, 0.9);
+  px(ctx, PALETTE.cyan,     7, 5, 6, 1, 0.65);
+  px(ctx, PALETTE.white,   11, 5, 2, 1, 0.55);
+  // Long coat body
+  poly(ctx, 0x1a1e2e, [[4, 11], [16, 11], [15, 24], [5, 24]]);
+  px(ctx, PALETTE.steel,  4, 11, 12, 1, 0.6);
+  px(ctx, 0x282e44,       8, 13,  4, 7, 0.8);
+  px(ctx, PALETTE.cyanDeep, 9, 14, 2, 4, 0.5);
+  // Data cable from collar
+  ctx.strokeStyle = css(PALETTE.magenta, 0.65);
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(4, 13);
+  ctx.quadraticCurveTo(1, 14, 0, 17);
+  ctx.stroke();
+  px(ctx, PALETTE.magenta, 0, 17, 2, 2, 0.9);
+  // Legs
+  px(ctx, 0x121520,  6, 24, 3, 4);
+  px(ctx, 0x121520, 11, 24, 3, 4);
+  // Boots
+  px(ctx, PALETTE.steel,  5, 26, 5, 2, 0.5);
+  px(ctx, PALETTE.steel, 10, 26, 5, 2, 0.5);
+}
+
+/** Mira: tech-vest smuggler, 20×28px. */
+function drawNpcMira(ctx: Ctx): void {
+  // Hair
+  px(ctx, 0x2e1428,        6, 0, 8, 3);
+  px(ctx, PALETTE.magentaDeep, 5, 1, 10, 2, 0.8);
+  // Head / face
+  px(ctx, 0x806055, 6, 3, 8, 6);
+  // Data-jack at temple
+  px(ctx, PALETTE.steel,  4, 4, 2, 2);
+  px(ctx, PALETTE.violet, 4, 5, 2, 1, 0.9);
+  // Eyes
+  px(ctx, PALETTE.cyan,  7, 5, 2, 1, 0.9);
+  px(ctx, PALETTE.cyan, 11, 5, 2, 1, 0.9);
+  // Tech vest body
+  poly(ctx, 0x222840, [[4, 9], [16, 9], [15, 24], [5, 24]]);
+  px(ctx, PALETTE.magenta, 7, 10, 6, 3, 0.45);
+  px(ctx, PALETTE.steel,   4,  9, 12, 1, 0.8);
+  px(ctx, 0x1c2032,        8, 13,  4, 5, 0.9);
+  // Arms (exposed skin)
+  px(ctx, 0x806055,  1, 10, 3, 7);
+  px(ctx, 0x806055, 16, 10, 3, 7);
+  // Tech bracelet (left wrist)
+  px(ctx, PALETTE.violet, 1, 16, 3, 2, 0.9);
+  px(ctx, PALETTE.white,  2, 16, 1, 1, 0.5);
+  // Legs
+  px(ctx, 0x141824,  6, 24, 3, 4);
+  px(ctx, 0x141824, 11, 24, 3, 4);
+  // Boots with trim
+  px(ctx, 0x1a1c28,     5, 26, 5, 2);
+  px(ctx, PALETTE.steel, 5, 26, 5, 1, 0.4);
+  px(ctx, 0x1a1c28,    10, 26, 5, 2);
+  px(ctx, PALETTE.steel, 10, 26, 5, 1, 0.4);
+}
+
+/** Ghost Terminal: hovering holographic kiosk, 20×28px. */
+function drawNpcTerminal(ctx: Ctx): void {
+  // Hover glow underneath chassis
+  radial(ctx, 10, 26, 10, [
+    [0,   css(PALETTE.violet, 0.4)],
+    [0.5, css(PALETTE.violet, 0.15)],
+    [1,   css(PALETTE.violet, 0)],
+  ]);
+  // Terminal chassis
+  poly(ctx, 0x161228, [[2, 4], [18, 4], [18, 21], [2, 21]]);
+  px(ctx, PALETTE.steel, 2,  4, 16, 1, 0.7);
+  px(ctx, PALETTE.steel, 2, 21, 16, 1, 0.7);
+  px(ctx, PALETTE.steel, 2,  4,  1, 17, 0.5);
+  px(ctx, PALETTE.steel, 17, 4,  1, 17, 0.5);
+  // Screen inset
+  px(ctx, 0x09071a, 4, 6, 12, 12);
+  // Holographic data lines on screen
+  px(ctx, PALETTE.violet,  5,  7, 7, 1, 0.8);
+  px(ctx, PALETTE.cyan,    5,  9, 5, 1, 0.6);
+  px(ctx, PALETTE.violet,  5, 11, 8, 1, 0.7);
+  px(ctx, PALETTE.cyan,    5, 13, 4, 1, 0.5);
+  px(ctx, PALETTE.magenta, 5, 15, 6, 1, 0.6);
+  // Warning exclamation glyph
+  px(ctx, PALETTE.magenta, 11,  8, 2, 4, 0.9);
+  px(ctx, PALETTE.magenta, 11, 13, 2, 2, 0.9);
+  // Corner indicator LEDs
+  px(ctx, PALETTE.violet,  2, 2, 2, 2, 0.9);
+  px(ctx, PALETTE.violet, 16, 2, 2, 2, 0.9);
+  // Floating base bracket
+  px(ctx, PALETTE.steel,  5, 22, 10, 2, 0.6);
+  px(ctx, PALETTE.violet, 6, 22,  8, 1, 0.5);
+}
+
+function makeNpcs(scene: Phaser.Scene): void {
+  canvasTexture(scene, npcKey('zero'),     20, 28, drawNpcZero);
+  canvasTexture(scene, npcKey('mira'),     20, 28, drawNpcMira);
+  canvasTexture(scene, npcKey('terminal'), 20, 28, drawNpcTerminal);
+}
+
+// ---------------------------------------------------------------- PANOPTIX-0 boss
+
+function drawPanoptix(ctx: Ctx, f: PanoptixFrame): void {
+  const dead    = f === 'dead';
+  const stagger = f === 'stagger';
+  const laser   = f === 'laser';
+
+  const irisColor   = laser ? PALETTE.danger : stagger ? PALETTE.sodium  : PALETTE.violet;
+  const irisInner   = laser ? PALETTE.white  : stagger ? PALETTE.sodium  : PALETTE.cyan;
+  const chassisCol  = dead  ? 0x1c1e26      : 0x2e3248;
+  const ringCol     = dead  ? 0x1a1c22      : 0x454c6a;
+  const legCol      = dead  ? 0x181a22      : 0x3a4058;
+
+  // Eight spider-legs radiating from centre, each bent at a mid-joint
+  const legAngles = [22, 67, 112, 157, 202, 247, 292, 337];
+  for (const angleDeg of legAngles) {
+    const a   = angleDeg * Math.PI / 180;
+    const bx  = 32 + Math.cos(a) * 11;
+    const by  = 32 + Math.sin(a) * 11;
+    const jx  = 32 + Math.cos(a) * 18;
+    const jy  = 32 + Math.sin(a) * 18;
+    const perp = a + Math.PI / 2 * (angleDeg < 180 ? 1 : -1);
+    const ex  = jx + Math.cos(a) * 9 + Math.cos(perp) * 3;
+    const ey  = jy + Math.sin(a) * 9 + Math.sin(perp) * 3;
+    ctx.strokeStyle = css(legCol, dead ? 0.3 : 0.78);
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(jx, jy); ctx.stroke();
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(jx, jy); ctx.lineTo(ex, ey); ctx.stroke();
+    // joint node
+    ctx.fillStyle = css(dead ? 0x20222a : PALETTE.steel, dead ? 0.2 : 0.55);
+    ctx.fillRect(jx - 1, jy - 1, 2, 2);
+    // claw tip
+    ctx.fillStyle = css(dead ? 0x12141a : PALETTE.danger, dead ? 0.12 : 0.6);
+    ctx.fillRect(ex - 1, ey - 1, 2, 2);
+  }
+
+  // Outer armoured ring
+  ctx.strokeStyle = css(ringCol, dead ? 0.4 : 0.95);
+  ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.arc(32, 32, 18, 0, Math.PI * 2); ctx.stroke();
+  // Ring segment notches
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    ctx.strokeStyle = css(dead ? 0x14161e : PALETTE.steel, dead ? 0.08 : 0.42);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(32 + Math.cos(a) * 15, 32 + Math.sin(a) * 15);
+    ctx.lineTo(32 + Math.cos(a) * 21, 32 + Math.sin(a) * 21);
+    ctx.stroke();
+  }
+
+  // Chassis fill inside ring
+  ctx.fillStyle = css(chassisCol, dead ? 0.75 : 1);
+  ctx.beginPath(); ctx.arc(32, 32, 15, 0, Math.PI * 2); ctx.fill();
+
+  // Iris
+  if (!dead) {
+    radial(ctx, 32, 32, 13, [
+      [0,    css(irisInner, laser ? 0.95 : 0.55)],
+      [0.45, css(irisColor, 0.85)],
+      [0.85, css(mix(irisColor, PALETTE.void, 0.6), 0.9)],
+      [1,    css(chassisCol, 1)],
+    ]);
+  } else {
+    ctx.fillStyle = css(0x080a10, 0.95);
+    ctx.beginPath(); ctx.arc(32, 32, 13, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Vertical-slit pupil
+  poly(ctx, dead ? 0x060810 : 0x03050a, [
+    [32, 32 - 9], [34, 32 - 4], [34, 32 + 4], [32, 32 + 9], [30, 32 + 4], [30, 32 - 4],
+  ], dead ? 0.22 : 0.96);
+  if (!dead) px(ctx, irisInner, 31, 28, 2, 5, laser ? 0.95 : 0.48);
+
+  // Laser charge glow overlay
+  if (laser) {
+    radial(ctx, 32, 32, 9, [
+      [0,    css(PALETTE.white,  0.95)],
+      [0.35, css(PALETTE.danger, 0.65)],
+      [0.75, css(PALETTE.danger, 0.2)],
+      [1,    css(PALETTE.danger, 0)],
+    ]);
+  }
+
+  // Stagger: sparks + ring cracks
+  if (stagger) {
+    for (const [sx, sy] of [[20, 22], [44, 18], [22, 44], [46, 43], [32, 15]] as [number, number][]) {
+      px(ctx, PALETTE.sodium, sx,     sy,     2, 1, 0.9);
+      px(ctx, PALETTE.white,  sx + 1, sy - 1, 1, 1, 0.65);
+    }
+    ctx.strokeStyle = css(PALETTE.sodium, 0.45);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(22, 21); ctx.lineTo(27, 26);
+    ctx.moveTo(44, 21); ctx.lineTo(39, 27);
+    ctx.stroke();
+  }
+
+  // Armour caps (top + bottom structural plates)
+  const capA = dead ? 0.28 : 0.85;
+  px(ctx, chassisCol,                      24, 14, 16, 4, capA);
+  px(ctx, chassisCol,                      24, 46, 16, 4, capA);
+  px(ctx, dead ? 0x1e202a : PALETTE.steel, 25, 14, 14, 1, dead ? 0.08 : 0.48);
+  px(ctx, dead ? 0x1e202a : PALETTE.steel, 25, 46, 14, 1, dead ? 0.08 : 0.48);
+}
+
+function makePanoptix(scene: Phaser.Scene): void {
+  for (const f of PANOPTIX_FRAMES) canvasTexture(scene, panoptixKey(f), 64, 64, (ctx) => drawPanoptix(ctx, f));
 }
 
 function makeHud(scene: Phaser.Scene): void {
@@ -623,6 +882,8 @@ export function makeAllTextures(scene: Phaser.Scene): void {
   makeHound(scene);
   makeDrone(scene);
   makeBulwark(scene);
+  makeNpcs(scene);
+  makePanoptix(scene);
   makeObjects(scene);
   makeHud(scene);
 }

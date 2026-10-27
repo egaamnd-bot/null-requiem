@@ -9,7 +9,9 @@ import type { Projectile } from '../core/projectile';
 import type { GameWorld } from '../core/world';
 import { PALETTE } from './palette';
 import { DEPTH } from './RoomView';
-import { houndKey, playerKey, TEX, bulwarkKey, droneKey, type PlayerFrame } from './textures';
+import type { NpcEntity } from '../core/npc';
+import type { PanoptixUnit } from '../core/enemies/panoptixUnit';
+import { houndKey, playerKey, TEX, bulwarkKey, droneKey, npcKey, panoptixKey, type PlayerFrame, type PanoptixFrame } from './textures';
 
 /** Render-space position (interpolated between simulation steps). */
 export interface RenderPos {
@@ -384,6 +386,183 @@ export class ProjectileViews {
       v.glow.destroy();
     }
     this.views.clear();
+  }
+}
+
+// ---------------------------------------------------------------- NPC
+
+/**
+ * Renders a single NPC (zero / mira / terminal).
+ * Gentle idle float; a pulsing talk-indicator dot appears when the NPC is active.
+ */
+export class NpcView {
+  private readonly sprite: Phaser.GameObjects.Image;
+  private readonly glow: Phaser.GameObjects.Image;
+  private readonly talkBubble: Phaser.GameObjects.Image;
+  private readonly baseY: number;
+
+  constructor(scene: Phaser.Scene, npc: NpcEntity) {
+    this.baseY = npc.feetY;
+    const glowTint = npc.kind === 'terminal' ? PALETTE.violet : PALETTE.cyan;
+    this.glow = scene.add
+      .image(npc.feetX, npc.feetY - 10, TEX.glowSoft)
+      .setTint(glowTint)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setAlpha(0.2)
+      .setScale(0.6)
+      .setDepth(DEPTH.enemies - 1);
+    this.sprite = scene.add
+      .image(npc.feetX, npc.feetY, npcKey(npc.kind))
+      .setOrigin(0.5, 1)
+      .setDepth(DEPTH.enemies);
+    // Pulsing talk-indicator shown when NPC is the active dialogue target
+    this.talkBubble = scene.add
+      .image(npc.feetX + 7, npc.feetY - 32, TEX.glow)
+      .setTint(PALETTE.white)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setScale(0.22)
+      .setDepth(DEPTH.enemies + 1)
+      .setVisible(false);
+  }
+
+  update(isActive: boolean, time: number): void {
+    const t = time / 1000;
+    // Gentle idle bob
+    const bob = Math.sin(t * 1.1 + this.baseY * 0.01) * 0.7;
+    this.sprite.setY(this.baseY + bob);
+    this.glow.setAlpha(0.15 + Math.sin(t * 2.0 + this.baseY * 0.01) * 0.06);
+    // Talk bubble: pulse when active
+    this.talkBubble
+      .setVisible(isActive)
+      .setY(this.baseY - 32 + Math.sin(t * 7) * 1.5)
+      .setAlpha(0.7 + Math.sin(t * 9) * 0.3)
+      .setScale(0.22 + Math.sin(t * 12) * 0.04);
+  }
+
+  destroy(): void {
+    this.sprite.destroy();
+    this.glow.destroy();
+    this.talkBubble.destroy();
+  }
+}
+
+// ---------------------------------------------------------------- PANOPTIX-0
+
+/**
+ * Renders the PANOPTIX-0 boss — a mechanical eye on a spider chassis.
+ * Draws laser / death-beam lines via Graphics; switches texture frame by state.
+ */
+export class PanoptixView {
+  private readonly sprite: Phaser.GameObjects.Image;
+  private readonly glow: Phaser.GameObjects.Image;
+  private readonly ring: Phaser.GameObjects.Image;
+  private readonly laserGraphics: Phaser.GameObjects.Graphics;
+
+  constructor(scene: Phaser.Scene) {
+    this.laserGraphics = scene.add.graphics().setDepth(DEPTH.enemies - 2);
+    this.glow = scene.add
+      .image(0, 0, TEX.glowSoft)
+      .setTint(PALETTE.violet)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setAlpha(0.3)
+      .setScale(2.2)
+      .setDepth(DEPTH.enemies - 1);
+    this.ring = scene.add
+      .image(0, 0, TEX.ring)
+      .setTint(PALETTE.magenta)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setAlpha(0.4)
+      .setScale(1.8)
+      .setDepth(DEPTH.enemies);
+    this.sprite = scene.add
+      .image(0, 0, panoptixKey('idle'))
+      .setOrigin(0.5, 0.5)
+      .setDepth(DEPTH.enemies + 1);
+  }
+
+  update(panoptix: PanoptixUnit, time: number): void {
+    const t  = time / 1000;
+    const cx = panoptix.centerX;
+    const cy = panoptix.centerY;
+
+    this.sprite.setPosition(cx, cy);
+    this.glow.setPosition(cx, cy);
+    this.ring.setPosition(cx, cy);
+
+    // Choose texture frame by state
+    let frame: PanoptixFrame = 'idle';
+    const s = panoptix.state;
+    if (s === 'laser-warmup' || s === 'laser-sweep' ||
+        s === 'deathbeam-warmup' || s === 'deathbeam-active') {
+      frame = 'laser';
+    } else if (s === 'stagger') {
+      frame = 'stagger';
+    } else if (s === 'defeated') {
+      frame = 'dead';
+    }
+    this.sprite.setTexture(panoptixKey(frame));
+
+    // Glow tint and alpha by state
+    const defeated = s === 'defeated';
+    const isLaser  = frame === 'laser';
+    this.glow
+      .setTint(isLaser ? PALETTE.danger : PALETTE.violet)
+      .setAlpha(defeated ? 0 : isLaser
+        ? 0.55 + Math.sin(t * 22) * 0.08
+        : 0.28 + Math.sin(t * 2.3) * 0.06);
+
+    // Spinning outer ring
+    this.ring
+      .setRotation(t * 0.45)
+      .setAlpha(defeated ? 0 : 0.3 + Math.sin(t * 3.1) * 0.08);
+
+    // Phase-3 flicker
+    this.sprite.setAlpha(
+      defeated ? 0.32 :
+      panoptix.phase >= 3 ? (Math.sin(t * 28) > 0.25 ? 1 : 0.82) : 1,
+    );
+
+    // ── Laser / death-beam lines ──
+    this.laserGraphics.clear();
+    if (!defeated) {
+      const laser = panoptix.laser;
+      if (laser) {
+        const len = 300;
+        const ex = cx + Math.cos(laser.angle) * len;
+        const ey = cy + Math.sin(laser.angle) * len;
+        if (laser.warmup) {
+          // Targeting thread: thin, flickering
+          this.laserGraphics.lineStyle(1, PALETTE.danger, 0.4 + Math.sin(t * 25) * 0.2);
+          this.laserGraphics.lineBetween(cx, cy, ex, ey);
+        } else {
+          // Active beam: red glow + bright core
+          this.laserGraphics.lineStyle(5, PALETTE.danger, 0.28);
+          this.laserGraphics.lineBetween(cx, cy, ex, ey);
+          this.laserGraphics.lineStyle(2, PALETTE.white, 0.92);
+          this.laserGraphics.lineBetween(cx, cy, ex, ey);
+        }
+      }
+      // Death-beam: multi-angle sweep
+      const deathBeams = panoptix.deathBeamAngles;
+      if (deathBeams) {
+        for (const angle of deathBeams) {
+          const len = 300;
+          const ex = cx + Math.cos(angle) * len;
+          const ey = cy + Math.sin(angle) * len;
+          this.laserGraphics.lineStyle(7, PALETTE.magenta, 0.28);
+          this.laserGraphics.lineBetween(cx, cy, ex, ey);
+          this.laserGraphics.lineStyle(2, PALETTE.white, 0.88);
+          this.laserGraphics.lineBetween(cx, cy, ex, ey);
+        }
+      }
+    }
+  }
+
+  destroy(): void {
+    this.sprite.destroy();
+    this.glow.destroy();
+    this.ring.destroy();
+    this.laserGraphics.destroy();
   }
 }
 

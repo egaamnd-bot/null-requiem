@@ -216,10 +216,38 @@ export class RoomView {
           s.add.image(cx, p.rect.y + 13, TEX.glowSoft).setTint(PALETTE.cyan).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.objects - 1),
         );
         this.pickups.push({ id: p.id, img, glow, baseY: img.y });
+      } else if (p.kind === 'fragment') {
+        const cy = p.rect.y + p.rect.h / 2;
+        const img = this.add(s.add.image(cx, cy, TEX.fragment).setDepth(DEPTH.objects));
+        const glow = this.add(
+          s.add.image(cx, cy, TEX.glowSoft)
+            .setTint(PALETTE.violet)
+            .setBlendMode(Phaser.BlendModes.ADD)
+            .setScale(0.5)
+            .setDepth(DEPTH.objects - 1),
+        );
+        this.pickups.push({ id: p.id, img, glow, baseY: cy });
+      } else if (p.kind === 'glitch-strike') {
+        const cy = p.rect.y + p.rect.h / 2;
+        const img = this.add(s.add.image(cx, cy, TEX.glitchStrikePickup).setOrigin(0.5, 0.5).setDepth(DEPTH.objects));
+        const glow = this.add(
+          s.add.image(cx, cy, TEX.glow)
+            .setTint(PALETTE.magenta)
+            .setBlendMode(Phaser.BlendModes.ADD)
+            .setScale(0.6)
+            .setDepth(DEPTH.objects - 1),
+        );
+        this.pickups.push({ id: p.id, img, glow, baseY: cy });
       } else {
+        // 'cell' (integrity cell)
         const cy = p.rect.y + p.rect.h / 2;
         const img = this.add(s.add.image(cx, cy, TEX.cell).setDepth(DEPTH.objects));
-        const glow = this.add(s.add.image(cx, cy, TEX.glow).setTint(PALETTE.cyan).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.objects - 1));
+        const glow = this.add(
+          s.add.image(cx, cy, TEX.glow)
+            .setTint(PALETTE.cyan)
+            .setBlendMode(Phaser.BlendModes.ADD)
+            .setDepth(DEPTH.objects - 1),
+        );
         this.pickups.push({ id: p.id, img, glow, baseY: cy });
       }
     }
