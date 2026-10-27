@@ -37,7 +37,7 @@ export class PlayerView {
 
   constructor(scene: Phaser.Scene) {
     this.glow = scene.add.image(0, 0, TEX.glowSoft).setTint(PALETTE.cyan).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.3).setScale(1.2).setDepth(DEPTH.player - 1);
-    this.sprite = scene.add.image(0, 0, playerKey('idle0')).setOrigin(0.5, 1).setDepth(DEPTH.player);
+    this.sprite = scene.add.image(0, 0, playerKey('idle0')).setOrigin(0.5, 1).setDepth(DEPTH.player).setScale(0.65);
     this.slash = scene.add.image(0, 0, TEX.slashSide).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.player + 1).setVisible(false);
   }
 
@@ -73,7 +73,7 @@ export class PlayerView {
     const s = this.squash;
     const sx = 1 + s * 0.18;
     const sy = 1 - s * 0.18;
-    this.sprite.setScale(p.isDashing ? 1.25 : sx, p.isDashing ? 0.85 : sy);
+    this.sprite.setScale(p.isDashing ? 0.84 : 0.65 * sx, p.isDashing ? 0.55 : 0.65 * sy);
 
     // Invulnerability blink, death fade.
     const inv = p.health.isInvulnerable && !p.dead;
@@ -133,7 +133,8 @@ export class EchoView {
       .setDepth(DEPTH.echo)
       .setTint(PALETTE.cyan)
       .setTintMode(Phaser.TintModes.FILL)
-      .setBlendMode(Phaser.BlendModes.ADD);
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setScale(0.65);
   }
 
   update(world: GameWorld, time: number): void {
