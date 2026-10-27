@@ -70,6 +70,7 @@ func take_hit(amount: int, from_position: Vector2, parry_hit: bool = false) -> v
 	global_position += knockback * (24.0 if parry_hit else 12.0)
 	velocity = knockback * (180.0 if parry_hit else 90.0)
 	state = "stagger"
+	attack_resolved = false  # a hit cancels the current attack cycle; don't carry the flag into the next telegraph
 	state_timer = 0.78 if parry_hit else 0.24
 	tell.visible = false
 	shell.color = Color(1.0, 0.82, 0.32, 1.0) if parry_hit else Color(1.0, 0.28, 0.4, 1.0)
