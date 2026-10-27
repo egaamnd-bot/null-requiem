@@ -46,7 +46,7 @@ export const ROOMS: readonly RoomDef[] = [
       east: { col: 60, row: 19 },
     },
     doors: [{ id: 'ashfall-east', area: { col: 63, row: 16, cols: 1, rows: 4 }, to: { room: 'gallery', entry: 'west' } }],
-    theme: { rock: 0x1a1720, edge: 0xb9ad9a, skyTop: 0x07060a, skyBottom: 0x1a0f0c, glow: 0x5fd4c0 },
+    theme: { rock: 0x2a2531, edge: 0xb9ad9a, skyTop: 0x07060a, skyBottom: 0x1a0f0c, glow: 0x5fd4c0 },
   },
   {
     id: 'gallery',
@@ -91,7 +91,7 @@ export const ROOMS: readonly RoomDef[] = [
       { id: 'gallery-west', area: { col: 0, row: 22, cols: 1, rows: 4 }, to: { room: 'ashfall', entry: 'east' } },
       { id: 'gallery-east', area: { col: 79, row: 22, cols: 1, rows: 4 }, to: { room: 'sanctum', entry: 'west' } },
     ],
-    theme: { rock: 0x181822, edge: 0xc4b8a2, skyTop: 0x05060b, skyBottom: 0x140c12, glow: 0x7fe0d2 },
+    theme: { rock: 0x272633, edge: 0xc4b8a2, skyTop: 0x05060b, skyBottom: 0x140c12, glow: 0x7fe0d2 },
   },
   {
     id: 'sanctum',
@@ -122,7 +122,7 @@ export const ROOMS: readonly RoomDef[] = [
       west: { col: 2, row: 15 },
     },
     doors: [{ id: 'sanctum-west', area: { col: 0, row: 12, cols: 1, rows: 4 }, to: { room: 'gallery', entry: 'east' } }],
-    theme: { rock: 0x1d1414, edge: 0xc9a98a, skyTop: 0x0a0505, skyBottom: 0x2a0e08, glow: 0xff9a4a },
+    theme: { rock: 0x2e2220, edge: 0xc9a98a, skyTop: 0x0a0505, skyBottom: 0x2a0e08, glow: 0xff9a4a },
     bossTriggerCol: 10,
     bossArena: { col: 6, row: 2, cols: 37, rows: 14 },
   },
