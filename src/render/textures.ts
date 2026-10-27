@@ -861,13 +861,6 @@ export function makeBackdrop(scene: Phaser.Scene, key: string, tint: number, lay
   const H = 540;
   canvasTexture(scene, key, W, H, (ctx) => {
     const rng = createRng(seed);
-    const path = (points: [number, number][], fill: string) => {
-      ctx.beginPath();
-      points.forEach(([x, y], i) => i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
-      ctx.closePath();
-      ctx.fillStyle = fill;
-      ctx.fill();
-    };
     const glow = (x: number, y: number, r: number, color: string, alpha = 1) => {
       const g = ctx.createRadialGradient(x, y, 0, x, y, r);
       g.addColorStop(0, color.replace('ALPHA', String(0.5 * alpha)));
