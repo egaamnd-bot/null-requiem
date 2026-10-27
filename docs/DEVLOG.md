@@ -73,6 +73,6 @@ Changes implemented:
 - `src/scenes/MobileControlsScene.ts`: joystick ring appears under the initial touch and the knob follows the thumb.
 - `src/main.ts`, `index.html`: remove forced pixel-art scaling and allow smooth canvas scaling.
 - `src/render/textures.ts`, `src/render/RoomView.ts`: added illustrated neon-purple city/bridge background layers at 2x source resolution, plus a 2x vector-rendered Courier sprite (silver hair, magenta scarf, cyan mono-blade). `src/render/ActorViews.ts` applies a scale that preserves world proportions.
-- `tests/touchTracker.test.ts`, `tests/touchLayout.test.ts`: added floating joystick regression coverage.
+- `tests/touchTracker.test.ts`, `tests/touchLayout.test.ts`: added floating joystick regression coverage. `e2e/touch.spec.ts` now begins movement touches at a chosen lower-left origin and drags to steer, matching the new control behaviour.
 
 Not yet verified at handover: CI for final head, Android visual rendering, actual joystick feel/readability on phone. The Courier, enemies, NPCs and terrain still use procedural placeholder art; a dedicated sprite pack is required for a faithful match to the reference. Do not overstate the art pass.
