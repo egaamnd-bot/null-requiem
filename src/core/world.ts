@@ -1,4 +1,4 @@
-import { BACKTRACE, BOSS, COMBAT, FLOW, PLAYER, PUZZLE, SIM, TILE_SIZE } from '../config/tuning';
+import { BACKTRACE, BOSS, COMBAT, FLOW, NPC_TUNING, PANOPTIX, PLAYER, PUZZLE, SIM, TILE_SIZE } from '../config/tuning';
 import type { RoomDef, TilePoint, TileRect } from '../world/types';
 import { Backtrace } from './backtrace';
 import { bodyRect } from './body';
@@ -6,15 +6,19 @@ import { hitConnects, type Damageable, type DamageSource } from './combat';
 import { ScrapHound } from './enemies/scrapHound';
 import type { Enemy, EnemyContext } from './enemies/enemy';
 import { BulwarkUnit } from './enemies/bulwarkUnit';
+import { PanoptixUnit } from './enemies/panoptixUnit';
 import { WatcherDrone } from './enemies/watcherDrone';
 import type { Emit, GameEvent } from './events';
 import { GameFlow } from './flow';
 import { emptyFrame, type InputFrame } from './input';
 import { insetRect, rectCenter, rectsOverlap, sign, type Rect } from './math';
+import { NpcEntity } from './npc';
 import { Player } from './player';
 import { Progression } from './progression';
 import { Projectile, type ProjectileSpec } from './projectile';
 import { Tile, TileGrid, type TileMarker } from './tiles';
+import { NPC_DEFS, FRAGMENT_LORE } from '../world/dialogues';
+import { FRAGMENT } from '../config/tuning';
 
 export interface CheckpointState {
   id: string;
@@ -26,9 +30,11 @@ export interface CheckpointState {
 
 export interface PickupState {
   id: string;
-  kind: 'backtrace' | 'cell';
+  kind: 'backtrace' | 'cell' | 'fragment' | 'glitch-strike';
   rect: Rect;
   taken: boolean;
+  /** For fragments: lore text to show when collected. */
+  lore?: string;
 }
 
 export interface DoorState {
@@ -121,6 +127,8 @@ export interface RoomState {
   grid: TileGrid;
   enemies: Enemy[];
   boss: BulwarkUnit | null;
+  panoptix: PanoptixUnit | null;
+  npcs: NpcEntity[];
   projectiles: Projectile[];
   checkpoints: CheckpointState[];
   pickups: PickupState[];
@@ -130,6 +138,8 @@ export interface RoomState {
   gateClosed: boolean;
   timedGate: TimedGateState | null;
   switches: OverrideSwitch[];
+  /** Index of NPC player is currently talking to, or -1. */
+  activeNpcIndex: number;
 }
 
 export interface HudSnapshot {
@@ -144,6 +154,18 @@ export interface HudSnapshot {
   dashCooldown: number;
   roomName: string;
   boss: { name: string; health: number; max: number; phase: number } | null;
+  /** 0–100 signal energy for Glitch Strike. */
+  signalEnergy: number;
+  signalMax: number;
+  /** Currently displayed NPC dialogue line, or null. */
+  activeNpcLine: string | null;
+  activeNpcName: string | null;
+  /** Memory fragments collected this run. */
+  fragmentsCollected: number;
+  fragmentsTotal: number;
+  /** 0–1 charge toward Glitch Strike (only shows when ability is unlocked). */
+  glitchChargeRatio: number;
+  hasGlitchStrike: boolean;
 }
 
 export interface WorldOptions {
@@ -276,11 +298,18 @@ export class GameWorld {
     const parsed = this.parsed.get(roomId);
     if (!def || !parsed) throw new Error(`Unknown room ${roomId}`);
     const grid = parsed.grid.clone();
+
+    // Count N and F markers per room for keying into dialogue defs
+    const npcCounters: Record<string, number> = {};
+    const fragCounters: Record<string, number> = {};
+
     const room: RoomState = {
       def,
       grid,
       enemies: [],
       boss: null,
+      panoptix: null,
+      npcs: [],
       projectiles: [],
       checkpoints: [],
       pickups: [],
@@ -290,6 +319,7 @@ export class GameWorld {
       gateClosed: false,
       timedGate: null,
       switches: [],
+      activeNpcIndex: -1,
     };
     const timedGateTiles: TilePoint[] = [];
     const switchMarkers: TileMarker[] = [];
@@ -305,14 +335,26 @@ export class GameWorld {
           room.enemies.push(new WatcherDrone(id, tileCenterX(m.col), (m.row + 0.5) * TILE_SIZE, droneIndex++ * 1.7));
           break;
         case 'X': {
-          if (this.progression.bossDefeated) break;
-          const arena = def.bossArena ? tileRectToPx(def.bossArena) : { x: 0, y: 0, w: grid.widthPx, h: grid.heightPx };
-          room.boss = new BulwarkUnit(id, tileCenterX(m.col), tileFeetY(m.row), {
-            left: arena.x,
-            right: arena.x + arena.w,
-            ceilingY: arena.y,
-            floorY: arena.y + arena.h,
-          });
+          // Determine boss type based on room id
+          if (roomId === 'null_archive') {
+            if (this.progression.panoptixDefeated) break;
+            const arena = def.bossArena ? tileRectToPx(def.bossArena) : { x: 0, y: 0, w: grid.widthPx, h: grid.heightPx };
+            room.panoptix = new PanoptixUnit(id, tileCenterX(m.col), tileFeetY(m.row), {
+              left: arena.x,
+              right: arena.x + arena.w,
+              ceilingY: arena.y,
+              floorY: arena.y + arena.h,
+            });
+          } else {
+            if (this.progression.bossDefeated) break;
+            const arena = def.bossArena ? tileRectToPx(def.bossArena) : { x: 0, y: 0, w: grid.widthPx, h: grid.heightPx };
+            room.boss = new BulwarkUnit(id, tileCenterX(m.col), tileFeetY(m.row), {
+              left: arena.x,
+              right: arena.x + arena.w,
+              ceilingY: arena.y,
+              floorY: arena.y + arena.h,
+            });
+          }
           break;
         }
         case 'K':
@@ -340,6 +382,48 @@ export class GameWorld {
             taken: this.progression.secrets.has(id),
           });
           break;
+        case 'G': {
+          room.pickups.push({
+            id,
+            kind: 'glitch-strike',
+            rect: { x: m.col * TILE_SIZE, y: (m.row - 1) * TILE_SIZE, w: TILE_SIZE, h: TILE_SIZE * 2 },
+            taken: this.progression.has('glitch-strike'),
+          });
+          break;
+        }
+        case 'N': {
+          // Key: 'roomId:N:index' where index is the Nth N marker in this room
+          const nIdx = npcCounters[roomId] ?? 0;
+          npcCounters[roomId] = nIdx + 1;
+          const dialogueKey = `${roomId}:N:${nIdx}`;
+          const dialogueDef = NPC_DEFS[dialogueKey];
+          if (dialogueDef) {
+            room.npcs.push(new NpcEntity({
+              id: dialogueDef.id,
+              name: dialogueDef.name,
+              lines: dialogueDef.lines,
+              feetX: tileCenterX(m.col),
+              feetY: tileFeetY(m.row),
+              kind: dialogueDef.kind,
+            }));
+          }
+          break;
+        }
+        case 'F': {
+          // Key: 'roomId:F:index'
+          const fIdx = fragCounters[roomId] ?? 0;
+          fragCounters[roomId] = fIdx + 1;
+          const fragKey = `${roomId}:F:${fIdx}`;
+          const lore = FRAGMENT_LORE[fragKey] ?? '';
+          room.pickups.push({
+            id: fragKey,
+            kind: 'fragment',
+            rect: { x: m.col * TILE_SIZE + 2, y: m.row * TILE_SIZE + 2, w: TILE_SIZE - 4, h: TILE_SIZE - 4 },
+            taken: this.progression.fragmentsCollected.has(fragKey),
+            lore,
+          });
+          break;
+        }
         case 'D':
           room.gates.push({ col: m.col, row: m.row });
           break;
@@ -471,7 +555,11 @@ export class GameWorld {
   private backtraceBurst(cx: number, cy: number): void {
     const room = this.room;
     const r = BACKTRACE.burst.radius;
-    const targets: Damageable[] = [...room.enemies, ...(room.boss && room.boss.isActive ? [room.boss] : []), ...room.projectiles];
+    const bossTargets: Damageable[] = [
+      ...(room.boss && room.boss.isActive ? [room.boss] : []),
+      ...(room.panoptix && !room.panoptix.defeated ? [room.panoptix as unknown as Damageable] : []),
+    ];
+    const targets: Damageable[] = [...room.enemies, ...bossTargets, ...room.projectiles];
     for (const t of targets) {
       if (!t.isAlive()) continue;
       const hr = t.hurtbox();
@@ -497,7 +585,7 @@ export class GameWorld {
     const player = this.player;
 
     if (this.flow.state === 'dying') {
-      player.step(emptyFrame(), room.grid, dt, { dash: false }, this.emit);
+      player.step(emptyFrame(), room.grid, dt, { dash: false, glitchStrike: false }, this.emit);
       this.deathTimer -= dt;
       if (this.deathTimer <= 0) this.flow.dispatch('deathFinished');
       return;
@@ -506,7 +594,12 @@ export class GameWorld {
     this.progression.playTime += dt;
     this.backtrace.tick(dt);
     if (input.backtracePressed) this.tryBacktrace();
-    player.step(input, room.grid, dt, { dash: true }, this.emit);
+
+    const abilities = {
+      dash: true,
+      glitchStrike: this.progression.has('glitch-strike'),
+    };
+    player.step(input, room.grid, dt, abilities, this.emit);
 
     this.handleHazards();
     if (!player.dead) {
@@ -525,15 +618,31 @@ export class GameWorld {
     };
     for (const e of room.enemies) e.update(ctx);
     room.boss?.update(ctx);
+
+    // PANOPTIX boss step
+    if (room.panoptix && !room.panoptix.defeated) {
+      room.panoptix.step(input, room.grid, dt, player.centerX, player.centerY, this.emit, room.projectiles);
+    }
+
     for (const p of room.projectiles) p.update(room.grid, dt, this.emit);
 
     this.resolvePlayerAttack();
     this.resolveDamageToPlayer();
 
+    // Panoptix laser hit detection
+    if (room.panoptix && !room.panoptix.defeated) {
+      this.resolvePanoptixLaserDamage();
+    }
+
     room.enemies = room.enemies.filter((e) => e.isAlive());
     room.projectiles = room.projectiles.filter((p) => p.alive);
 
     this.updateTimedGate(dt);
+
+    // NPC interaction
+    if (input.interactPressed) {
+      this.handleNpcInteract();
+    }
 
     if (!player.dead) {
       this.handleCheckpoints();
@@ -542,12 +651,76 @@ export class GameWorld {
       this.handleDoors();
     }
     this.handleBossOutcome(dt);
+    this.handlePanoptixOutcome(dt);
 
     if (player.dead && this.flow.state === 'playing') {
       this.flow.dispatch('playerDied');
       this.progression.deaths++;
       this.deathTimer = FLOW.deathAnimation;
       room.projectiles = [];
+      // Dismiss any active dialogue on death
+      if (room.activeNpcIndex >= 0) {
+        room.activeNpcIndex = -1;
+        this.emit({ type: 'npcDismiss' });
+      }
+    }
+  }
+
+  private handleNpcInteract(): void {
+    const room = this.room;
+    const player = this.player;
+
+    // If already in dialogue, advance or dismiss
+    if (room.activeNpcIndex >= 0) {
+      const npc = room.npcs[room.activeNpcIndex];
+      if (npc) {
+        const line = npc.advance();
+        // After the last line, dismiss
+        if (npc.currentLine === npc.lines[0] && npc.lines.length > 1) {
+          room.activeNpcIndex = -1;
+          this.emit({ type: 'npcDismiss' });
+        } else {
+          this.emit({ type: 'npcTalk', npcId: npc.id, line });
+        }
+      }
+      return;
+    }
+
+    // Find closest NPC in range
+    const px = player.centerX;
+    const py = player.centerY;
+    const range = NPC_TUNING.talkRange;
+    let bestDist = range + 1;
+    let bestIdx = -1;
+    for (let i = 0; i < room.npcs.length; i++) {
+      const npc = room.npcs[i];
+      if (!npc) continue;
+      const dx = npc.centerX - px;
+      const dy = npc.centerY - py;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestIdx = i;
+      }
+    }
+
+    if (bestIdx >= 0) {
+      const npc = room.npcs[bestIdx];
+      if (npc) {
+        room.activeNpcIndex = bestIdx;
+        this.emit({ type: 'npcTalk', npcId: npc.id, line: npc.currentLine });
+      }
+    }
+  }
+
+  private resolvePanoptixLaserDamage(): void {
+    const room = this.room;
+    const panoptix = room.panoptix;
+    if (!panoptix) return;
+    const player = this.player;
+    if (player.dead || player.health.isInvulnerable) return;
+    if (panoptix.laserHitsPoint(player.centerX, player.centerY)) {
+      player.takeDamage(PANOPTIX.laserDamage, panoptix.centerX, this.emit);
     }
   }
 
@@ -578,9 +751,15 @@ export class GameWorld {
     const hb = player.hitbox();
     if (!hb) return;
     const room = this.room;
+
+    const panoptixTargets: Damageable[] = room.panoptix && !room.panoptix.defeated
+      ? [room.panoptix as unknown as Damageable]
+      : [];
+
     const targets: Damageable[] = [
       ...room.enemies,
       ...(room.boss && room.boss.isActive ? [room.boss] : []),
+      ...panoptixTargets,
       ...room.projectiles,
       ...room.walls,
       ...room.switches,
@@ -605,7 +784,13 @@ export class GameWorld {
         this.emit({ type: 'enemyDied', x: tc.x, y: tc.y, kind: (t as Enemy).kind });
       }
       if (killed && t instanceof BreakableWall) this.breakWall(t);
-      if (t.targetKind !== 'projectile') connected = true;
+      if (t.targetKind !== 'projectile') {
+        connected = true;
+        // Gain signal energy on hit
+        if (t.targetKind !== 'wall' && t.targetKind !== 'switch') {
+          player.gainSignal(10, this.emit);
+        }
+      }
       pogoable ||= t.pogoable;
     }
     if (connected) player.onSwingConnected(pogoable, this.emit);
@@ -625,6 +810,17 @@ export class GameWorld {
     const sources: DamageSource[] = [];
     for (const e of room.enemies) sources.push(...e.damageSources());
     if (room.boss) sources.push(...room.boss.damageSources());
+    // Panoptix contact damage
+    if (room.panoptix && !room.panoptix.defeated) {
+      const pb = room.panoptix.body;
+      sources.push({
+        rect: { x: pb.x, y: pb.y, w: pb.w, h: pb.h },
+        damage: PANOPTIX.contactDamage,
+        originX: room.panoptix.centerX,
+        originY: room.panoptix.centerY,
+        requiresLineOfSight: false,
+      });
+    }
     for (const p of room.projectiles) {
       if (!p.alive) continue;
       const c = rectCenter(p.rect());
@@ -682,7 +878,23 @@ export class GameWorld {
         this.progression.unlock('backtrace');
         this.backtrace.clear();
         this.emit({ type: 'abilityUnlocked', ability: 'backtrace', x: c.x, y: c.y });
+      } else if (p.kind === 'glitch-strike') {
+        this.progression.unlock('glitch-strike');
+        this.emit({ type: 'abilityUnlocked', ability: 'glitch-strike', x: c.x, y: c.y });
+      } else if (p.kind === 'fragment') {
+        if (!this.progression.fragmentsCollected.has(p.id)) {
+          this.progression.fragmentsCollected.add(p.id);
+          this.emit({
+            type: 'fragmentCollected',
+            id: p.id,
+            x: c.x,
+            y: c.y,
+            total: FRAGMENT.totalInSlice,
+            collected: this.progression.fragmentCount,
+          });
+        }
       } else {
+        // 'cell'
         this.progression.secrets.add(p.id);
         this.progression.maxHealthBonus++;
         this.player.health.setMax(this.maxHealth, true);
@@ -694,12 +906,24 @@ export class GameWorld {
 
   private handleBossTrigger(): void {
     const room = this.room;
+
+    // BulwarkUnit trigger
     const boss = room.boss;
-    if (!boss || boss.state !== 'dormant' || room.def.bossTriggerCol === undefined) return;
-    if (this.player.centerX <= room.def.bossTriggerCol * TILE_SIZE) return;
-    this.setGates(true);
-    boss.activate();
-    this.emit({ type: 'bossStart', name: boss.displayName });
+    if (boss && boss.state === 'dormant' && room.def.bossTriggerCol !== undefined) {
+      if (this.player.centerX > room.def.bossTriggerCol * TILE_SIZE) {
+        this.setGates(true);
+        boss.activate();
+        this.emit({ type: 'bossStart', name: boss.displayName });
+      }
+    }
+
+    // PANOPTIX trigger
+    const panoptix = room.panoptix;
+    if (panoptix && panoptix.state === 'intro' && room.def.bossTriggerCol !== undefined) {
+      if (this.player.centerX > room.def.bossTriggerCol * TILE_SIZE) {
+        this.setGates(true);
+      }
+    }
   }
 
   private setGates(closed: boolean): void {
@@ -725,6 +949,23 @@ export class GameWorld {
     }
   }
 
+  private handlePanoptixOutcome(dt: number): void {
+    const panoptix = this.room.panoptix;
+    if (!panoptix) return;
+    if (panoptix.defeated && !this.progression.panoptixDefeated) {
+      this.progression.panoptixDefeated = true;
+      this.room.projectiles = [];
+      this.setGates(false);
+      this.emit({ type: 'bossDefeated', x: panoptix.centerX, y: panoptix.centerY });
+      this.onSave(this.progression);
+      this.victoryTimer = PANOPTIX.victoryDelay;
+    }
+    if (this.victoryTimer > 0 && !this.player.dead) {
+      this.victoryTimer -= dt;
+      if (this.victoryTimer <= 0) this.flow.dispatch('win');
+    }
+  }
+
   private handleDoors(): void {
     const pr = bodyRect(this.player.body);
     for (const d of this.room.doors) {
@@ -738,7 +979,21 @@ export class GameWorld {
   // ------------------------------------------------------------------ queries
 
   hud(): HudSnapshot {
-    const boss = this.room?.boss;
+    const room = this.room;
+    const boss = room?.boss;
+    const panoptix = room?.panoptix;
+    const activeNpc = room?.activeNpcIndex >= 0 ? room.npcs[room.activeNpcIndex] : undefined;
+
+    const bossSnap = (() => {
+      if (boss && boss.state !== 'dormant') {
+        return { name: boss.displayName, health: boss.health.current, max: boss.health.max, phase: boss.phase };
+      }
+      if (panoptix && !panoptix.defeated) {
+        return { name: PANOPTIX.name, health: panoptix.health.current, max: panoptix.health.max, phase: panoptix.phase };
+      }
+      return null;
+    })();
+
     return {
       health: this.player.health.current,
       maxHealth: this.player.health.max,
@@ -747,11 +1002,16 @@ export class GameWorld {
       backtraceCooldown: this.backtrace.cooldownRatio,
       backtraceReady: this.backtrace.ready,
       dashCooldown: this.player.dashCooldownRatio,
-      roomName: this.room?.def.name ?? '',
-      boss:
-        boss && boss.state !== 'dormant'
-          ? { name: boss.displayName, health: boss.health.current, max: boss.health.max, phase: boss.phase }
-          : null,
+      roomName: room?.def.name ?? '',
+      boss: bossSnap,
+      signalEnergy: this.player.signalEnergy,
+      signalMax: 100,
+      activeNpcLine: activeNpc?.currentLine ?? null,
+      activeNpcName: activeNpc?.name ?? null,
+      fragmentsCollected: this.progression.fragmentCount,
+      fragmentsTotal: FRAGMENT.totalInSlice,
+      glitchChargeRatio: this.player.chargeTimer > 0 ? Math.min(1, this.player.chargeTimer / 0.48) : 0,
+      hasGlitchStrike: this.progression.has('glitch-strike'),
     };
   }
 }

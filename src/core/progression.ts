@@ -13,12 +13,16 @@ export interface ProgressionData {
   secrets: string[];
   brokenWalls: string[];
   latchedGates: string[];
+  fragmentsCollected: string[];
   maxHealthBonus: number;
   checkpoint: CheckpointRef | null;
   bossDefeated: boolean;
+  panoptixDefeated: boolean;
   deaths: number;
   playTime: number;
 }
+
+const VALID_ABILITIES: Ability[] = ['backtrace', 'glitch-strike'];
 
 /** Persistent run progress: what survives death, and what is written to save data. */
 export class Progression {
@@ -27,9 +31,12 @@ export class Progression {
   readonly brokenWalls = new Set<string>();
   /** Timed gates the player has passed; they stay open for good. */
   readonly latchedGates = new Set<string>();
+  /** Memory fragment IDs collected by the player. */
+  readonly fragmentsCollected = new Set<string>();
   maxHealthBonus = 0;
   checkpoint: CheckpointRef | null = null;
   bossDefeated = false;
+  panoptixDefeated = false;
   deaths = 0;
   playTime = 0;
 
@@ -43,6 +50,10 @@ export class Progression {
     return true;
   }
 
+  get fragmentCount(): number {
+    return this.fragmentsCollected.size;
+  }
+
   serialize(): ProgressionData {
     return {
       version: 1,
@@ -50,9 +61,11 @@ export class Progression {
       secrets: [...this.secrets],
       brokenWalls: [...this.brokenWalls],
       latchedGates: [...this.latchedGates],
+      fragmentsCollected: [...this.fragmentsCollected],
       maxHealthBonus: this.maxHealthBonus,
       checkpoint: this.checkpoint ? { ...this.checkpoint } : null,
       bossDefeated: this.bossDefeated,
+      panoptixDefeated: this.panoptixDefeated,
       deaths: this.deaths,
       playTime: this.playTime,
     };
@@ -64,16 +77,20 @@ export class Progression {
     if (d.version !== 1) return null;
     const p = new Progression();
     const strings = (v: unknown): string[] => (Array.isArray(v) ? v.filter((s) => typeof s === 'string') : []);
-    for (const a of strings(d.abilities)) if (a === 'backtrace') p.abilities.add(a);
+    for (const a of strings(d.abilities)) {
+      if (VALID_ABILITIES.includes(a as Ability)) p.abilities.add(a as Ability);
+    }
     for (const s of strings(d.secrets)) p.secrets.add(s);
     for (const w of strings(d.brokenWalls)) p.brokenWalls.add(w);
     for (const g of strings(d.latchedGates)) p.latchedGates.add(g);
+    for (const f of strings(d.fragmentsCollected)) p.fragmentsCollected.add(f);
     p.maxHealthBonus = typeof d.maxHealthBonus === 'number' ? Math.max(0, Math.floor(d.maxHealthBonus)) : 0;
     const cp = d.checkpoint;
     if (cp && typeof cp.roomId === 'string' && typeof cp.x === 'number' && typeof cp.y === 'number') {
       p.checkpoint = { roomId: cp.roomId, x: cp.x, y: cp.y };
     }
     p.bossDefeated = d.bossDefeated === true;
+    p.panoptixDefeated = d.panoptixDefeated === true;
     p.deaths = typeof d.deaths === 'number' ? d.deaths : 0;
     p.playTime = typeof d.playTime === 'number' ? d.playTime : 0;
     return p;

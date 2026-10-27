@@ -4,7 +4,7 @@
  */
 
 export type AttackDirection = 'side' | 'up' | 'down';
-export type Ability = 'backtrace';
+export type Ability = 'backtrace' | 'glitch-strike';
 
 export type GameEvent =
   | { type: 'playerJump'; x: number; y: number }
@@ -37,6 +37,13 @@ export type GameEvent =
   | { type: 'bossDefeated'; x: number; y: number }
   | { type: 'gateClosed' }
   | { type: 'gateOpened' }
-  | { type: 'roomEntered'; roomId: string; name: string };
+  | { type: 'roomEntered'; roomId: string; name: string }
+  | { type: 'glitchStrike'; x: number; y: number; facing: number }
+  | { type: 'npcTalk'; npcId: string; line: string }
+  | { type: 'npcDismiss' }
+  | { type: 'fragmentCollected'; id: string; x: number; y: number; total: number; collected: number }
+  | { type: 'signalChanged'; value: number; max: number }
+  | { type: 'panoptixLaser'; fromX: number; fromY: number; angle: number; warmup: boolean }
+  | { type: 'panoptixDeathBeams'; angles: readonly number[]; active: boolean };
 
 export type Emit = (event: GameEvent) => void;

@@ -169,7 +169,7 @@ describe('Dash', () => {
     const grid = gridFrom(flatRoom());
     const p = new Player(tileX(5), tileFeet(13));
     settle(p, grid);
-    const events = runPlayer(p, grid, 30, (i) => input({ dashPressed: i === 0 }), { dash: false });
+    const events = runPlayer(p, grid, 30, (i) => input({ dashPressed: i === 0 }), { dash: false, glitchStrike: false });
     expect(events.some((e) => e.type === 'playerDash')).toBe(false);
     expect(p.body.vx).toBe(0);
   });
@@ -180,7 +180,7 @@ describe('Dash', () => {
     settle(p, grid);
     const startX = p.body.x;
     const steps = Math.round(PLAYER.dash.duration / DT);
-    const events = runPlayer(p, grid, steps, (i) => input({ dashPressed: i === 0 }), { dash: true });
+    const events = runPlayer(p, grid, steps, (i) => input({ dashPressed: i === 0 }), { dash: true, glitchStrike: false });
     expect(events.filter((e) => e.type === 'playerDash')).toHaveLength(1);
     expect(p.body.x - startX).toBeCloseTo(PLAYER.dash.speed * PLAYER.dash.duration, 0);
   });
@@ -194,7 +194,7 @@ describe('Dash', () => {
       grid,
       cooldownSteps * 2,
       (i) => input({ dashPressed: i === 1 || i === cooldownSteps + 1 }),
-      { dash: true },
+      { dash: true, glitchStrike: false },
     );
     expect(p.body.onGround).toBe(false);
     expect(events.filter((e) => e.type === 'playerDash')).toHaveLength(1);
@@ -205,7 +205,7 @@ describe('Dash', () => {
     const p = new Player(tileX(36), tileFeet(13));
     settle(p, grid);
     p.facing = 1;
-    runPlayer(p, grid, 40, (i) => input({ dashPressed: i === 0, moveX: 1 }), { dash: true });
+    runPlayer(p, grid, 40, (i) => input({ dashPressed: i === 0, moveX: 1 }), { dash: true, glitchStrike: false });
     expect(p.body.x + p.body.w).toBeLessThanOrEqual(39 * 16 + 1e-6);
     expect(p.isDashing).toBe(false);
   });
@@ -304,7 +304,7 @@ describe('Player damage', () => {
     expect(p.attackPhase).toBe('none');
     expect(p.hitbox()).toBeNull();
     const after = runPlayer(p, grid, 60, () => input({ attackPressed: true, jumpPressed: true, moveX: 1 }), {
-      dash: true,
+      dash: true, glitchStrike: false,
     });
     expect(after.filter((e) => e.type === 'playerAttack' || e.type === 'playerJump')).toHaveLength(0);
 

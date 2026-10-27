@@ -192,6 +192,80 @@ export const PUZZLE = {
   gateOpenTime: 1.0,
 } as const;
 
+/** Secondary resource — Signal Energy — powering special moves. */
+export const SIGNAL = {
+  max: 100,
+  /** Points regenerated per second while not using abilities. */
+  regenRate: 8,
+  /** Gained on a successful melee hit. */
+  gainOnHit: 10,
+  glitchStrikeCost: 40,
+} as const;
+
+/** Charged heavy attack — hold attack for chargeTime then release. */
+export const GLITCH_STRIKE = {
+  /** Seconds of holding attack before the charge completes. */
+  chargeTime: 0.48,
+  startup: 0.04,
+  active: 0.16,
+  recovery: 0.22,
+  damage: 2,
+  /** Hitbox is wider and taller than a normal side swing. */
+  reachX: 40,
+  reachY: 30,
+  /** Knockback multiplier on top of normal recoil. */
+  knockbackMultiplier: 1.8,
+} as const;
+
+/** PANOPTIX-0 — the secret surveillance-AI boss in the Null Archive. */
+export const PANOPTIX = {
+  name: 'PANOPTIX-0',
+  width: 26,
+  height: 26,
+  health: 24,
+  gravity: 0,           // floats
+  phase2Threshold: 0.6, // 60% HP → phase 2
+  phase3Threshold: 0.28,// 28% HP → phase 3
+  staggerTime: 0.35,
+  contactDamage: 1,
+  introTime: 1.4,
+  idleMin: 0.4,
+  idleMax: 0.7,
+  laserDamage: 1,
+  laser: {
+    range: 180,
+    sweepRate: 120, // degrees per second
+    sweepArc: 160,  // total arc per sweep
+    width: 3,
+    warmupTime: 0.55,
+    cooldown: 2.2,
+  },
+  drone: {
+    spawnInterval: 7.0,
+    maxActive: 3,
+    spawnCount: 2,
+  },
+  deathBeam: {
+    count: 8,       // simultaneous beams in phase 3
+    rotateRate: 60, // deg/s
+    damage: 1,
+    cooldown: 3.5,
+    activeDuration: 2.0,
+  },
+  victoryDelay: 2.5,
+} as const;
+
+/** NPC interaction. */
+export const NPC_TUNING = {
+  talkRange: 36,  // pixel distance to show prompt
+  promptOffsetY: -26,
+} as const;
+
+/** Memory fragments (collectible lore). */
+export const FRAGMENT = {
+  totalInSlice: 6,
+} as const;
+
 export const FLOW = {
   /** Seconds between the killing blow and the game-over prompt. */
   deathAnimation: 1.2,

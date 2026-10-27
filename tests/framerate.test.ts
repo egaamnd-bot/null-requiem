@@ -46,7 +46,7 @@ function simulate(fps: number, seconds: number) {
     const t = f / fps;
     latch.sample(heldAt(t));
     steps += stepper.advance(1 / fps, (dt) => {
-      player.step(latch.consume(), grid, dt, { dash: true }, () => {});
+      player.step(latch.consume(), grid, dt, { dash: true, glitchStrike: false }, () => {});
     });
   }
   return { x: player.body.x, y: player.body.y, vx: player.body.vx, steps, attacks: player.attackId };

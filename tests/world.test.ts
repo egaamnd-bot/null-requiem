@@ -7,7 +7,7 @@ import { ROOMS, START_ROOM } from '../src/world/rooms';
 import { DT, input, stepWorld, tileFeet, tileX, worldAt } from './helpers';
 import type { InputFrame } from '../src/core/input';
 
-const KNOWN_MARKERS = new Set(['P', 'K', 'C', 'W', 'A', 'H', 'X', 'D', 'T', 'S']);
+const KNOWN_MARKERS = new Set(['P', 'K', 'C', 'W', 'A', 'H', 'X', 'D', 'T', 'S', 'F', 'N', 'G']);
 const ATTACK_CYCLE_STEPS = Math.ceil((COMBAT.attack.startup + COMBAT.attack.active + COMBAT.attack.recovery) / DT) + 2;
 
 describe('Room data', () => {

@@ -20,6 +20,7 @@ export const PALETTE = {
   sodiumDeep: 0xa4581a,
   danger: 0xff3b4e,
   violet: 0x8a5cff,
+  neonOrange: 0xff6a00,
   white: 0xffffff,
 } as const;
 

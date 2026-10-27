@@ -22,9 +22,11 @@ export interface InputFrame {
   moveY: -1 | 0 | 1;
   jumpHeld: boolean;
   jumpPressed: boolean;
+  attackHeld: boolean;
   attackPressed: boolean;
   dashPressed: boolean;
   backtracePressed: boolean;
+  interactPressed: boolean;
 }
 
 export const NO_INPUT: Readonly<HeldInput> = {
@@ -39,7 +41,7 @@ export const NO_INPUT: Readonly<HeldInput> = {
 };
 
 export function emptyFrame(): InputFrame {
-  return { moveX: 0, moveY: 0, jumpHeld: false, jumpPressed: false, attackPressed: false, dashPressed: false, backtracePressed: false };
+  return { moveX: 0, moveY: 0, jumpHeld: false, jumpPressed: false, attackHeld: false, attackPressed: false, dashPressed: false, backtracePressed: false, interactPressed: false };
 }
 
 function axis(neg: boolean, pos: boolean): -1 | 0 | 1 {
@@ -54,6 +56,7 @@ export class InputLatch {
   private attackPressed = false;
   private dashPressed = false;
   private backtracePressed = false;
+  private interactPressed = false;
 
   /** Call once per render frame with the currently held buttons. */
   sample(held: HeldInput): void {
@@ -65,6 +68,11 @@ export class InputLatch {
     this.current = { ...held };
   }
 
+  /** Signal a virtual interact press from the touch overlay. */
+  pressInteract(): void {
+    this.interactPressed = true;
+  }
+
   /** Produce the frame for one simulation step and consume any pending presses. */
   consume(): InputFrame {
     const frame: InputFrame = {
@@ -72,9 +80,11 @@ export class InputLatch {
       moveY: axis(this.current.up, this.current.down),
       jumpHeld: this.current.jump,
       jumpPressed: this.jumpPressed,
+      attackHeld: this.current.attack,
       attackPressed: this.attackPressed,
       dashPressed: this.dashPressed,
       backtracePressed: this.backtracePressed,
+      interactPressed: this.interactPressed,
     };
     this.clearPresses();
     return frame;
@@ -86,6 +96,7 @@ export class InputLatch {
     this.attackPressed = false;
     this.dashPressed = false;
     this.backtracePressed = false;
+    this.interactPressed = false;
   }
 
   /**

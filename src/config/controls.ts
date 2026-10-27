@@ -14,6 +14,7 @@ export type Action =
   | 'attack'
   | 'dash'
   | 'backtrace'
+  | 'interact'
   | 'pause'
   | 'confirm'
   | 'back'
@@ -28,6 +29,7 @@ export const KEYBOARD_BINDINGS: Readonly<Record<Action, readonly string[]>> = {
   attack: ['J', 'X'],
   dash: ['K', 'C', 'SHIFT'],
   backtrace: ['L', 'V', 'Q'],
+  interact: ['F', 'E'],
   pause: ['ESC', 'P'],
   confirm: ['ENTER', 'SPACE', 'Z'],
   back: ['ESC', 'BACKSPACE'],
@@ -44,6 +46,7 @@ export const GAMEPAD_BINDINGS: Readonly<Record<Action, readonly number[]>> = {
   attack: [2],
   dash: [1, 5, 7],
   backtrace: [3, 4, 6],
+  interact: [3],
   pause: [9],
   confirm: [0, 9],
   back: [1, 8],

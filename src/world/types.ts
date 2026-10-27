@@ -38,7 +38,9 @@ export interface RoomDef {
    * ASCII layout. Terrain: `#` concrete, `.` air, `=` one-way catwalk, `^` live current (hazard), `B` breakable wall.
    * Markers (placed on air): `P` new-game start, `K` sync relay (checkpoint), `C` scrap hound,
    * `W` watcher drone, `A` Backtrace module, `H` integrity cell (secret), `X` boss, `D` boss gate,
-   * `T` timed gate tile, `S` override switch (opens the room's timed gate).
+   * `T` timed gate tile, `S` override switch (opens the room's timed gate),
+   * `N` NPC entity (dialogue, keyed by room+index), `F` memory fragment (lore collectible),
+   * `G` glitch-strike upgrade pickup.
    */
   layout: readonly string[];
   /** Named arrival points (feet stand on the bottom of this tile). */

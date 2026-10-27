@@ -5,6 +5,7 @@ import { BootScene } from './scenes/BootScene';
 import { GameScene } from './scenes/GameScene';
 import type { Services } from './scenes/session';
 import { TitleScene } from './scenes/TitleScene';
+import { MobileControlsScene } from './scenes/MobileControlsScene';
 import { UIScene } from './scenes/UIScene';
 import { VictoryScene } from './scenes/VictoryScene';
 import { LocalSaveStore } from './state/LocalSaveStore';
@@ -29,7 +30,7 @@ const game = new Phaser.Game({
   input: {
     gamepad: true,
   },
-  scene: [new BootScene(services), TitleScene, GameScene, UIScene, VictoryScene],
+  scene: [new BootScene(services), TitleScene, GameScene, UIScene, VictoryScene, MobileControlsScene],
 });
 
 // Unlock audio on the first user gesture anywhere on the page.

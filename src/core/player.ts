@@ -1,4 +1,4 @@
-import { COMBAT, PLAYER, PLAYER_GRAVITY, PLAYER_JUMP_VELOCITY } from '../config/tuning';
+import { COMBAT, GLITCH_STRIKE, PLAYER, PLAYER_GRAVITY, PLAYER_JUMP_VELOCITY, SIGNAL } from '../config/tuning';
 import { bodyCenterX, bodyCenterY, createBody, moveBody, type Body } from './body';
 import { attackHitbox } from './combat';
 import type { AttackDirection, Emit } from './events';
@@ -11,6 +11,7 @@ export type AttackPhase = 'none' | 'startup' | 'active' | 'recovery';
 
 export interface PlayerAbilities {
   dash: boolean;
+  glitchStrike: boolean;
 }
 
 /**
@@ -40,9 +41,18 @@ export class Player {
   attackId = 0;
   private attackTimer = 0;
   private attackBuffer = 0;
-  /** Targets already struck by the current swing; each swing hits a target at most once. */
-  readonly struckThisSwing = new Set<string>();
-  private swingRewarded = false;
+  /** True if current attack is a Glitch Strike (heavy charged attack). */
+  isGlitchStrike = false;
+  /** How long the attack button has been held continuously (for charge detection). */
+  chargeTimer = 0;
+  private chargeReady = false;
+  /** IDs of things already hit this swing — prevent multi-hit per swing. */
+  struckThisSwing = new Set<string>();
+  /** Whether the swing-connect bonus (pogo / recoil) has been applied yet. */
+  swingRewarded = false;
+
+  // Signal Energy
+  signalEnergy = 0;
 
   // Damage
   private stunTimer = 0;
@@ -121,6 +131,9 @@ export class Player {
   cancelAttack(): void {
     this.attackPhase = 'none';
     this.attackTimer = 0;
+    this.isGlitchStrike = false;
+    this.chargeTimer = 0;
+    this.chargeReady = false;
     this.struckThisSwing.clear();
     this.swingRewarded = false;
   }
@@ -131,9 +144,24 @@ export class Player {
     return attackHitbox(this.body, this.facing, this.attackDir);
   }
 
+  /** Add signal energy (capped at max). Call from world when a swing connects. */
+  gainSignal(amount: number, emit: Emit): void {
+    const prev = this.signalEnergy;
+    this.signalEnergy = Math.min(SIGNAL.max, this.signalEnergy + amount);
+    if (this.signalEnergy !== prev) emit({ type: 'signalChanged', value: this.signalEnergy, max: SIGNAL.max });
+  }
+
   step(input: InputFrame, grid: TileGrid, dt: number, abilities: PlayerAbilities, emit: Emit): void {
     const b = this.body;
     this.health.tick(dt);
+    // Regen signal energy passively
+    if (!this.dead) {
+      const prev = this.signalEnergy;
+      this.signalEnergy = Math.min(SIGNAL.max, this.signalEnergy + SIGNAL.regenRate * dt);
+      if (Math.floor(this.signalEnergy) !== Math.floor(prev)) {
+        emit({ type: 'signalChanged', value: this.signalEnergy, max: SIGNAL.max });
+      }
+    }
 
     if (this.dead) {
       b.vx = approach(b.vx, 0, PLAYER.airDecel * dt);
@@ -205,7 +233,7 @@ export class Player {
       this.airTime += dt;
     }
 
-    this.updateAttack(input, control, dt, emit);
+    this.updateAttack(input, control, dt, abilities, emit);
   }
 
   private endDash(): void {
@@ -268,34 +296,66 @@ export class Player {
     return anyOneWay;
   }
 
-  private updateAttack(input: InputFrame, control: boolean, dt: number, emit: Emit): void {
+  private updateAttack(input: InputFrame, control: boolean, dt: number, abilities: PlayerAbilities, emit: Emit): void {
     const a = COMBAT.attack;
     if (this.attackPhase !== 'none') {
       this.attackTimer -= dt;
       if (this.attackTimer <= 0) {
         if (this.attackPhase === 'startup') {
           this.attackPhase = 'active';
-          this.attackTimer += a.active;
+          this.attackTimer += this.isGlitchStrike ? GLITCH_STRIKE.active : a.active;
         } else if (this.attackPhase === 'active') {
           this.attackPhase = 'recovery';
-          this.attackTimer += a.recovery;
+          this.attackTimer += this.isGlitchStrike ? GLITCH_STRIKE.recovery : a.recovery;
         } else {
           this.attackPhase = 'none';
           this.attackTimer = 0;
+          this.isGlitchStrike = false;
         }
       }
     }
 
+    // Glitch strike charge tracking: hold attack outside an active swing
+    if (control && abilities.glitchStrike && input.attackHeld && this.attackPhase === 'none' && !this.isDashing) {
+      const prevCharge = this.chargeTimer;
+      this.chargeTimer += dt;
+      if (!this.chargeReady && this.chargeTimer >= GLITCH_STRIKE.chargeTime && this.signalEnergy >= SIGNAL.glitchStrikeCost) {
+        this.chargeReady = true;
+      }
+      if (prevCharge > 0 && this.chargeTimer === prevCharge) this.chargeTimer = dt; // safety
+    } else if (!input.attackHeld || this.isDashing) {
+      // Attack released — if charge was ready and we're not already in a swing, fire glitch strike
+      if (this.chargeReady && this.attackPhase === 'none' && control && !this.isDashing) {
+        this.signalEnergy = Math.max(0, this.signalEnergy - SIGNAL.glitchStrikeCost);
+        emit({ type: 'signalChanged', value: this.signalEnergy, max: SIGNAL.max });
+        this.isGlitchStrike = true;
+        this.attackDir = 'side';
+        this.attackPhase = 'startup';
+        this.attackTimer = GLITCH_STRIKE.startup;
+        this.attackId++;
+        this.struckThisSwing.clear();
+        this.swingRewarded = false;
+        this.attackBuffer = 0;
+        emit({ type: 'glitchStrike', x: this.centerX, y: this.centerY, facing: this.facing });
+      }
+      this.chargeTimer = 0;
+      this.chargeReady = false;
+    }
+
     if (control && this.attackBuffer > 0 && this.attackPhase === 'none' && !this.isDashing) {
-      const b = this.body;
-      this.attackDir = input.moveY < 0 ? 'up' : input.moveY > 0 && !b.onGround ? 'down' : 'side';
-      this.attackPhase = 'startup';
-      this.attackTimer = a.startup;
-      this.attackId++;
-      this.struckThisSwing.clear();
-      this.swingRewarded = false;
-      this.attackBuffer = 0;
-      emit({ type: 'playerAttack', dir: this.attackDir });
+      // Normal (uncharged) attack — only fire if charge is NOT ready
+      if (!this.chargeReady) {
+        const b = this.body;
+        this.isGlitchStrike = false;
+        this.attackDir = input.moveY < 0 ? 'up' : input.moveY > 0 && !b.onGround ? 'down' : 'side';
+        this.attackPhase = 'startup';
+        this.attackTimer = a.startup;
+        this.attackId++;
+        this.struckThisSwing.clear();
+        this.swingRewarded = false;
+        this.attackBuffer = 0;
+        emit({ type: 'playerAttack', dir: this.attackDir });
+      }
     }
   }
 
