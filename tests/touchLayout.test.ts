@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buttonAt, createTouchLayout, dpadKeysAt, holdKeysAt, isOnPause, type HoldKey } from '../src/input/touchLayout';
+import { buttonAt, createTouchLayout, dpadKeysAt, holdKeysAt, isJoystickZone, isOnPause, joystickKeysAt, type HoldKey } from '../src/input/touchLayout';
 
 const SIZES: Array<[number, number]> = [
   [480, 270],
@@ -37,6 +37,16 @@ describe('touch layout', () => {
         expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThanOrEqual(a.r + b.r);
       }
     }
+  });
+
+
+  it('uses a flexible lower-left touch zone instead of requiring the thumb to find a fixed pad', () => {
+    const l = createTouchLayout(480, 270);
+    expect(isJoystickZone(l, 92, 160)).toBe(true);
+    expect(isJoystickZone(l, 230, 160)).toBe(false);
+    expect(isJoystickZone(l, 92, 40)).toBe(false);
+    expect(joystickKeysAt(l, { x: 92, y: 160 }, 45, 160)).toEqual(['left']);
+    expect(joystickKeysAt(l, { x: 92, y: 160 }, 92, 160)).toEqual([]);
   });
 
   it('gives action buttons a thumb-sized hit target (>= 36 logical px across)', () => {
