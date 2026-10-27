@@ -4,18 +4,18 @@ import type { DamageSource } from '../combat';
 import { approach, sign } from '../math';
 import { Enemy, type EnemyContext } from './enemy';
 
-export type AshgrubState = 'patrol' | 'windup' | 'lunge' | 'recover' | 'stagger';
+export type HoundState = 'patrol' | 'windup' | 'lunge' | 'recover' | 'stagger';
 
-const T = ENEMIES.ashgrub;
+const T = ENEMIES.scrapHound;
 
 /**
- * Ashgrub — a ground crawler with a stone carapace and a molten core.
- * Rhythm: it patrols, notices the player, rears back (readable wind-up),
- * lunges forward, then sits exposed while its core cools (recovery).
+ * Scrap Hound — a low, four-legged security drone built from salvaged parts.
+ * Rhythm: it patrols, notices the player, crouches with its sensor flaring (readable wind-up),
+ * lunges forward, then sits exposed while its servos reset (recovery).
  * Hitting it during the wind-up interrupts the attack; the lunge itself has armour.
  */
-export class Ashgrub extends Enemy<AshgrubState> {
-  readonly kind = 'ashgrub';
+export class ScrapHound extends Enemy<HoundState> {
+  readonly kind = 'scrapHound';
 
   constructor(id: string, feetX: number, feetY: number) {
     super(id, createBody(feetX - T.width / 2, feetY - T.height, T.width, T.height), T.health, 'patrol');

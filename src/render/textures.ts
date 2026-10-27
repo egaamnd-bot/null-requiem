@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { createRng } from '../core/math';
-import { css, PALETTE } from './palette';
+import { css, mix, PALETTE } from './palette';
 
 /**
  * All placeholder art is generated procedurally at boot from original drawing code.
@@ -16,24 +16,30 @@ export const TEX = {
   spark: 'fx-spark',
   mote: 'fx-mote',
   dust: 'fx-dust',
+  rain: 'fx-rain',
+  ring: 'fx-ring',
   vignette: 'fx-vignette',
+  scanlines: 'fx-scanlines',
   slashSide: 'fx-slash-side',
   slashUp: 'fx-slash-up',
   slashDown: 'fx-slash-down',
   bolt: 'proj-bolt',
   shockwave: 'proj-shockwave',
-  fallingEmber: 'proj-ember',
-  rainMarker: 'fx-rain-marker',
-  lanternUnlit: 'obj-lantern-unlit',
-  lanternLit: 'obj-lantern-lit',
-  shrine: 'obj-shrine',
-  shrineSpent: 'obj-shrine-spent',
-  heartcoal: 'obj-heartcoal',
+  plasma: 'proj-plasma',
+  rainMarker: 'fx-strike-marker',
+  relayOff: 'obj-relay-off',
+  relayOn: 'obj-relay-on',
+  module: 'obj-backtrace-module',
+  moduleSpent: 'obj-backtrace-module-spent',
+  cell: 'obj-integrity-cell',
   crackedWall: 'tile-cracked',
-  gate: 'tile-gate',
-  hudEmberFull: 'hud-ember-full',
-  hudEmberEmpty: 'hud-ember-empty',
-  hudVeilstep: 'hud-veilstep',
+  bossGate: 'tile-boss-gate',
+  laserGate: 'tile-laser-gate',
+  switchIdle: 'obj-switch-idle',
+  switchLive: 'obj-switch-live',
+  hudCellFull: 'hud-cell-full',
+  hudCellEmpty: 'hud-cell-empty',
+  hudBacktrace: 'hud-backtrace',
   title: 'ui-title-emblem',
 } as const;
 
@@ -41,17 +47,17 @@ export const PLAYER_FRAMES = ['idle0', 'idle1', 'run0', 'run1', 'run2', 'run3', 
 export type PlayerFrame = (typeof PLAYER_FRAMES)[number];
 export const playerKey = (f: PlayerFrame): string => `player-${f}`;
 
-export const GRUB_FRAMES = ['walk0', 'walk1', 'windup', 'lunge', 'recover'] as const;
-export type GrubFrame = (typeof GRUB_FRAMES)[number];
-export const grubKey = (f: GrubFrame): string => `ashgrub-${f}`;
+export const HOUND_FRAMES = ['walk0', 'walk1', 'windup', 'lunge', 'recover'] as const;
+export type HoundFrame = (typeof HOUND_FRAMES)[number];
+export const houndKey = (f: HoundFrame): string => `hound-${f}`;
 
-export const WISP_FRAMES = ['idle0', 'idle1', 'charge'] as const;
-export type WispFrame = (typeof WISP_FRAMES)[number];
-export const wispKey = (f: WispFrame): string => `wisp-${f}`;
+export const DRONE_FRAMES = ['idle0', 'idle1', 'charge'] as const;
+export type DroneFrame = (typeof DRONE_FRAMES)[number];
+export const droneKey = (f: DroneFrame): string => `drone-${f}`;
 
-export const WARDEN_FRAMES = ['idle', 'windup', 'charge', 'leap', 'stunned', 'dead'] as const;
-export type WardenFrame = (typeof WARDEN_FRAMES)[number];
-export const wardenKey = (f: WardenFrame): string => `warden-${f}`;
+export const BULWARK_FRAMES = ['idle', 'windup', 'charge', 'leap', 'stunned', 'dead'] as const;
+export type BulwarkFrame = (typeof BULWARK_FRAMES)[number];
+export const bulwarkKey = (f: BulwarkFrame): string => `bulwark-${f}`;
 
 function canvasTexture(scene: Phaser.Scene, key: string, w: number, h: number, draw: (ctx: Ctx) => void): void {
   if (scene.textures.exists(key)) scene.textures.remove(key);
@@ -110,29 +116,49 @@ function makeEffects(scene: Phaser.Scene): void {
     px(ctx, PALETTE.white, 1, 0, 2, 4, 0.8);
     px(ctx, PALETTE.white, 0, 1, 4, 2, 0.8);
   });
+  canvasTexture(scene, TEX.rain, 1, 7, (ctx) => {
+    const g = ctx.createLinearGradient(0, 0, 0, 7);
+    g.addColorStop(0, 'rgba(255,255,255,0)');
+    g.addColorStop(1, 'rgba(255,255,255,0.9)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 1, 7);
+  });
+  canvasTexture(scene, TEX.ring, 64, 64, (ctx) => {
+    ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(32, 32, 29, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(32, 32, 24, 0, Math.PI * 2);
+    ctx.stroke();
+  });
   canvasTexture(scene, TEX.vignette, 240, 135, (ctx) => {
     const g = ctx.createRadialGradient(120, 67, 40, 120, 67, 150);
     g.addColorStop(0, 'rgba(0,0,0,0)');
-    g.addColorStop(0.7, 'rgba(4,3,6,0.35)');
-    g.addColorStop(1, 'rgba(4,3,6,0.85)');
+    g.addColorStop(0.7, 'rgba(3,4,10,0.35)');
+    g.addColorStop(1, 'rgba(3,4,10,0.85)');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, 240, 135);
   });
+  canvasTexture(scene, TEX.scanlines, 4, 4, (ctx) => px(ctx, PALETTE.void, 0, 0, 4, 1, 0.35));
 
-  // Slash arcs: crescent of warm light with a pale leading edge.
+  // Slash arcs: a crescent of cyan light with a white leading edge (a mono-blade cut).
   const crescent = (ctx: Ctx, cx: number, cy: number, r: number, a0: number, a1: number) => {
     ctx.lineCap = 'round';
-    ctx.strokeStyle = css(PALETTE.ember, 0.55);
+    ctx.strokeStyle = css(PALETTE.cyanDeep, 0.6);
     ctx.lineWidth = 7;
     ctx.beginPath();
     ctx.arc(cx, cy, r - 2, a0, a1);
     ctx.stroke();
-    ctx.strokeStyle = css(PALETTE.emberBright, 0.9);
+    ctx.strokeStyle = css(PALETTE.cyan, 0.95);
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.arc(cx, cy, r, a0, a1);
     ctx.stroke();
-    ctx.strokeStyle = css(PALETTE.bone, 1);
+    ctx.strokeStyle = css(PALETTE.white, 1);
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.arc(cx, cy, r + 1.5, a0 + 0.15, a1 - 0.15);
@@ -144,311 +170,319 @@ function makeEffects(scene: Phaser.Scene): void {
 
   canvasTexture(scene, TEX.bolt, 12, 12, (ctx) => {
     radial(ctx, 6, 6, 6, [
-      [0, css(PALETTE.bone)],
-      [0.35, css(PALETTE.emberBright)],
-      [0.7, css(PALETTE.ember, 0.6)],
-      [1, css(PALETTE.ember, 0)],
+      [0, css(PALETTE.white)],
+      [0.35, css(PALETTE.magenta)],
+      [0.7, css(PALETTE.magenta, 0.5)],
+      [1, css(PALETTE.magenta, 0)],
     ]);
   });
   canvasTexture(scene, TEX.shockwave, 14, 14, (ctx) => {
-    poly(ctx, PALETTE.emberDeep, [[0, 14], [3, 5], [6, 9], [8, 1], [11, 7], [14, 14]], 0.9);
-    poly(ctx, PALETTE.ember, [[2, 14], [4, 8], [7, 11], [8, 5], [10, 10], [12, 14]]);
-    poly(ctx, PALETTE.emberBright, [[5, 14], [7, 10], [9, 14]]);
+    // A crackling arc of electricity hugging the floor.
+    ctx.strokeStyle = css(PALETTE.sodium, 0.9);
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, 14);
+    ctx.lineTo(3, 6);
+    ctx.lineTo(6, 10);
+    ctx.lineTo(8, 2);
+    ctx.lineTo(11, 8);
+    ctx.lineTo(14, 14);
+    ctx.stroke();
+    poly(ctx, PALETTE.sodiumDeep, [[2, 14], [7, 9], [12, 14]], 0.8);
+    px(ctx, PALETTE.white, 7, 9, 1, 4);
   });
-  canvasTexture(scene, TEX.fallingEmber, 8, 14, (ctx) => {
-    poly(ctx, PALETTE.ember, [[4, 0], [8, 9], [4, 14], [0, 9]], 0.85);
-    poly(ctx, PALETTE.emberBright, [[4, 4], [6, 9], [4, 12], [2, 9]]);
+  canvasTexture(scene, TEX.plasma, 8, 14, (ctx) => {
+    poly(ctx, PALETTE.danger, [[4, 0], [8, 9], [4, 14], [0, 9]], 0.85);
+    poly(ctx, PALETTE.white, [[4, 5], [6, 9], [4, 12], [2, 9]]);
   });
   canvasTexture(scene, TEX.rainMarker, 18, 6, (ctx) => {
     const g = ctx.createLinearGradient(0, 0, 18, 0);
-    g.addColorStop(0, css(PALETTE.ember, 0));
-    g.addColorStop(0.5, css(PALETTE.emberBright, 1));
-    g.addColorStop(1, css(PALETTE.ember, 0));
+    g.addColorStop(0, css(PALETTE.danger, 0));
+    g.addColorStop(0.5, css(PALETTE.danger, 1));
+    g.addColorStop(1, css(PALETTE.danger, 0));
     ctx.fillStyle = g;
     ctx.fillRect(0, 2, 18, 2);
-    px(ctx, PALETTE.bone, 8, 1, 2, 4);
+    px(ctx, PALETTE.white, 8, 0, 2, 6);
   });
 }
 
-// ---------------------------------------------------------------- player: the Kindler
+// ---------------------------------------------------------------- player: the Courier
 
-interface KindlerPose {
+interface CourierPose {
   bob?: number;
   lean?: number;
   flare?: number;
   stride?: number;
-  scarf?: number;
-  eye?: number;
+  tail?: number;
+  visor?: number;
   pale?: boolean;
   stretch?: number;
 }
 
 /**
- * The Kindler: a slim wanderer in a long, pointed charcoal hood with a single ember-lit eye
- * and a cinder-red scarf. Drawn facing right; the view flips it.
+ * The Courier: a lean runner in a hooded, high-collared jacket with a horizontal cyan visor
+ * across the face and a long data-cable tail trailing from the collar. Drawn facing right.
  */
-function drawKindler(ctx: Ctx, pose: KindlerPose): void {
-  const W = 24;
+function drawCourier(ctx: Ctx, pose: CourierPose): void {
   const H = 28;
   const bob = pose.bob ?? 0;
   const lean = pose.lean ?? 0;
   const flare = pose.flare ?? 0;
   const stride = pose.stride ?? 0;
-  const scarf = pose.scarf ?? 0;
+  const tail = pose.tail ?? 0;
   const stretch = pose.stretch ?? 0;
-  const cloak = pose.pale ? PALETTE.bone : 0x2b2632;
-  const hood = pose.pale ? PALETTE.white : 0x3b3442;
-  const rim = PALETTE.stone;
-  const cx = W / 2 + lean;
-  const top = 2 + bob - stretch;
-
-  // Feet / legs (peeking beneath the cloak).
+  const jacket = pose.pale ? PALETTE.chrome : 0x1c2236;
+  const hood = pose.pale ? PALETTE.white : 0x262e48;
+  const trim = PALETTE.steel;
+  const cx = 12 + lean;
+  const top = 3 + bob - stretch;
   const footY = H - 2;
-  px(ctx, 0x15121a, cx - 3 + stride, footY - 1, 2, 3);
-  px(ctx, 0x15121a, cx + 1 - stride, footY - 1, 2, 3);
 
-  // Cloak body: a trapezoid flaring toward the hem.
-  poly(ctx, cloak, [
+  // Legs and boots
+  px(ctx, 0x10131f, cx - 3 + stride, footY - 4, 2, 5);
+  px(ctx, 0x10131f, cx + 1 - stride, footY - 4, 2, 5);
+  px(ctx, PALETTE.steel, cx - 3 + stride, footY, 3, 1, 0.8);
+  px(ctx, PALETTE.steel, cx + 1 - stride, footY, 3, 1, 0.8);
+
+  // Jacket: cropped, flares at the hem
+  poly(ctx, jacket, [
     [cx - 4, top + 9],
     [cx + 4, top + 9],
-    [cx + 6 + flare, footY - 1],
-    [cx + 2, footY],
-    [cx - 2, footY + 0.5],
-    [cx - 6 - flare - lean * 0.6, footY - 1],
+    [cx + 5 + flare * 0.6, footY - 4],
+    [cx - 5 - flare - lean * 0.4, footY - 4],
   ]);
-  // Pale stitched hem.
-  px(ctx, rim, cx - 5 - flare, footY - 2, 10 + flare * 2, 1, 0.6);
+  px(ctx, trim, cx - 5 - flare, footY - 5, 10 + flare * 1.6, 1, 0.7);
+  // Chest light strip
+  px(ctx, PALETTE.cyan, cx + 2, top + 12, 1, 4, pose.pale ? 0.4 : 0.85);
 
-  // Hood: tall point that sweeps backward.
+  // Hood with a high, squared collar
   poly(ctx, hood, [
     [cx - 5, top + 10],
-    [cx - 5, top + 5],
-    [cx - 3 - lean * 0.5, top - 1],
-    [cx - 6 - lean, top - 3],
-    [cx + 1, top + 1],
-    [cx + 5, top + 5],
+    [cx - 5, top + 3],
+    [cx - 2, top - 1],
+    [cx + 3, top - 1],
+    [cx + 5, top + 3],
     [cx + 5, top + 10],
   ]);
-  // Face opening and the single ember eye.
-  poly(ctx, PALETTE.ink, [
-    [cx - 1, top + 4],
-    [cx + 4.5, top + 5],
-    [cx + 4.5, top + 9],
-    [cx, top + 9],
-  ]);
-  const eye = pose.eye ?? 1;
-  px(ctx, PALETTE.emberBright, cx + 2, top + 6, 2, 2, eye);
-  px(ctx, PALETTE.ember, cx + 1, top + 6, 1, 1, eye * 0.6);
-  // Hood rim highlight.
-  px(ctx, rim, cx + 4, top + 5, 1, 4, 0.8);
+  // Face shadow and the visor band
+  px(ctx, PALETTE.ink, cx - 1, top + 3, 6, 5);
+  const visor = pose.visor ?? 1;
+  px(ctx, PALETTE.cyan, cx - 1, top + 5, 6, 2, visor);
+  px(ctx, PALETTE.white, cx + 3, top + 5, 2, 1, visor * 0.9);
+  px(ctx, trim, cx - 5, top + 3, 1, 7, 0.7);
 
-  // Scarf: wraps the neck and trails behind.
-  px(ctx, PALETTE.emberDeep, cx - 5, top + 9, 10, 2);
-  poly(ctx, PALETTE.emberDeep, [
-    [cx - 5, top + 9],
-    [cx - 10 - scarf, top + 10 - scarf * 0.6],
-    [cx - 11 - scarf, top + 12 - scarf * 0.4],
-    [cx - 5, top + 11],
-  ]);
-  px(ctx, PALETTE.ember, cx - 4, top + 9, 3, 1, 0.8);
+  // Data-cable tail from the collar, glowing at the tip
+  ctx.strokeStyle = css(PALETTE.magenta, pose.pale ? 0.4 : 0.9);
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(cx - 5, top + 8);
+  ctx.quadraticCurveTo(cx - 8 - tail, top + 9 - tail * 0.4, cx - 11 - tail, top + 12 - tail * 0.7);
+  ctx.stroke();
+  px(ctx, PALETTE.magenta, cx - 12 - tail, top + 11 - tail * 0.7, 2, 2, pose.pale ? 0.4 : 1);
 }
 
 function makePlayer(scene: Phaser.Scene): void {
-  const poses: Record<PlayerFrame, KindlerPose> = {
-    idle0: { bob: 0, scarf: 0 },
-    idle1: { bob: 1, scarf: 1 },
-    run0: { lean: 1, stride: 2, scarf: 2, flare: 1 },
-    run1: { lean: 1, bob: 1, stride: 0, scarf: 3, flare: 0 },
-    run2: { lean: 1, stride: -2, scarf: 2, flare: 1 },
-    run3: { lean: 1, bob: 1, stride: 0, scarf: 3, flare: 0 },
-    jump: { stretch: 1, flare: -1, scarf: 1 },
-    fall: { flare: 3, scarf: 4, bob: -1 },
-    dash: { lean: 3, flare: 2, scarf: 6, eye: 1 },
-    attack: { lean: 2, stride: 1, scarf: 2, flare: 1 },
-    hurt: { pale: true, lean: -2, flare: 2, eye: 0.3 },
+  const poses: Record<PlayerFrame, CourierPose> = {
+    idle0: { bob: 0, tail: 0 },
+    idle1: { bob: 1, tail: 1 },
+    run0: { lean: 1, stride: 2, tail: 2, flare: 1 },
+    run1: { lean: 1, bob: 1, stride: 0, tail: 3, flare: 0 },
+    run2: { lean: 1, stride: -2, tail: 2, flare: 1 },
+    run3: { lean: 1, bob: 1, stride: 0, tail: 3, flare: 0 },
+    jump: { stretch: 1, flare: -1, tail: 1 },
+    fall: { flare: 2, tail: 4, bob: -1 },
+    dash: { lean: 3, flare: 2, tail: 6 },
+    attack: { lean: 2, stride: 1, tail: 2, flare: 1 },
+    hurt: { pale: true, lean: -2, flare: 2, visor: 0.3 },
   };
-  for (const f of PLAYER_FRAMES) canvasTexture(scene, playerKey(f), 24, 28, (ctx) => drawKindler(ctx, poses[f]));
+  for (const f of PLAYER_FRAMES) canvasTexture(scene, playerKey(f), 24, 28, (ctx) => drawCourier(ctx, poses[f]));
 }
 
-// ---------------------------------------------------------------- Ashgrub
+// ---------------------------------------------------------------- Scrap Hound
 
-function drawAshgrub(ctx: Ctx, f: GrubFrame): void {
-  const W = 24;
+function drawHound(ctx: Ctx, f: HoundFrame): void {
   const H = 16;
-  const rear = f === 'windup' ? 3 : 0;
-  const flat = f === 'lunge' ? 2 : 0;
-  const core = f === 'windup' ? PALETTE.emberBright : f === 'recover' ? 0x5a3a2e : PALETTE.ember;
-  const leg = f === 'walk1' ? 1 : 0;
-  // Legs
-  for (let i = 0; i < 3; i++) {
-    const lx = 6 + i * 5;
-    px(ctx, 0x2a2228, lx + ((i + leg) % 2), H - 3, 1, 3);
+  const crouch = f === 'windup' ? 2 : 0;
+  const flat = f === 'lunge' ? -1 : 0;
+  const step = f === 'walk1' ? 1 : 0;
+  const eye = f === 'windup' ? PALETTE.white : f === 'recover' ? 0x4a2a30 : PALETTE.danger;
+  const body = 0x4a5068;
+  const dark = 0x262a3a;
+  // Legs (four thin struts)
+  for (let i = 0; i < 4; i++) {
+    const lx = 5 + i * 4;
+    const off = (i + step) % 2;
+    px(ctx, dark, lx + off, H - 4 + crouch * 0.5, 1, 4 - crouch * 0.5);
   }
-  // Molten underbelly
-  px(ctx, core, 4, H - 6 + flat, W - 8, 3, f === 'recover' ? 0.8 : 1);
-  // Carapace dome (pale stone plates)
-  poly(ctx, 0x8f8576, [
-    [2, H - 4 + flat],
-    [4, 6 - rear + flat * 2],
-    [10, 3 - rear + flat * 2],
-    [17, 4 - rear * 0.5 + flat * 2],
-    [22, H - 4 + flat],
+  // Chassis
+  poly(ctx, body, [
+    [3, H - 4 + crouch],
+    [4, 7 + crouch + flat],
+    [17, 6 + crouch + flat],
+    [20, H - 5 + crouch],
   ]);
-  poly(ctx, PALETTE.stone, [
-    [5, 8 - rear + flat * 2],
-    [10, 4 - rear + flat * 2],
-    [16, 5 - rear * 0.5 + flat * 2],
-    [13, 8 - rear * 0.5 + flat * 2],
-  ]);
-  // Glowing seams between plates
-  const seam = f === 'recover' ? 0x6a4030 : core;
-  px(ctx, seam, 9, 5 - rear + flat * 2, 1, H - 9 + rear - flat * 2);
-  px(ctx, seam, 15, 5 - rear + flat * 2, 1, H - 9 + rear - flat * 2);
-  // Head + single slit eye (front = right)
-  px(ctx, 0x3a2f30, 19, H - 8 + flat, 4, 4);
-  px(ctx, f === 'windup' ? PALETTE.bone : PALETTE.emberBright, 21, H - 7 + flat, 2, 1);
+  px(ctx, PALETTE.steel, 5, 7 + crouch + flat, 11, 1, 0.9);
+  // Hazard plate and exposed coil
+  px(ctx, PALETTE.sodium, 7, 9 + crouch + flat, 2, 3, f === 'recover' ? 0.3 : 0.8);
+  px(ctx, PALETTE.sodium, 11, 9 + crouch + flat, 2, 3, f === 'recover' ? 0.3 : 0.8);
+  // Head with a single sensor eye (front = right)
+  px(ctx, dark, 17, 6 + crouch + flat, 6, 5);
+  px(ctx, eye, 20, 7 + crouch + flat, 2, 2);
+  // Antenna
+  px(ctx, PALETTE.steel, 5, 3 + crouch + flat, 1, 4);
+  px(ctx, PALETTE.danger, 5, 2 + crouch + flat, 1, 1, f === 'recover' ? 0.3 : 1);
 }
 
-function makeAshgrub(scene: Phaser.Scene): void {
-  for (const f of GRUB_FRAMES) canvasTexture(scene, grubKey(f), 24, 16, (ctx) => drawAshgrub(ctx, f));
+function makeHound(scene: Phaser.Scene): void {
+  for (const f of HOUND_FRAMES) canvasTexture(scene, houndKey(f), 24, 16, (ctx) => drawHound(ctx, f));
 }
 
-// ---------------------------------------------------------------- Lantern Wisp
+// ---------------------------------------------------------------- Watcher Drone
 
-function drawWisp(ctx: Ctx, f: WispFrame): void {
-  const sway = f === 'idle1' ? 1 : 0;
+function drawDrone(ctx: Ctx, f: DroneFrame): void {
+  const tilt = f === 'idle1' ? 1 : 0;
   const charge = f === 'charge';
-  // Tendrils
-  ctx.strokeStyle = css(PALETTE.bio, 0.55);
-  ctx.lineWidth = 1;
-  for (let i = 0; i < 3; i++) {
-    const x = 6 + i * 4;
-    ctx.beginPath();
-    ctx.moveTo(x, 13);
-    ctx.quadraticCurveTo(x + (i - 1) * 2 + sway, 18, x + sway * (i - 1), 23);
-    ctx.stroke();
-  }
-  // Translucent bell
-  poly(ctx, PALETTE.bioDeep, [[2, 13], [3, 6], [10, 1], [17, 6], [18, 13]], 0.75);
-  poly(ctx, PALETTE.bio, [[4, 12], [5, 6], [10, 3], [15, 6], [16, 12]], 0.45);
-  px(ctx, PALETTE.bone, 7, 4, 3, 1, 0.7);
-  // Ember core
-  radial(ctx, 10, 9, charge ? 6 : 4, [
-    [0, css(PALETTE.bone)],
-    [0.4, css(PALETTE.emberBright)],
-    [1, css(PALETTE.ember, 0)],
+  // Rotor arms
+  px(ctx, 0x2a3044, 1, 5 + tilt, 18, 2);
+  px(ctx, PALETTE.steel, 0, 3 + tilt, 5, 1);
+  px(ctx, PALETTE.steel, 15, 3 - tilt + 1, 5, 1);
+  // Body shell
+  poly(ctx, 0x1c2132, [[4, 7], [16, 7], [15, 16], [5, 16]]);
+  px(ctx, PALETTE.steel, 5, 7, 10, 1, 0.8);
+  // Magenta ring lights
+  px(ctx, PALETTE.magenta, 4, 9, 1, 4, 0.9);
+  px(ctx, PALETTE.magenta, 15, 9, 1, 4, 0.9);
+  // Lens
+  radial(ctx, 10, 12, charge ? 6 : 4, [
+    [0, css(PALETTE.white)],
+    [0.4, css(charge ? PALETTE.sodium : PALETTE.magenta)],
+    [1, css(PALETTE.magenta, 0)],
   ]);
-  // Rim
-  px(ctx, PALETTE.bioDeep, 2, 12, 17, 2, 0.9);
+  // Hanging sensor
+  px(ctx, PALETTE.steel, 9, 16, 2, 4);
+  px(ctx, PALETTE.danger, 9, 20, 2, 1);
 }
 
-function makeWisp(scene: Phaser.Scene): void {
-  for (const f of WISP_FRAMES) canvasTexture(scene, wispKey(f), 20, 24, (ctx) => drawWisp(ctx, f));
+function makeDrone(scene: Phaser.Scene): void {
+  for (const f of DRONE_FRAMES) canvasTexture(scene, droneKey(f), 20, 24, (ctx) => drawDrone(ctx, f));
 }
 
-// ---------------------------------------------------------------- Kiln Warden
+// ---------------------------------------------------------------- BULWARK-9
 
-function drawWarden(ctx: Ctx, f: WardenFrame): void {
-  const W = 48;
+function drawBulwark(ctx: Ctx, f: BulwarkFrame): void {
   const H = 40;
   const dead = f === 'dead';
   const stunned = f === 'stunned';
-  const fire = dead ? 0x2a1a16 : stunned ? 0x6a2a18 : f === 'windup' ? PALETTE.emberBright : PALETTE.ember;
+  const visor = dead ? 0x2a1a1e : stunned ? 0x5a2030 : f === 'windup' ? PALETTE.white : PALETTE.danger;
   const lean = f === 'charge' ? 3 : 0;
   const crouch = f === 'windup' || f === 'leap' ? 2 : 0;
-  const body = dead ? 0x3a332f : 0x5a4e46;
-  const brick = dead ? 0x2e2825 : 0x463c36;
+  const plate = dead ? 0x2e3242 : 0x4c5470;
+  const dark = dead ? 0x1c1f2a : 0x2a2f42;
 
-  // Legs: stubby stone pillars
-  px(ctx, brick, 12 + lean, H - 6, 7, 6);
-  px(ctx, brick, 29 + lean, H - 6, 7, 6);
-  // Kiln body (domed)
-  poly(ctx, body, [
-    [8 + lean, H - 5],
-    [7 + lean, 16 + crouch],
-    [14 + lean, 8 + crouch],
-    [34 + lean, 8 + crouch],
-    [41 + lean, 16 + crouch],
-    [40 + lean, H - 5],
+  // Legs: hydraulic pistons
+  px(ctx, dark, 12 + lean, H - 7, 7, 7);
+  px(ctx, dark, 29 + lean, H - 7, 7, 7);
+  px(ctx, PALETTE.steel, 14 + lean, H - 7, 1, 6, dead ? 0.3 : 0.8);
+  px(ctx, PALETTE.steel, 31 + lean, H - 7, 1, 6, dead ? 0.3 : 0.8);
+  // Torso: boxy armoured shell
+  poly(ctx, plate, [
+    [8 + lean, H - 6],
+    [7 + lean, 13 + crouch],
+    [12 + lean, 8 + crouch],
+    [36 + lean, 8 + crouch],
+    [41 + lean, 13 + crouch],
+    [40 + lean, H - 6],
   ]);
-  // Brick courses
-  for (let y = 12 + crouch; y < H - 6; y += 5) {
-    px(ctx, brick, 8 + lean, y, 32, 1);
-    for (let x = 10 + ((y / 5) % 2) * 4; x < 39; x += 8) px(ctx, brick, x + lean, y - 4, 1, 4);
+  // Hazard stripes across the chest
+  for (let x = 12; x < 36; x += 6) {
+    poly(ctx, dead ? 0x3a3020 : PALETTE.sodium, [
+      [x + lean, 24 + crouch],
+      [x + 3 + lean, 24 + crouch],
+      [x + 6 + lean, 28 + crouch],
+      [x + 3 + lean, 28 + crouch],
+    ]);
   }
-  // Furnace grate mouth
-  px(ctx, 0x1a1210, 15 + lean, 18 + crouch, 18, 12);
-  px(ctx, fire, 16 + lean, 19 + crouch, 16, 10);
-  for (let x = 17; x < 32; x += 4) px(ctx, 0x1a1210, x + lean, 19 + crouch, 1, 10);
-  if (!dead && !stunned) px(ctx, PALETTE.bone, 18 + lean, 26 + crouch, 12, 1, 0.6);
-  // Chimney head with two ember eyes
-  px(ctx, brick, 19 + lean, 2 + crouch, 10, 7);
-  px(ctx, dead ? 0x221a18 : PALETTE.emberBright, 21 + lean, 4 + crouch, 2, 2);
-  px(ctx, dead ? 0x221a18 : PALETTE.emberBright, 25 + lean, 4 + crouch, 2, 2);
-  // Arms
+  px(ctx, dark, 11 + lean, 23 + crouch, 26, 1);
+  px(ctx, dark, 11 + lean, 28 + crouch, 26, 1);
+  // Head: low dome with a full-width visor
+  px(ctx, dark, 16 + lean, 2 + crouch, 16, 8);
+  px(ctx, visor, 18 + lean, 5 + crouch, 12, 2);
+  if (!dead && !stunned) px(ctx, PALETTE.white, 26 + lean, 5 + crouch, 3, 1);
+  // Shoulder lamps
+  px(ctx, dead ? 0x2a2a30 : PALETTE.cyan, 8 + lean, 10 + crouch, 3, 2, dead ? 0.4 : 0.9);
+  px(ctx, dead ? 0x2a2a30 : PALETTE.cyan, 37 + lean, 10 + crouch, 3, 2, dead ? 0.4 : 0.9);
+  // Arms: riot shields
   const armUp = f === 'windup' ? -6 : f === 'leap' ? -8 : 0;
-  px(ctx, body, 1 + lean, 16 + crouch + armUp, 7, 14);
-  px(ctx, body, 40 + lean, 16 + crouch + armUp, 7, 14);
-  px(ctx, PALETTE.stone, 1 + lean, 16 + crouch + armUp, 7, 2, 0.7);
-  px(ctx, PALETTE.stone, 40 + lean, 16 + crouch + armUp, 7, 2, 0.7);
-  // Pale stone cap highlight
-  px(ctx, PALETTE.stone, 15 + lean, 8 + crouch, 18, 2, dead ? 0.3 : 0.8);
+  px(ctx, plate, 1 + lean, 14 + crouch + armUp, 7, 15);
+  px(ctx, plate, 40 + lean, 14 + crouch + armUp, 7, 15);
+  px(ctx, PALETTE.steel, 1 + lean, 14 + crouch + armUp, 7, 1, 0.9);
+  px(ctx, PALETTE.steel, 40 + lean, 14 + crouch + armUp, 7, 1, 0.9);
+  px(ctx, PALETTE.chrome, 12 + lean, 8 + crouch, 24, 1, dead ? 0.2 : 0.6);
   if (stunned) {
-    // Wisps of smoke
-    px(ctx, 0x8a8078, 22, 0, 2, 2, 0.6);
-    px(ctx, 0x8a8078, 26, 1, 2, 1, 0.4);
+    // Sparks from the visor
+    px(ctx, PALETTE.sodium, 21, 1, 1, 1);
+    px(ctx, PALETTE.white, 26, 0, 1, 1);
+    px(ctx, PALETTE.sodium, 30, 2, 1, 1);
   }
-  void W;
 }
 
-function makeWarden(scene: Phaser.Scene): void {
-  for (const f of WARDEN_FRAMES) canvasTexture(scene, wardenKey(f), 48, 40, (ctx) => drawWarden(ctx, f));
+function makeBulwark(scene: Phaser.Scene): void {
+  for (const f of BULWARK_FRAMES) canvasTexture(scene, bulwarkKey(f), 48, 40, (ctx) => drawBulwark(ctx, f));
 }
 
 // ---------------------------------------------------------------- objects & tiles
 
 function makeObjects(scene: Phaser.Scene): void {
-  const lantern = (ctx: Ctx, lit: boolean) => {
-    // Iron post and hook
-    px(ctx, 0x2a2630, 7, 6, 2, 26);
-    px(ctx, 0x2a2630, 4, 30, 8, 2);
-    px(ctx, 0x2a2630, 9, 6, 4, 1);
-    px(ctx, 0x2a2630, 12, 6, 1, 3);
-    // Cage
-    px(ctx, 0x3a3440, 9, 9, 7, 9);
-    px(ctx, lit ? PALETTE.emberBright : 0x2a2228, 10, 10, 5, 7);
-    if (lit) px(ctx, PALETTE.bone, 12, 12, 1, 3);
-    px(ctx, 0x3a3440, 12, 10, 1, 7);
-    px(ctx, PALETTE.stone, 9, 9, 7, 1, 0.7);
+  // Sync relay: a street terminal booth whose screen links when touched.
+  const relay = (ctx: Ctx, on: boolean) => {
+    px(ctx, 0x1c2132, 3, 4, 10, 28);
+    px(ctx, PALETTE.steel, 3, 4, 10, 1);
+    px(ctx, 0x0b0d18, 5, 7, 6, 8);
+    px(ctx, on ? PALETTE.cyan : PALETTE.magentaDeep, 6, 8, 4, 6, on ? 0.95 : 0.6);
+    if (on) {
+      px(ctx, PALETTE.white, 6, 10, 4, 1);
+      px(ctx, PALETTE.white, 7, 12, 2, 1, 0.7);
+    }
+    px(ctx, on ? PALETTE.cyan : PALETTE.danger, 7, 18, 2, 1);
+    px(ctx, PALETTE.steel, 5, 22, 6, 1, 0.6);
+    px(ctx, PALETTE.steel, 5, 25, 6, 1, 0.6);
+    px(ctx, 0x10131f, 2, 30, 12, 2);
   };
-  canvasTexture(scene, TEX.lanternUnlit, 16, 32, (ctx) => lantern(ctx, false));
-  canvasTexture(scene, TEX.lanternLit, 16, 32, (ctx) => lantern(ctx, true));
+  canvasTexture(scene, TEX.relayOff, 16, 32, (ctx) => relay(ctx, false));
+  canvasTexture(scene, TEX.relayOn, 16, 32, (ctx) => relay(ctx, true));
 
-  const shrine = (ctx: Ctx, spent: boolean) => {
-    poly(ctx, 0x4a4450, [[2, 32], [3, 6], [8, 1], [13, 6], [14, 32]]);
-    poly(ctx, PALETTE.stone, [[4, 30], [4, 7], [8, 3], [12, 7], [12, 30]], spent ? 0.35 : 0.6);
-    // Glyph: an ember with two swept veils (wings)
-    const c = spent ? 0x6e655a : PALETTE.emberBright;
-    px(ctx, c, 7, 12, 2, 4);
-    poly(ctx, spent ? 0x4a4450 : PALETTE.bio, [[7, 13], [3, 10], [4, 15]], 0.9);
-    poly(ctx, spent ? 0x4a4450 : PALETTE.bio, [[9, 13], [13, 10], [12, 15]], 0.9);
-    px(ctx, c, 6, 20, 4, 1, 0.8);
-    px(ctx, c, 7, 23, 2, 1, 0.6);
+  // Backtrace module: a pedestal holding a ring-shaped core.
+  const module = (ctx: Ctx, spent: boolean) => {
+    poly(ctx, 0x2a3044, [[3, 32], [4, 22], [12, 22], [13, 32]]);
+    px(ctx, PALETTE.steel, 4, 22, 8, 1);
+    const c = spent ? PALETTE.steel : PALETTE.cyan;
+    ctx.strokeStyle = css(c, spent ? 0.5 : 1);
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(8, 13, 5.5, 0, Math.PI * 2);
+    ctx.stroke();
+    // A clock hand turned backwards
+    ctx.beginPath();
+    ctx.moveTo(8, 13);
+    ctx.lineTo(5, 10);
+    ctx.stroke();
+    px(ctx, spent ? PALETTE.steel : PALETTE.white, 7, 12, 2, 2);
   };
-  canvasTexture(scene, TEX.shrine, 16, 32, (ctx) => shrine(ctx, false));
-  canvasTexture(scene, TEX.shrineSpent, 16, 32, (ctx) => shrine(ctx, true));
+  canvasTexture(scene, TEX.module, 16, 32, (ctx) => module(ctx, false));
+  canvasTexture(scene, TEX.moduleSpent, 16, 32, (ctx) => module(ctx, true));
 
-  canvasTexture(scene, TEX.heartcoal, 12, 12, (ctx) => {
-    poly(ctx, PALETTE.cinder, [[6, 0], [12, 4], [10, 11], [2, 11], [0, 4]]);
-    poly(ctx, PALETTE.emberDeep, [[6, 2], [10, 5], [8, 9], [3, 9], [2, 5]]);
-    poly(ctx, PALETTE.ember, [[6, 3], [8, 5], [6, 8], [4, 5]]);
-    px(ctx, PALETTE.bone, 5, 4, 1, 1);
+  canvasTexture(scene, TEX.cell, 12, 12, (ctx) => {
+    px(ctx, PALETTE.steel, 4, 0, 4, 2);
+    px(ctx, 0x1c2132, 2, 2, 8, 10);
+    px(ctx, PALETTE.cyan, 3, 6, 6, 5);
+    px(ctx, PALETTE.white, 4, 7, 1, 3);
+    px(ctx, PALETTE.steel, 2, 2, 8, 1);
   });
 
   canvasTexture(scene, TEX.crackedWall, 16, 16, (ctx) => {
-    px(ctx, 0x1f1b24, 0, 0, 16, 16);
-    px(ctx, 0x2a2530, 1, 1, 14, 14);
-    ctx.strokeStyle = css(PALETTE.stoneDark, 0.9);
+    px(ctx, 0x1f2333, 0, 0, 16, 16);
+    px(ctx, 0x2a2f42, 1, 1, 14, 14);
+    ctx.strokeStyle = css(PALETTE.steel, 0.9);
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(3, 1);
@@ -458,58 +492,88 @@ function makeObjects(scene: Phaser.Scene): void {
     ctx.moveTo(7, 6);
     ctx.lineTo(13, 8);
     ctx.stroke();
-    px(ctx, PALETTE.ember, 7, 6, 1, 1, 0.5);
+    px(ctx, PALETTE.sodium, 7, 6, 1, 1, 0.6);
   });
 
-  canvasTexture(scene, TEX.gate, 16, 16, (ctx) => {
-    for (let x = 1; x < 16; x += 5) {
-      px(ctx, 0x3a2a24, x, 0, 3, 16);
-      px(ctx, PALETTE.ember, x + 1, 0, 1, 16, 0.55);
+  canvasTexture(scene, TEX.bossGate, 16, 16, (ctx) => {
+    px(ctx, 0x2a2f42, 0, 0, 16, 16);
+    for (let y = 0; y < 16; y += 4) {
+      poly(ctx, PALETTE.sodium, [[0, y], [4, y], [8, y + 4], [4, y + 4]], 0.8);
+      poly(ctx, PALETTE.sodium, [[8, y], [12, y], [16, y + 4], [12, y + 4]], 0.8);
     }
-    px(ctx, 0x2a1e1a, 0, 7, 16, 2);
+    px(ctx, PALETTE.ink, 0, 0, 16, 1);
   });
+
+  canvasTexture(scene, TEX.laserGate, 16, 16, (ctx) => {
+    for (const x of [3, 8, 13]) {
+      px(ctx, PALETTE.magentaDeep, x - 1, 0, 3, 16, 0.5);
+      px(ctx, PALETTE.magenta, x, 0, 1, 16);
+    }
+  });
+
+  const sw = (ctx: Ctx, live: boolean) => {
+    px(ctx, PALETTE.steel, 7, 18, 2, 14);
+    px(ctx, 0x1c2132, 2, 4, 12, 14);
+    px(ctx, PALETTE.steel, 2, 4, 12, 1);
+    px(ctx, live ? PALETTE.cyan : PALETTE.danger, 5, 7, 6, 3);
+    px(ctx, live ? PALETTE.white : PALETTE.magentaDeep, 6, 12, 4, 3);
+    px(ctx, PALETTE.sodium, 4, 16, 8, 1, 0.8);
+  };
+  canvasTexture(scene, TEX.switchIdle, 16, 32, (ctx) => sw(ctx, false));
+  canvasTexture(scene, TEX.switchLive, 16, 32, (ctx) => sw(ctx, true));
 }
 
 function makeHud(scene: Phaser.Scene): void {
-  const ember = (ctx: Ctx, full: boolean) => {
-    poly(ctx, full ? PALETTE.emberDeep : 0x2a2228, [[6, 0], [11, 6], [9, 13], [3, 13], [1, 6]]);
+  const cell = (ctx: Ctx, full: boolean) => {
+    px(ctx, full ? PALETTE.cyanDeep : 0x1c2132, 0, 0, 8, 12);
     if (full) {
-      poly(ctx, PALETTE.ember, [[6, 3], [9, 7], [8, 11], [4, 11], [3, 7]]);
-      poly(ctx, PALETTE.emberBright, [[6, 6], [7, 9], [5, 9]]);
+      px(ctx, PALETTE.cyan, 1, 1, 6, 10);
+      px(ctx, PALETTE.white, 2, 2, 1, 8, 0.8);
     } else {
-      ctx.strokeStyle = css(PALETTE.stoneDark, 0.9);
+      ctx.strokeStyle = css(PALETTE.steel, 0.9);
       ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(6, 0.5);
-      ctx.lineTo(11, 6);
-      ctx.lineTo(9, 13);
-      ctx.lineTo(3, 13);
-      ctx.lineTo(1, 6);
-      ctx.closePath();
-      ctx.stroke();
+      ctx.strokeRect(0.5, 0.5, 7, 11);
     }
   };
-  canvasTexture(scene, TEX.hudEmberFull, 12, 14, (ctx) => ember(ctx, true));
-  canvasTexture(scene, TEX.hudEmberEmpty, 12, 14, (ctx) => ember(ctx, false));
-  canvasTexture(scene, TEX.hudVeilstep, 16, 16, (ctx) => {
-    poly(ctx, PALETTE.bio, [[8, 8], [1, 3], [3, 12]], 0.9);
-    poly(ctx, PALETTE.bio, [[8, 8], [15, 3], [13, 12]], 0.9);
-    px(ctx, PALETTE.emberBright, 7, 5, 2, 7);
+  canvasTexture(scene, TEX.hudCellFull, 8, 12, (ctx) => cell(ctx, true));
+  canvasTexture(scene, TEX.hudCellEmpty, 8, 12, (ctx) => cell(ctx, false));
+  canvasTexture(scene, TEX.hudBacktrace, 16, 16, (ctx) => {
+    ctx.strokeStyle = css(PALETTE.cyan);
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(8, 8, 6, Math.PI * 0.15, Math.PI * 1.85);
+    ctx.stroke();
+    poly(ctx, PALETTE.cyan, [[12, 1], [15, 5], [11, 6]]);
+    ctx.beginPath();
+    ctx.moveTo(8, 8);
+    ctx.lineTo(5, 5);
+    ctx.stroke();
+    px(ctx, PALETTE.white, 7, 7, 2, 2);
   });
   canvasTexture(scene, TEX.title, 64, 64, (ctx) => {
     radial(ctx, 32, 32, 30, [
-      [0, css(PALETTE.emberBright, 0.9)],
-      [0.3, css(PALETTE.ember, 0.4)],
-      [1, css(PALETTE.ember, 0)],
+      [0, css(PALETTE.cyan, 0.7)],
+      [0.35, css(PALETTE.violet, 0.3)],
+      [1, css(PALETTE.violet, 0)],
     ]);
-    poly(ctx, PALETTE.bone, [[32, 14], [38, 30], [32, 48], [26, 30]], 0.9);
-    poly(ctx, PALETTE.ember, [[32, 22], [35, 30], [32, 40], [29, 30]]);
+    // A broken clock face whose hand points backwards.
+    ctx.strokeStyle = css(PALETTE.chrome, 0.95);
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(32, 32, 15, -Math.PI * 0.35, Math.PI * 1.45);
+    ctx.stroke();
+    ctx.strokeStyle = css(PALETTE.cyan);
+    ctx.beginPath();
+    ctx.moveTo(32, 32);
+    ctx.lineTo(23, 24);
+    ctx.stroke();
+    px(ctx, PALETTE.magenta, 30, 30, 4, 4);
   });
 }
 
 // ---------------------------------------------------------------- backgrounds
 
-/** Tileable cave backdrop layers (far stalactites, mid pillars), drawn per theme. */
+/** Tileable city backdrop layers: a far skyline with lit windows, and near overpass pillars with signs. */
 export function makeBackdrop(scene: Phaser.Scene, key: string, tint: number, layer: 'far' | 'mid', seed: number): void {
   const W = 512;
   const H = 300;
@@ -517,24 +581,37 @@ export function makeBackdrop(scene: Phaser.Scene, key: string, tint: number, lay
     const rng = createRng(seed);
     if (layer === 'far') {
       for (let x = 0; x < W; ) {
-        const w = 10 + rng() * 26;
-        const len = 30 + rng() * 110;
-        poly(ctx, tint, [[x, 0], [x + w, 0], [x + w * 0.55, len]], 0.9);
-        const floorLen = 20 + rng() * 70;
-        poly(ctx, tint, [[x + w * 0.2, H], [x + w * 1.2, H], [x + w * 0.7, H - floorLen]], 0.8);
-        x += w * (0.6 + rng() * 0.8);
+        const w = 18 + rng() * 34;
+        const h = 90 + rng() * 170;
+        const top = H - h;
+        px(ctx, tint, x, top, w, h, 0.95);
+        if (rng() < 0.4) px(ctx, tint, x + w * 0.4, top - 12 - rng() * 14, 2, 26, 0.95); // antenna
+        // Windows: sparse lit cells
+        for (let wy = top + 6; wy < H - 6; wy += 6) {
+          for (let wx = x + 3; wx < x + w - 3; wx += 5) {
+            const r = rng();
+            if (r < 0.1) px(ctx, PALETTE.sodium, wx, wy, 2, 2, 0.55);
+            else if (r < 0.14) px(ctx, PALETTE.cyan, wx, wy, 2, 2, 0.45);
+          }
+        }
+        x += w + 2 + rng() * 6;
       }
     } else {
-      for (let i = 0; i < 6; i++) {
-        const x = (i / 6) * W + rng() * 40;
-        const w = 18 + rng() * 22;
-        px(ctx, tint, x, 0, w, H, 0.85);
-        // Arch between pillars
-        ctx.fillStyle = css(tint, 0.85);
-        ctx.beginPath();
-        ctx.ellipse(x + w + 30, 40 + rng() * 30, 50, 26, 0, Math.PI, 0, true);
-        ctx.fill();
-        px(ctx, 0xffffff, x + 2, 0, 1, H, 0.03);
+      for (let i = 0; i < 5; i++) {
+        const x = (i / 5) * W + rng() * 40;
+        const w = 22 + rng() * 18;
+        px(ctx, tint, x, 0, w, H, 0.9);
+        // Overpass deck spanning between pillars
+        px(ctx, tint, x - 30, 40 + rng() * 30, w + 110, 12, 0.9);
+        // Unreadable neon sign blocks (shapes only, no text)
+        if (rng() < 0.8) {
+          const sc = rng() < 0.5 ? PALETTE.magenta : PALETTE.cyan;
+          const sy = 90 + rng() * 120;
+          px(ctx, sc, x + 4, sy, w - 8, 2, 0.6);
+          for (let k = 0; k < 3; k++) px(ctx, sc, x + 6 + k * ((w - 14) / 3), sy + 5, (w - 18) / 3, 6, 0.35);
+          px(ctx, sc, x + 4, sy + 14, w - 8, 2, 0.6);
+        }
+        px(ctx, mix(tint, PALETTE.white, 0.3), x + 2, 0, 1, H, 0.12);
       }
     }
   });
@@ -543,9 +620,9 @@ export function makeBackdrop(scene: Phaser.Scene, key: string, tint: number, lay
 export function makeAllTextures(scene: Phaser.Scene): void {
   makeEffects(scene);
   makePlayer(scene);
-  makeAshgrub(scene);
-  makeWisp(scene);
-  makeWarden(scene);
+  makeHound(scene);
+  makeDrone(scene);
+  makeBulwark(scene);
   makeObjects(scene);
   makeHud(scene);
 }

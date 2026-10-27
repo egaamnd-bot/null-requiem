@@ -3,10 +3,10 @@ import type { RoomDef, TilePoint, TileRect } from '../world/types';
 import { Backtrace } from './backtrace';
 import { bodyRect } from './body';
 import { hitConnects, type Damageable, type DamageSource } from './combat';
-import { Ashgrub } from './enemies/ashgrub';
+import { ScrapHound } from './enemies/scrapHound';
 import type { Enemy, EnemyContext } from './enemies/enemy';
-import { KilnWarden } from './enemies/kilnWarden';
-import { LanternWisp } from './enemies/lanternWisp';
+import { BulwarkUnit } from './enemies/bulwarkUnit';
+import { WatcherDrone } from './enemies/watcherDrone';
 import type { Emit, GameEvent } from './events';
 import { GameFlow } from './flow';
 import { emptyFrame, type InputFrame } from './input';
@@ -26,7 +26,7 @@ export interface CheckpointState {
 
 export interface PickupState {
   id: string;
-  kind: 'backtrace' | 'heartcoal';
+  kind: 'backtrace' | 'cell';
   rect: Rect;
   taken: boolean;
 }
@@ -120,7 +120,7 @@ export interface RoomState {
   def: RoomDef;
   grid: TileGrid;
   enemies: Enemy[];
-  boss: KilnWarden | null;
+  boss: BulwarkUnit | null;
   projectiles: Projectile[];
   checkpoints: CheckpointState[];
   pickups: PickupState[];
@@ -294,20 +294,20 @@ export class GameWorld {
     const timedGateTiles: TilePoint[] = [];
     const switchMarkers: TileMarker[] = [];
 
-    let wispIndex = 0;
+    let droneIndex = 0;
     for (const m of parsed.markers) {
       const id = `${roomId}:${m.char}:${m.col},${m.row}`;
       switch (m.char) {
         case 'C':
-          room.enemies.push(new Ashgrub(id, tileCenterX(m.col), tileFeetY(m.row)));
+          room.enemies.push(new ScrapHound(id, tileCenterX(m.col), tileFeetY(m.row)));
           break;
         case 'W':
-          room.enemies.push(new LanternWisp(id, tileCenterX(m.col), (m.row + 0.5) * TILE_SIZE, wispIndex++ * 1.7));
+          room.enemies.push(new WatcherDrone(id, tileCenterX(m.col), (m.row + 0.5) * TILE_SIZE, droneIndex++ * 1.7));
           break;
         case 'X': {
           if (this.progression.bossDefeated) break;
           const arena = def.bossArena ? tileRectToPx(def.bossArena) : { x: 0, y: 0, w: grid.widthPx, h: grid.heightPx };
-          room.boss = new KilnWarden(id, tileCenterX(m.col), tileFeetY(m.row), {
+          room.boss = new BulwarkUnit(id, tileCenterX(m.col), tileFeetY(m.row), {
             left: arena.x,
             right: arena.x + arena.w,
             ceilingY: arena.y,
@@ -335,7 +335,7 @@ export class GameWorld {
         case 'H':
           room.pickups.push({
             id,
-            kind: 'heartcoal',
+            kind: 'cell',
             rect: { x: m.col * TILE_SIZE + 2, y: m.row * TILE_SIZE + 2, w: TILE_SIZE - 4, h: TILE_SIZE - 4 },
             taken: this.progression.secrets.has(id),
           });
@@ -717,7 +717,7 @@ export class GameWorld {
       this.setGates(false);
       this.emit({ type: 'bossDefeated', x: boss.centerX, y: boss.centerY });
       this.onSave(this.progression);
-      this.victoryTimer = BOSS.kilnWarden.victoryDelay;
+      this.victoryTimer = BOSS.bulwarkUnit.victoryDelay;
     }
     if (this.victoryTimer > 0 && !this.player.dead) {
       this.victoryTimer -= dt;

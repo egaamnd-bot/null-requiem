@@ -1,6 +1,6 @@
 import type { SaveStore } from '../core/progression';
 
-const KEY = 'emberveil.save.v1';
+const KEY = 'nullrequiem.save.v1';
 
 /** Browser localStorage save slot. Fails soft: if storage is unavailable, the game still runs. */
 export class LocalSaveStore implements SaveStore {

@@ -1,21 +1,23 @@
 import type { RoomDef } from './types';
 
 /**
- * The Emberveil vertical slice: three connected rooms.
+ * The Null Requiem vertical slice: three connected rooms.
  *
- *  Ashfall Hollow ──▶ Lantern Gallery ──▶ Cinder Sanctum (miniboss)
+ *  Rainline Alley ──▶ Transit Stacks ──▶ Precinct Vault (miniboss)
  *
- * The Gallery's lower corridor is cut by an ember pit too wide to jump. The Veilstep shrine on
- * the Gallery's upper ledges grants the dash needed to cross it. Ashfall Hollow hides a
- * cracked wall near the start with a Heartcoal (+1 max health) behind it.
+ * Transit Stacks' lower line is cut by a live-current pit that needs a jump + dash. Beyond it a
+ * timed security gate only opens for 1 s when its override switch is struck — too short to
+ * reach on foot. The Backtrace module on the upper catwalks lets the player strike the switch
+ * and snap back to the gate. Rainline Alley hides a cracked wall near the start with an
+ * Integrity Cell (+1 max integrity) behind it.
  */
 
-export const START_ROOM = 'ashfall';
+export const START_ROOM = 'alley';
 
 export const ROOMS: readonly RoomDef[] = [
   {
-    id: 'ashfall',
-    name: 'Ashfall Hollow',
+    id: 'alley',
+    name: 'Rainline Alley',
     layout: [
     '################################################################',
     '################################################################',
@@ -45,12 +47,12 @@ export const ROOMS: readonly RoomDef[] = [
     entries: {
       east: { col: 60, row: 19 },
     },
-    doors: [{ id: 'ashfall-east', area: { col: 63, row: 16, cols: 1, rows: 4 }, to: { room: 'gallery', entry: 'west' } }],
-    theme: { rock: 0x2a2531, edge: 0xb9ad9a, skyTop: 0x07060a, skyBottom: 0x1a0f0c, glow: 0x5fd4c0 },
+    doors: [{ id: 'alley-east', area: { col: 63, row: 16, cols: 1, rows: 4 }, to: { room: 'transit', entry: 'west' } }],
+    theme: { rock: 0x272c3e, edge: 0x8f9bbd, skyTop: 0x05060c, skyBottom: 0x1a0d26, glow: 0x3cf2ff },
   },
   {
-    id: 'gallery',
-    name: 'Lantern Gallery',
+    id: 'transit',
+    name: 'Transit Stacks',
     layout: [
     '################################################################################',
     '################################################################################',
@@ -88,14 +90,14 @@ export const ROOMS: readonly RoomDef[] = [
       east: { col: 76, row: 25 },
     },
     doors: [
-      { id: 'gallery-west', area: { col: 0, row: 22, cols: 1, rows: 4 }, to: { room: 'ashfall', entry: 'east' } },
-      { id: 'gallery-east', area: { col: 79, row: 22, cols: 1, rows: 4 }, to: { room: 'sanctum', entry: 'west' } },
+      { id: 'transit-west', area: { col: 0, row: 22, cols: 1, rows: 4 }, to: { room: 'alley', entry: 'east' } },
+      { id: 'transit-east', area: { col: 79, row: 22, cols: 1, rows: 4 }, to: { room: 'precinct', entry: 'west' } },
     ],
-    theme: { rock: 0x272633, edge: 0xc4b8a2, skyTop: 0x05060b, skyBottom: 0x140c12, glow: 0x7fe0d2 },
+    theme: { rock: 0x252a3a, edge: 0x9aa6c4, skyTop: 0x04060e, skyBottom: 0x0d1830, glow: 0xff3ea5 },
   },
   {
-    id: 'sanctum',
-    name: 'Cinder Sanctum',
+    id: 'precinct',
+    name: 'Precinct Vault',
     layout: [
     '############################################',
     '############################################',
@@ -121,8 +123,8 @@ export const ROOMS: readonly RoomDef[] = [
     entries: {
       west: { col: 2, row: 15 },
     },
-    doors: [{ id: 'sanctum-west', area: { col: 0, row: 12, cols: 1, rows: 4 }, to: { room: 'gallery', entry: 'east' } }],
-    theme: { rock: 0x2e2220, edge: 0xc9a98a, skyTop: 0x0a0505, skyBottom: 0x2a0e08, glow: 0xff9a4a },
+    doors: [{ id: 'precinct-west', area: { col: 0, row: 12, cols: 1, rows: 4 }, to: { room: 'transit', entry: 'east' } }],
+    theme: { rock: 0x2c2a36, edge: 0xa69e92, skyTop: 0x08050a, skyBottom: 0x2a0a14, glow: 0xff3b4e },
     bossTriggerCol: 10,
     bossArena: { col: 6, row: 2, cols: 37, rows: 14 },
   },

@@ -28,20 +28,19 @@ export class VictoryScene extends Phaser.Scene {
   create(): void {
     const { width: W, height: H } = VIEW;
     this.cameras.main.setBackgroundColor(PALETTE.void);
-    this.cameras.main.fadeIn(900, 255, 236, 210);
-    this.add.image(W / 2, H / 2 - 20, TEX.glowSoft).setTint(PALETTE.ember).setBlendMode(Phaser.BlendModes.ADD).setScale(3).setAlpha(0.4);
+    this.cameras.main.fadeIn(900, 200, 240, 255);
+    this.add.image(W / 2, H / 2 - 20, TEX.glowSoft).setTint(PALETTE.cyan).setBlendMode(Phaser.BlendModes.ADD).setScale(3).setAlpha(0.3);
     this.add
-      .text(W / 2, 62, 'THE SANCTUM COOLS', { fontFamily: UI_FONT, fontSize: '22px', color: css(PALETTE.bone), resolution: 2 })
+      .text(W / 2, 62, 'VAULT BREACHED', { fontFamily: UI_FONT, fontSize: '22px', color: css(PALETTE.chrome), resolution: 2 })
       .setOrigin(0.5)
       .setLetterSpacing(5)
-      .setShadow(0, 0, css(PALETTE.ember), 10, false, true);
+      .setShadow(0, 0, css(PALETTE.magenta), 10, false, true);
     this.add
-      .text(W / 2, 92, 'The Kiln Warden is quenched. Beyond its gate, the veil runs deeper.', {
+      .text(W / 2, 92, 'BULWARK-9 is offline. Somewhere below the precinct, a clock is running backwards.', {
         fontFamily: UI_FONT,
         fontSize: '10px',
-        color: css(PALETTE.stone),
-        fontStyle: 'italic',
-        resolution: 2,
+        color: css(PALETTE.mist),
+                resolution: 2,
       })
       .setOrigin(0.5);
     const d = this.victory;
@@ -49,17 +48,17 @@ export class VictoryScene extends Phaser.Scene {
       .text(W / 2, 140, [`Time   ${formatTime(d.playTime)}`, `Deaths   ${d.deaths}`, `Secrets   ${d.secretsFound} / ${d.secretsTotal}`].join('\n'), {
         fontFamily: UI_MONO,
         fontSize: '10px',
-        color: css(PALETTE.bone),
+        color: css(PALETTE.chrome),
         align: 'center',
         lineSpacing: 6,
         resolution: 2,
       })
       .setOrigin(0.5);
     this.add
-      .text(W / 2, H - 46, 'End of the Emberveil vertical slice — thank you for playing.\nPress Enter to return to the title', {
+      .text(W / 2, H - 46, 'End of the Null Requiem vertical slice - thank you for playing.\nPress Enter to return to the title', {
         fontFamily: UI_FONT,
         fontSize: '9px',
-        color: css(PALETTE.stoneDark),
+        color: css(PALETTE.steel),
         align: 'center',
         lineSpacing: 4,
         resolution: 2,

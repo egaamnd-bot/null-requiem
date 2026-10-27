@@ -4,17 +4,17 @@ import type { DamageSource } from '../combat';
 import { approach, clamp, sign } from '../math';
 import { Enemy, type EnemyContext } from './enemy';
 
-export type WispState = 'drift' | 'windup' | 'cooldown' | 'stagger';
+export type DroneState = 'drift' | 'windup' | 'cooldown' | 'stagger';
 
-const T = ENEMIES.lanternWisp;
+const T = ENEMIES.watcherDrone;
 
 /**
- * Lantern Wisp — a drifting, jelly-like spore lantern.
- * It bobs around its roost, keeps its distance once it notices the player, swells while
- * charging (wind-up), then looses a slow ember bolt. Bolts can be cut out of the air.
+ * Watcher Drone — a hovering surveillance drone with a targeting laser.
+ * It bobs around its patrol point, keeps its distance once it notices the player, glows hot while
+ * charging (wind-up), then fires a slow laser bolt. Bolts can be cut out of the air.
  */
-export class LanternWisp extends Enemy<WispState> {
-  readonly kind = 'lanternWisp';
+export class WatcherDrone extends Enemy<DroneState> {
+  readonly kind = 'watcherDrone';
   private clock: number;
   private readonly homeX: number;
   private readonly homeY: number;
@@ -102,7 +102,7 @@ export class LanternWisp extends Enemy<WispState> {
     const len = Math.hypot(dx, dy) || 1;
     const s = T.bolt.size;
     ctx.spawnProjectile({
-      kind: 'emberBolt',
+      kind: 'laserBolt',
       x: this.centerX - s / 2,
       y: this.centerY - s / 2,
       w: s,

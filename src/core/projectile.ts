@@ -3,7 +3,7 @@ import type { Emit } from './events';
 import type { Rect } from './math';
 import type { TileGrid } from './tiles';
 
-export type ProjectileKind = 'emberBolt' | 'shockwave' | 'fallingEmber';
+export type ProjectileKind = 'laserBolt' | 'shockwave' | 'plasmaRain';
 
 export interface ProjectileSpec {
   kind: ProjectileKind;
@@ -80,7 +80,7 @@ export class Projectile implements Damageable {
       this.alive = false;
       return;
     }
-    // Leading-point tile test: bolts and embers burst on terrain, shockwaves stop at walls.
+    // Leading-point tile test: bolts and plasma burst on terrain, shockwaves stop at walls.
     const cx = this.x + this.w / 2;
     const cy = this.y + this.h / 2;
     const leadX = cx + Math.sign(this.vx) * (this.w / 2);

@@ -17,15 +17,16 @@ interface Menu {
 }
 
 /**
- * HUD and overlays drawn above the game: embers (health), Veilstep indicator, boss bar,
+ * HUD and overlays drawn above the game: integrity cells (health), Backtrace indicator, boss bar,
  * toasts and area banners, the pause menu and the game-over prompt.
  */
 export class UIScene extends Phaser.Scene {
   private session!: Session;
   private controls!: InputManager;
-  private embers: Phaser.GameObjects.Image[] = [];
-  private veilIcon!: Phaser.GameObjects.Image;
-  private veilFill!: Phaser.GameObjects.Rectangle;
+  private cells: Phaser.GameObjects.Image[] = [];
+  private btIcon!: Phaser.GameObjects.Image;
+  private btFill!: Phaser.GameObjects.Rectangle;
+  private btLabel!: Phaser.GameObjects.Text;
   private bossName!: Phaser.GameObjects.Text;
   private bossBarBg!: Phaser.GameObjects.Rectangle;
   private bossBar!: Phaser.GameObjects.Rectangle;
@@ -47,7 +48,7 @@ export class UIScene extends Phaser.Scene {
 
   init(data: { session: Session }): void {
     this.session = data.session;
-    this.embers = [];
+    this.cells = [];
     this.toastTimer = 0;
     this.bannerTimer = 0;
     this.overlayFrames = 0;
@@ -58,23 +59,27 @@ export class UIScene extends Phaser.Scene {
     this.controls = new InputManager(this);
     this.controls.swallow();
 
-    this.veilIcon = this.add.image(0, 0, TEX.hudVeilstep).setOrigin(0, 0.5).setVisible(false);
-    this.veilFill = this.add.rectangle(0, 0, 16, 16, PALETTE.void, 0.65).setOrigin(0, 1).setVisible(false);
+    this.btIcon = this.add.image(0, 0, TEX.hudBacktrace).setOrigin(0, 0.5).setVisible(false);
+    this.btFill = this.add.rectangle(0, 0, 16, 16, PALETTE.void, 0.7).setOrigin(0, 1).setVisible(false);
+    this.btLabel = this.add
+      .text(0, 0, 'BACKTRACE', { fontFamily: UI_MONO, fontSize: '7px', color: css(PALETTE.cyan), resolution: 2 })
+      .setOrigin(0, 0.5)
+      .setVisible(false);
 
     this.bossName = this.add
-      .text(W / 2, H - 26, '', { fontFamily: UI_FONT, fontSize: '10px', color: css(PALETTE.bone), resolution: 2 })
+      .text(W / 2, H - 26, '', { fontFamily: UI_FONT, fontSize: '10px', color: css(PALETTE.chrome), resolution: 2 })
       .setOrigin(0.5)
       .setLetterSpacing(2)
       .setVisible(false);
-    this.bossBarBg = this.add.rectangle(W / 2, H - 14, 202, 6, PALETTE.ink, 0.9).setStrokeStyle(1, PALETTE.stoneDark).setVisible(false);
-    this.bossBarLag = this.add.rectangle(W / 2 - 100, H - 14, 200, 4, PALETTE.bone, 0.5).setOrigin(0, 0.5).setVisible(false);
-    this.bossBar = this.add.rectangle(W / 2 - 100, H - 14, 200, 4, PALETTE.ember, 1).setOrigin(0, 0.5).setVisible(false);
+    this.bossBarBg = this.add.rectangle(W / 2, H - 14, 202, 6, PALETTE.ink, 0.9).setStrokeStyle(1, PALETTE.steel).setVisible(false);
+    this.bossBarLag = this.add.rectangle(W / 2 - 100, H - 14, 200, 4, PALETTE.chrome, 0.5).setOrigin(0, 0.5).setVisible(false);
+    this.bossBar = this.add.rectangle(W / 2 - 100, H - 14, 200, 4, PALETTE.magenta, 1).setOrigin(0, 0.5).setVisible(false);
 
     this.toast = this.add
       .text(W / 2, H - 52, '', {
         fontFamily: UI_FONT,
         fontSize: '10px',
-        color: css(PALETTE.bone),
+        color: css(PALETTE.chrome),
         align: 'center',
         backgroundColor: css(PALETTE.void, 0.6),
         padding: { x: 8, y: 4 },
@@ -83,15 +88,15 @@ export class UIScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setAlpha(0);
     this.banner = this.add
-      .text(W / 2, 46, '', { fontFamily: UI_FONT, fontSize: '16px', color: css(PALETTE.bone), resolution: 2 })
+      .text(W / 2, 46, '', { fontFamily: UI_FONT, fontSize: '16px', color: css(PALETTE.chrome), resolution: 2 })
       .setOrigin(0.5)
       .setLetterSpacing(4)
-      .setShadow(0, 0, css(PALETTE.ember), 8, false, true)
+      .setShadow(0, 0, css(PALETTE.magenta), 8, false, true)
       .setAlpha(0);
 
     this.pauseMenu = this.buildMenu('Paused', [
       ['Resume', () => this.session.resume()],
-      ['Return to last lantern', () => this.session.retry()],
+      ['Resync at last relay', () => this.session.retry()],
       ['Quit to title', () => this.session.quit()],
     ]);
     this.gameOver = this.buildGameOver();
@@ -108,23 +113,23 @@ export class UIScene extends Phaser.Scene {
     c.add(this.add.rectangle(0, 0, W, H, PALETTE.void, 0.72).setOrigin(0));
     c.add(
       this.add
-        .text(W / 2, 74, title.toUpperCase(), { fontFamily: UI_FONT, fontSize: '18px', color: css(PALETTE.bone), resolution: 2 })
+        .text(W / 2, 74, title.toUpperCase(), { fontFamily: UI_FONT, fontSize: '18px', color: css(PALETTE.chrome), resolution: 2 })
         .setOrigin(0.5)
         .setLetterSpacing(5),
     );
     const labels = items.map(([label], i) => {
       const t = this.add
-        .text(W / 2, 116 + i * 20, label, { fontFamily: UI_FONT, fontSize: '12px', color: css(PALETTE.stone), resolution: 2 })
+        .text(W / 2, 116 + i * 20, label, { fontFamily: UI_FONT, fontSize: '12px', color: css(PALETTE.mist), resolution: 2 })
         .setOrigin(0.5);
       c.add(t);
       return t;
     });
     c.add(
       this.add
-        .text(W / 2, H - 40, '↑/↓ choose   Enter/Space confirm   Esc resume   M mute', {
+        .text(W / 2, H - 40, 'Up/Down choose   Enter/Space confirm   Esc resume   M mute', {
           fontFamily: UI_MONO,
           fontSize: '8px',
-          color: css(PALETTE.stoneDark),
+          color: css(PALETTE.steel),
           resolution: 2,
         })
         .setOrigin(0.5),
@@ -137,24 +142,24 @@ export class UIScene extends Phaser.Scene {
     c.add(this.add.rectangle(0, 0, W, H, PALETTE.void, 0.78).setOrigin(0));
     c.add(
       this.add
-        .text(W / 2, H / 2 - 22, 'THE EMBER GUTTERS OUT', { fontFamily: UI_FONT, fontSize: '18px', color: css(PALETTE.emberDeep), resolution: 2 })
+        .text(W / 2, H / 2 - 22, 'SIGNAL LOST', { fontFamily: UI_FONT, fontSize: '18px', color: css(PALETTE.danger), resolution: 2 })
         .setOrigin(0.5)
         .setLetterSpacing(4)
-        .setShadow(0, 0, css(PALETTE.ember), 8, false, true),
+        .setShadow(0, 0, css(PALETTE.magenta), 8, false, true),
     );
     c.add(
       this.add
-        .text(W / 2, H / 2 + 10, 'Press Enter / Space to rekindle at the last lantern', {
+        .text(W / 2, H / 2 + 10, 'Press Enter / Space to resync at the last relay', {
           fontFamily: UI_FONT,
           fontSize: '10px',
-          color: css(PALETTE.bone),
+          color: css(PALETTE.chrome),
           resolution: 2,
         })
         .setOrigin(0.5),
     );
     c.add(
       this.add
-        .text(W / 2, H / 2 + 28, 'Esc — return to title', { fontFamily: UI_MONO, fontSize: '8px', color: css(PALETTE.stoneDark), resolution: 2 })
+        .text(W / 2, H / 2 + 28, 'Esc: return to title', { fontFamily: UI_MONO, fontSize: '8px', color: css(PALETTE.steel), resolution: 2 })
         .setOrigin(0.5),
     );
     return c;
@@ -176,25 +181,39 @@ export class UIScene extends Phaser.Scene {
         this.showBanner(e.name);
         break;
       case 'checkpoint':
-        this.showToast(e.firstTime ? 'Hearth lantern kindled — embers restored, progress saved' : 'Embers restored');
+        this.showToast(e.firstTime ? 'Sync relay linked - integrity restored, progress saved' : 'Integrity restored');
         break;
       case 'abilityUnlocked':
-        this.showToast('VEILSTEP awakened\nPress K / C / Shift to dash — even in mid-air', 5);
+        this.showToast('BACKTRACE online\nPress L / V: snap back to your echo (4 s ago) and undo damage taken since', 6);
         break;
       case 'secretFound':
-        this.showToast('A Heartcoal — your embers burn one brighter', 4);
+        this.showToast('Integrity Cell installed - +1 max integrity', 4);
         break;
       case 'wallBroken':
         this.showToast('The cracked wall gives way', 2);
+        break;
+      case 'switchHit':
+        this.showToast('OVERRIDE ACCEPTED - gate cycling for 1 second', 1.6);
+        break;
+      case 'gateLocked':
+        this.showToast(
+          this.session.world.progression.has('backtrace')
+            ? 'Security gate locked - the override switch is back down the line'
+            : 'Security gate locked - the override switch is too far to reach in time',
+          3,
+        );
+        break;
+      case 'gateLatched':
+        this.showToast('Gate bypassed - it will stay open', 2.2);
         break;
       case 'bossStart':
         this.showBanner(e.name);
         break;
       case 'bossPhase':
-        this.showToast('The Warden’s furnace roars hotter…', 2.5);
+        this.showToast('BULWARK-9 is overclocking...', 2.5);
         break;
       case 'bossDefeated':
-        this.showToast('The Kiln Warden falls silent', 3);
+        this.showToast('BULWARK-9 offline', 3);
         break;
       case 'playerHurt':
         this.hurtFlash = 0.25;
@@ -206,25 +225,24 @@ export class UIScene extends Phaser.Scene {
 
   private updateHud(dt: number): void {
     const hud = this.session.world.hud();
-    // Embers (health) — top left.
-    while (this.embers.length < hud.maxHealth) {
-      this.embers.push(this.add.image(12 + this.embers.length * 13, 14, TEX.hudEmberFull).setOrigin(0, 0.5));
+    // Integrity cells (health) — top left.
+    while (this.cells.length < hud.maxHealth) {
+      this.cells.push(this.add.image(12 + this.cells.length * 10, 14, TEX.hudCellFull).setOrigin(0, 0.5));
     }
-    this.embers.forEach((img, i) => {
+    this.cells.forEach((img, i) => {
       const visible = i < hud.maxHealth;
       const full = i < hud.health;
-      img.setVisible(visible).setTexture(full ? TEX.hudEmberFull : TEX.hudEmberEmpty);
-      const pulse = full && i === hud.health - 1 && hud.health <= 2 ? 1 + Math.sin(this.time.now / 120) * 0.12 : 1;
-      img.setScale(pulse);
-      img.setAlpha(this.hurtFlash > 0 && !full ? 0.5 + Math.sin(this.time.now / 30) * 0.5 : 1);
+      img.setVisible(visible).setTexture(full ? TEX.hudCellFull : TEX.hudCellEmpty);
+      const pulse = full && i === hud.health - 1 && hud.health <= 2 ? 0.6 + Math.sin(this.time.now / 120) * 0.4 : 1;
+      img.setAlpha(this.hurtFlash > 0 && !full ? 0.5 + Math.sin(this.time.now / 30) * 0.5 : pulse);
     });
     this.hurtFlash = Math.max(0, this.hurtFlash - dt);
 
-    // Veilstep indicator.
-    const vx = 14 + hud.maxHealth * 13 + 6;
-    this.veilIcon.setVisible(hud.hasBacktrace).setPosition(vx, 14);
-    this.veilFill.setVisible(hud.hasBacktrace && hud.dashCooldown > 0).setPosition(vx, 22).setSize(16, 16 * hud.dashCooldown);
-    this.veilIcon.setAlpha(hud.dashCooldown > 0 ? 0.6 : 1);
+    // Backtrace indicator: icon dims and fills from the bottom while cooling down.
+    const bx = 14 + hud.maxHealth * 10 + 8;
+    this.btIcon.setVisible(hud.hasBacktrace).setPosition(bx, 14).setAlpha(hud.backtraceReady ? 1 : 0.45);
+    this.btFill.setVisible(hud.hasBacktrace && hud.backtraceCooldown > 0).setPosition(bx, 22).setSize(16, 16 * hud.backtraceCooldown);
+    this.btLabel.setVisible(hud.hasBacktrace).setPosition(bx + 19, 14).setAlpha(hud.backtraceReady ? 0.9 : 0.35);
 
     // Boss bar.
     const boss = hud.boss;
@@ -234,7 +252,7 @@ export class UIScene extends Phaser.Scene {
       const ratio = boss.health / boss.max;
       this.bossLag = Math.max(ratio, this.bossLag - dt * 0.4);
       this.bossName.setText(boss.name.toUpperCase());
-      this.bossBar.setSize(200 * ratio, 4).setFillStyle(boss.phase === 2 ? PALETTE.danger : PALETTE.ember);
+      this.bossBar.setSize(200 * ratio, 4).setFillStyle(boss.phase === 2 ? PALETTE.danger : PALETTE.sodium);
       this.bossBarLag.setSize(200 * this.bossLag, 4);
     } else {
       this.bossLag = 1;
@@ -255,7 +273,7 @@ export class UIScene extends Phaser.Scene {
       menu.index = (menu.index + (inp.justPressed('up') ? n - 1 : 1)) % n;
       sfx.play('menu');
     }
-    menu.labels.forEach((l, i) => l.setColor(css(i === menu.index ? PALETTE.emberBright : PALETTE.stoneDark)));
+    menu.labels.forEach((l, i) => l.setColor(css(i === menu.index ? PALETTE.cyan : PALETTE.steel)));
     // Ignore input on the frame the overlay opened (the same key press that opened it).
     if (this.overlayFrames < 2) return;
     if (inp.justPressed('back') || inp.justPressed('pause')) {

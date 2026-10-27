@@ -7,7 +7,7 @@ import { InputLatch } from '../core/input';
 import { saveProgression } from '../core/progression';
 import { GameWorld } from '../core/world';
 import { InputManager } from '../input/InputManager';
-import { BossView, EnemyViewRegistry, PlayerView, ProjectileViews, type RenderPos } from '../render/ActorViews';
+import { BossView, EchoView, EnemyViewRegistry, PlayerView, ProjectileViews, type RenderPos } from '../render/ActorViews';
 import { Fx } from '../render/Fx';
 import { DEPTH, RoomView } from '../render/RoomView';
 import { TEX } from '../render/textures';
@@ -30,6 +30,7 @@ export class GameScene extends Phaser.Scene {
   private camFollow!: CameraFollow;
   private roomView: RoomView | null = null;
   private playerView!: PlayerView;
+  private echoView!: EchoView;
   private enemyViews!: EnemyViewRegistry;
   private projectileViews!: ProjectileViews;
   private bossView: BossView | null = null;
@@ -60,7 +61,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.cameras.main.setBackgroundColor(0x07060a);
+    this.cameras.main.setBackgroundColor(0x05060c);
     this.cameras.main.setRoundPixels(true);
     this.controls = new InputManager(this);
     this.controls.swallow();
@@ -69,6 +70,7 @@ export class GameScene extends Phaser.Scene {
     this.camFollow = new CameraFollow(VIEW.width, VIEW.height, { width: VIEW.width, height: VIEW.height });
 
     this.playerView = new PlayerView(this);
+    this.echoView = new EchoView(this);
     this.enemyViews = new EnemyViewRegistry(this);
     this.projectileViews = new ProjectileViews(this);
     this.fx = new Fx(this);
@@ -99,11 +101,12 @@ export class GameScene extends Phaser.Scene {
       this.bossView?.destroy();
       this.bossView = null;
       this.playerView.destroy();
+      this.echoView.destroy();
       this.fx.destroy();
       this.bus.removeAllListeners();
     });
 
-    this.cameras.main.fadeIn(500, 7, 6, 10);
+    this.cameras.main.fadeIn(500, 5, 6, 12);
     this.exposeDebugHandle();
   }
 
@@ -129,14 +132,14 @@ export class GameScene extends Phaser.Scene {
     const state = this.world.flow.state;
     if (state !== 'gameover' && state !== 'paused') return;
     this.transitioning = true;
-    this.cameras.main.fadeOut(260, 7, 6, 10);
+    this.cameras.main.fadeOut(260, 5, 6, 12);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
       this.world.retry();
       this.fx.setPaused(false);
       this.syncRoom();
       this.controls.swallow();
       this.latch.reset(this.controls.held());
-      this.cameras.main.fadeIn(320, 7, 6, 10);
+      this.cameras.main.fadeIn(320, 5, 6, 12);
       this.transitioning = false;
     });
   }
@@ -145,7 +148,7 @@ export class GameScene extends Phaser.Scene {
     if (this.transitioning) return;
     this.transitioning = true;
     this.world.quitToTitle();
-    this.cameras.main.fadeOut(300, 7, 6, 10);
+    this.cameras.main.fadeOut(300, 5, 6, 12);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
       this.scene.stop(SCENES.ui);
       this.scene.start(SCENES.title, { services: this.services });
@@ -154,12 +157,12 @@ export class GameScene extends Phaser.Scene {
 
   private startDoorTransition(): void {
     this.transitioning = true;
-    this.cameras.main.fadeOut(160, 7, 6, 10);
+    this.cameras.main.fadeOut(160, 5, 6, 12);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
       this.world.completeTransition();
       this.syncRoom();
       this.latch.clearPresses();
-      this.cameras.main.fadeIn(220, 7, 6, 10);
+      this.cameras.main.fadeIn(220, 5, 6, 12);
       this.transitioning = false;
     });
   }
@@ -176,7 +179,7 @@ export class GameScene extends Phaser.Scene {
     };
     // The slice is complete: clear the save so the title offers a fresh journey.
     this.services.store.clear();
-    this.cameras.main.fadeOut(1200, 255, 236, 210);
+    this.cameras.main.fadeOut(1200, 200, 240, 255);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
       this.scene.stop(SCENES.ui);
       this.scene.start(SCENES.victory, data);
@@ -269,6 +272,7 @@ export class GameScene extends Phaser.Scene {
     const player = world.player;
     const ppos = this.renderPos(player.body, alpha);
     this.playerView.update(player, ppos, dt, time);
+    this.echoView.update(world, time);
     this.enemyViews.sync(room.enemies, (en) => this.renderPos(en.body, alpha), time);
     if (room.boss && this.bossView) this.bossView.update(room.boss, this.renderPos(room.boss.body, alpha), time);
     this.projectileViews.sync(room.projectiles, time);
@@ -286,7 +290,7 @@ export class GameScene extends Phaser.Scene {
    */
   private exposeDebugHandle(): void {
     if (typeof window === 'undefined') return;
-    (window as unknown as { emberveil?: unknown }).emberveil = {
+    (window as unknown as { nullRequiem?: unknown }).nullRequiem = {
       world: this.world,
       scene: this,
     };

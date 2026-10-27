@@ -1,18 +1,25 @@
-/** EMBERVEIL palette: near-black depths, warm ember light, pale stone, cool bioluminescence. */
+/**
+ * NULL REQUIEM palette: wet concrete and steel under a near-black night sky, lit by cyan
+ * (the player, time, safety) and magenta (surveillance, the city), with sodium-amber signage
+ * and hot red reserved for danger.
+ */
 export const PALETTE = {
-  void: 0x07060a,
-  ink: 0x0e0c12,
-  shadow: 0x1a1720,
-  stone: 0xb9ad9a,
-  stoneDark: 0x6e655a,
-  bone: 0xe8dcc8,
-  ember: 0xff8a3d,
-  emberBright: 0xffcf6b,
-  emberDeep: 0xc2412b,
-  cinder: 0x7a2418,
-  bio: 0x5fd4c0,
-  bioDeep: 0x1f6f66,
-  danger: 0xff4a2a,
+  void: 0x05060c,
+  ink: 0x0b0d18,
+  shadow: 0x141828,
+  concrete: 0x2a2f42,
+  steel: 0x5b6480,
+  /** Secondary text and UI hints. */
+  mist: 0x9aa6c4,
+  chrome: 0xd8e1f0,
+  cyan: 0x3cf2ff,
+  cyanDeep: 0x157a8c,
+  magenta: 0xff3ea5,
+  magentaDeep: 0x8a1f5c,
+  sodium: 0xffb347,
+  sodiumDeep: 0xa4581a,
+  danger: 0xff3b4e,
+  violet: 0x8a5cff,
   white: 0xffffff,
 } as const;
 
@@ -36,5 +43,6 @@ export function mix(a: number, b: number, t: number): number {
   return (r << 16) | (g << 8) | bl;
 }
 
-export const UI_FONT = '"Georgia", "Times New Roman", serif';
-export const UI_MONO = '"Trebuchet MS", "Segoe UI", sans-serif';
+/** System font stacks only — the game must run offline. */
+export const UI_FONT = '"Trebuchet MS", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+export const UI_MONO = '"Consolas", "Lucida Console", "Courier New", monospace';

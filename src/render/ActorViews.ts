@@ -1,14 +1,15 @@
 import Phaser from 'phaser';
 import { COMBAT } from '../config/tuning';
-import type { Ashgrub } from '../core/enemies/ashgrub';
+import type { ScrapHound } from '../core/enemies/scrapHound';
 import type { Enemy } from '../core/enemies/enemy';
-import type { KilnWarden } from '../core/enemies/kilnWarden';
-import { LanternWisp } from '../core/enemies/lanternWisp';
+import type { BulwarkUnit } from '../core/enemies/bulwarkUnit';
+import { WatcherDrone } from '../core/enemies/watcherDrone';
 import type { Player } from '../core/player';
 import type { Projectile } from '../core/projectile';
+import type { GameWorld } from '../core/world';
 import { PALETTE } from './palette';
 import { DEPTH } from './RoomView';
-import { grubKey, playerKey, TEX, wardenKey, wispKey, type PlayerFrame } from './textures';
+import { houndKey, playerKey, TEX, bulwarkKey, droneKey, type PlayerFrame } from './textures';
 
 /** Render-space position (interpolated between simulation steps). */
 export interface RenderPos {
@@ -33,7 +34,7 @@ export class PlayerView {
   private slashTimer = 0;
 
   constructor(scene: Phaser.Scene) {
-    this.glow = scene.add.image(0, 0, TEX.glowSoft).setTint(PALETTE.ember).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.32).setScale(1.3).setDepth(DEPTH.player - 1);
+    this.glow = scene.add.image(0, 0, TEX.glowSoft).setTint(PALETTE.cyan).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.3).setScale(1.2).setDepth(DEPTH.player - 1);
     this.sprite = scene.add.image(0, 0, playerKey('idle0')).setOrigin(0.5, 1).setDepth(DEPTH.player);
     this.slash = scene.add.image(0, 0, TEX.slashSide).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.player + 1).setVisible(false);
   }
@@ -75,7 +76,7 @@ export class PlayerView {
     // Invulnerability blink, death fade.
     const inv = p.health.isInvulnerable && !p.dead;
     this.sprite.setAlpha(p.dead ? 0.85 : inv && Math.floor(time / 70) % 2 === 0 ? 0.35 : 1);
-    flash(this.sprite, p.isDashing, PALETTE.bone);
+    flash(this.sprite, p.isDashing, PALETTE.cyan);
     if (p.isDashing) this.sprite.setAlpha(0.85);
 
     this.glow.setPosition(feetX, feetY - 12).setAlpha(p.dead ? 0.12 : 0.28 + Math.sin(time / 300) * 0.04);
@@ -112,6 +113,53 @@ export class PlayerView {
   }
 }
 
+// ---------------------------------------------------------------- Backtrace echo
+
+/**
+ * The echo: a translucent afterimage showing exactly where Backtrace will send the player
+ * (the oldest recorded spot they can still occupy). Bright when ready, faint while cooling down.
+ */
+export class EchoView {
+  private readonly sprite: Phaser.GameObjects.Image;
+  private readonly glow: Phaser.GameObjects.Image;
+
+  constructor(scene: Phaser.Scene) {
+    this.glow = scene.add.image(0, 0, TEX.glow).setTint(PALETTE.cyan).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.echo - 1).setScale(0.7);
+    this.sprite = scene.add
+      .image(0, 0, playerKey('idle0'))
+      .setOrigin(0.5, 1)
+      .setDepth(DEPTH.echo)
+      .setTint(PALETTE.cyan)
+      .setTintMode(Phaser.TintModes.FILL)
+      .setBlendMode(Phaser.BlendModes.ADD);
+  }
+
+  update(world: GameWorld, time: number): void {
+    const p = world.player;
+    const target =
+      world.progression.has('backtrace') && !p.dead && world.backtrace.historySeconds > 0.3
+        ? world.backtrace.target(world.room.grid, p.body.w, p.body.h)
+        : null;
+    const visible = !!target && Math.abs(target.feetX - p.feetX) + Math.abs(target.feetY - p.feetY) > 6;
+    this.sprite.setVisible(visible);
+    this.glow.setVisible(visible);
+    if (!target || !visible) return;
+    const ready = world.backtrace.ready;
+    // Digital flicker: mostly steady, with brief dropouts.
+    const flicker = Math.sin(time / 37) * Math.sin(time / 91) > 0.85 ? 0.4 : 1;
+    this.sprite
+      .setPosition(Math.round(target.feetX), Math.round(target.feetY))
+      .setFlipX(target.facing < 0)
+      .setAlpha((ready ? 0.45 : 0.14) * flicker);
+    this.glow.setPosition(target.feetX, target.feetY - 11).setAlpha(ready ? 0.35 : 0.08);
+  }
+
+  destroy(): void {
+    this.sprite.destroy();
+    this.glow.destroy();
+  }
+}
+
 // ---------------------------------------------------------------- enemies
 
 interface EnemyView {
@@ -119,29 +167,29 @@ interface EnemyView {
   destroy(): void;
 }
 
-class AshgrubView implements EnemyView {
+class HoundView implements EnemyView {
   private readonly sprite: Phaser.GameObjects.Image;
   private readonly glow: Phaser.GameObjects.Image;
   private readonly tell: Phaser.GameObjects.Image;
 
   constructor(scene: Phaser.Scene) {
-    this.glow = scene.add.image(0, 0, TEX.glow).setTint(PALETTE.ember).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.enemies - 1);
-    this.sprite = scene.add.image(0, 0, grubKey('walk0')).setOrigin(0.5, 1).setDepth(DEPTH.enemies);
-    this.tell = scene.add.image(0, 0, TEX.spark).setTint(PALETTE.bone).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.enemies + 1).setVisible(false);
+    this.glow = scene.add.image(0, 0, TEX.glow).setTint(PALETTE.danger).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.enemies - 1);
+    this.sprite = scene.add.image(0, 0, houndKey('walk0')).setOrigin(0.5, 1).setDepth(DEPTH.enemies);
+    this.tell = scene.add.image(0, 0, TEX.spark).setTint(PALETTE.white).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.enemies + 1).setVisible(false);
   }
 
   update(e: Enemy, pos: RenderPos, time: number): void {
-    const g = e as Ashgrub;
+    const g = e as ScrapHound;
     const b = g.body;
     const fx = Math.round(pos.x + b.w / 2);
     const fy = Math.round(pos.y + b.h);
     let shake = 0;
-    let key = grubKey(Math.floor(time / 180) % 2 === 0 ? 'walk0' : 'walk1');
+    let key = houndKey(Math.floor(time / 180) % 2 === 0 ? 'walk0' : 'walk1');
     if (g.state === 'windup') {
-      key = grubKey('windup');
+      key = houndKey('windup');
       shake = Math.sin(time / 18) * 1;
-    } else if (g.state === 'lunge') key = grubKey('lunge');
-    else if (g.state === 'recover') key = grubKey('recover');
+    } else if (g.state === 'lunge') key = houndKey('lunge');
+    else if (g.state === 'recover') key = houndKey('recover');
     this.sprite.setTexture(key).setPosition(fx + shake, fy).setFlipX(g.facing < 0);
     flash(this.sprite, g.flash > 0);
     const glowA = g.state === 'windup' ? 0.75 : g.state === 'recover' ? 0.12 : 0.35;
@@ -157,24 +205,24 @@ class AshgrubView implements EnemyView {
   }
 }
 
-class WispView implements EnemyView {
+class DroneView implements EnemyView {
   private readonly sprite: Phaser.GameObjects.Image;
   private readonly glow: Phaser.GameObjects.Image;
   private readonly core: Phaser.GameObjects.Image;
 
   constructor(scene: Phaser.Scene) {
-    this.glow = scene.add.image(0, 0, TEX.glowSoft).setTint(PALETTE.bio).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.35).setScale(0.7).setDepth(DEPTH.enemies - 1);
-    this.sprite = scene.add.image(0, 0, wispKey('idle0')).setDepth(DEPTH.enemies).setAlpha(0.95);
-    this.core = scene.add.image(0, 0, TEX.glow).setTint(PALETTE.emberBright).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.enemies + 1);
+    this.glow = scene.add.image(0, 0, TEX.glowSoft).setTint(PALETTE.magenta).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.35).setScale(0.7).setDepth(DEPTH.enemies - 1);
+    this.sprite = scene.add.image(0, 0, droneKey('idle0')).setDepth(DEPTH.enemies).setAlpha(0.95);
+    this.core = scene.add.image(0, 0, TEX.glow).setTint(PALETTE.sodium).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.enemies + 1);
   }
 
   update(e: Enemy, pos: RenderPos, time: number): void {
-    const w = e as LanternWisp;
+    const w = e as WatcherDrone;
     const b = w.body;
     const cx = Math.round(pos.x + b.w / 2);
     const cy = Math.round(pos.y + b.h / 2);
     const charging = w.state === 'windup';
-    const key = charging ? wispKey('charge') : wispKey(Math.floor(time / 300) % 2 === 0 ? 'idle0' : 'idle1');
+    const key = charging ? droneKey('charge') : droneKey(Math.floor(time / 300) % 2 === 0 ? 'idle0' : 'idle1');
     this.sprite.setTexture(key).setPosition(cx, cy + 4).setFlipX(w.facing < 0);
     flash(this.sprite, w.flash > 0);
     this.glow.setPosition(cx, cy);
@@ -195,34 +243,34 @@ export class BossView {
   private readonly ceilingMarks: Phaser.GameObjects.Image[] = [];
 
   constructor(private readonly scene: Phaser.Scene) {
-    this.glow = scene.add.image(0, 0, TEX.glowSoft).setTint(PALETTE.ember).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.enemies - 1);
-    this.sprite = scene.add.image(0, 0, wardenKey('idle')).setOrigin(0.5, 1).setDepth(DEPTH.enemies);
+    this.glow = scene.add.image(0, 0, TEX.glowSoft).setTint(PALETTE.danger).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.enemies - 1);
+    this.sprite = scene.add.image(0, 0, bulwarkKey('idle')).setOrigin(0.5, 1).setDepth(DEPTH.enemies);
   }
 
-  update(boss: KilnWarden, pos: RenderPos, time: number): void {
+  update(boss: BulwarkUnit, pos: RenderPos, time: number): void {
     const b = boss.body;
     const fx = Math.round(pos.x + b.w / 2);
     const fy = Math.round(pos.y + b.h);
-    let key = wardenKey('idle');
+    let key = bulwarkKey('idle');
     let shake = 0;
     switch (boss.state) {
       case 'chargeWindup':
       case 'leapWindup':
       case 'rainWindup':
-        key = wardenKey('windup');
+        key = bulwarkKey('windup');
         shake = Math.sin(time / 20) * (0.5 + boss.windupProgress);
         break;
       case 'charge':
-        key = wardenKey('charge');
+        key = bulwarkKey('charge');
         break;
       case 'leap':
-        key = wardenKey('leap');
+        key = bulwarkKey('leap');
         break;
       case 'stunned':
-        key = wardenKey('stunned');
+        key = bulwarkKey('stunned');
         break;
       case 'dead':
-        key = wardenKey('dead');
+        key = bulwarkKey('dead');
         break;
       case 'intro':
         shake = Math.sin(time / 25) * 1.2;
@@ -235,11 +283,11 @@ export class BossView {
     const hot = boss.state.endsWith('Windup') ? 0.6 + boss.windupProgress * 0.4 : boss.state === 'stunned' || boss.state === 'dead' ? 0.1 : 0.4;
     this.glow.setPosition(fx, fy - 16).setAlpha(hot * (boss.phase === 2 ? 1.2 : 1)).setScale(boss.phase === 2 ? 1.3 : 1.05);
 
-    // Ember-rain telegraphs: floor marker + faint ceiling glow per pending ember.
+    // Plasma-rain telegraphs: floor marker + faint ceiling glow per pending strike.
     const pending = boss.rainMarkers.filter((m) => !m.fired);
     while (this.markers.length < pending.length) {
       this.markers.push(this.scene.add.image(0, 0, TEX.rainMarker).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.fx));
-      this.ceilingMarks.push(this.scene.add.image(0, 0, TEX.glow).setTint(PALETTE.ember).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.fx));
+      this.ceilingMarks.push(this.scene.add.image(0, 0, TEX.glow).setTint(PALETTE.danger).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.fx));
     }
     this.markers.forEach((m, i) => {
       const r = pending[i];
@@ -275,7 +323,7 @@ export class EnemyViewRegistry {
       live.add(e.id);
       let v = this.views.get(e.id);
       if (!v) {
-        v = e instanceof LanternWisp ? new WispView(this.scene) : new AshgrubView(this.scene);
+        v = e instanceof WatcherDrone ? new DroneView(this.scene) : new HoundView(this.scene);
         this.views.set(e.id, v);
       }
       v.update(e, posOf(e), time);
@@ -307,17 +355,17 @@ export class ProjectileViews {
       live.add(p.id);
       let v = this.views.get(p.id);
       if (!v) {
-        const key = p.kind === 'emberBolt' ? TEX.bolt : p.kind === 'shockwave' ? TEX.shockwave : TEX.fallingEmber;
+        const key = p.kind === 'laserBolt' ? TEX.bolt : p.kind === 'shockwave' ? TEX.shockwave : TEX.plasma;
         v = {
           sprite: this.scene.add.image(0, 0, key).setDepth(DEPTH.projectiles).setBlendMode(Phaser.BlendModes.ADD),
-          glow: this.scene.add.image(0, 0, TEX.glow).setTint(PALETTE.ember).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.projectiles - 1).setScale(0.6).setAlpha(0.6),
+          glow: this.scene.add.image(0, 0, TEX.glow).setTint(p.kind === 'laserBolt' ? PALETTE.magenta : p.kind === 'shockwave' ? PALETTE.sodium : PALETTE.danger).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.projectiles - 1).setScale(0.6).setAlpha(0.6),
         };
         this.views.set(p.id, v);
       }
       const cx = p.x + p.w / 2;
       const cy = p.y + p.h / 2;
       v.sprite.setPosition(cx, cy).setFlipX(p.vx < 0);
-      if (p.kind === 'emberBolt') v.sprite.setRotation(time / 80);
+      if (p.kind === 'laserBolt') v.sprite.setRotation(time / 80);
       if (p.kind === 'shockwave') v.sprite.setScale(1, 0.85 + Math.sin(time / 40) * 0.15);
       v.glow.setPosition(cx, cy);
     }

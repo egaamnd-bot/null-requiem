@@ -94,7 +94,7 @@ export const COMBAT = {
 } as const;
 
 export const ENEMIES = {
-  ashgrub: {
+  scrapHound: {
     width: 18,
     height: 12,
     health: 3,
@@ -112,7 +112,7 @@ export const ENEMIES = {
     contactDamage: 1,
     lungeDamage: 1,
   },
-  lanternWisp: {
+  watcherDrone: {
     width: 14,
     height: 14,
     health: 2,
@@ -136,8 +136,8 @@ export const ENEMIES = {
 } as const;
 
 export const BOSS = {
-  kilnWarden: {
-    name: 'The Kiln Warden',
+  bulwarkUnit: {
+    name: 'BULWARK-9',
     width: 34,
     height: 30,
     health: 20,

@@ -4,7 +4,7 @@ import type { DamageSource } from '../combat';
 import { approach, clamp, sign } from '../math';
 import { Enemy, type EnemyContext } from './enemy';
 
-export type WardenState =
+export type BulwarkState =
   | 'dormant'
   | 'intro'
   | 'idle'
@@ -18,7 +18,7 @@ export type WardenState =
   | 'rainRecover'
   | 'dead';
 
-export type WardenAttack = 'charge' | 'leap' | 'rain';
+export type BulwarkAttack = 'charge' | 'leap' | 'rain';
 
 export interface Arena {
   left: number;
@@ -29,35 +29,35 @@ export interface Arena {
 
 export interface RainMarker {
   x: number;
-  /** Seconds until this ember falls. */
+  /** Seconds until this plasma round falls. */
   remaining: number;
   fired: boolean;
 }
 
-const T = BOSS.kilnWarden;
+const T = BOSS.bulwarkUnit;
 
 /**
- * The Kiln Warden — a hulking furnace-construct that tends the sanctum's cinders.
+ * BULWARK-9 — a decommissioned riot-control mech still guarding the precinct vault.
  *
  * Patterns (each with a distinct wind-up and a punish window):
- *  - Charge: lowers its grate and backs up, then rushes across the arena. Slamming into a wall
+ *  - Charge: drops its visor and backs up, then rushes across the arena. Slamming into a wall
  *    stuns it — the biggest damage window in the fight.
  *  - Leap: crouches, then leaps to where the player stood and slams, sending a shockwave
  *    along the floor in both directions (jump it). Recovers briefly after landing.
- *  - Ember rain (below half health): rears up and calls embers down from the ceiling;
+ *  - Plasma rain (below half health): raises its arms and calls a strike down from the ceiling;
  *    glowing floor markers show where each will land.
  */
-export class KilnWarden extends Enemy<WardenState> {
-  readonly kind = 'kilnWarden';
+export class BulwarkUnit extends Enemy<BulwarkState> {
+  readonly kind = 'bulwarkUnit';
   override readonly targetKind = 'boss' as const;
   phase = 1;
   rainMarkers: RainMarker[] = [];
   private nextIdle = 0.8;
-  private lastAttack: WardenAttack | null = null;
+  private lastAttack: BulwarkAttack | null = null;
   private repeatCount = 0;
   private phaseChangePending = false;
   /** Exposed for tests and tuning tools. */
-  lastChosenAttack: WardenAttack | null = null;
+  lastChosenAttack: BulwarkAttack | null = null;
 
   constructor(
     id: string,
@@ -184,8 +184,8 @@ export class KilnWarden extends Enemy<WardenState> {
     this.nextIdle = (T.idleTimeMin + ctx.rng() * (T.idleTimeMax - T.idleTimeMin)) / this.speedMul;
   }
 
-  private chooseAttack(ctx: EnemyContext): WardenAttack {
-    const pool: WardenAttack[] = this.phase === 2 ? ['charge', 'leap', 'rain'] : ['charge', 'leap'];
+  private chooseAttack(ctx: EnemyContext): BulwarkAttack {
+    const pool: BulwarkAttack[] = this.phase === 2 ? ['charge', 'leap', 'rain'] : ['charge', 'leap'];
     // Never use the same attack three times in a row.
     const allowed = this.repeatCount >= 2 ? pool.filter((a) => a !== this.lastAttack) : pool;
     const pick = allowed[Math.floor(ctx.rng() * allowed.length)] ?? 'leap';
@@ -195,9 +195,9 @@ export class KilnWarden extends Enemy<WardenState> {
     return pick;
   }
 
-  private startAttack(attack: WardenAttack, ctx: EnemyContext): void {
+  private startAttack(attack: BulwarkAttack, ctx: EnemyContext): void {
     this.facePlayer(ctx);
-    const state: WardenState =
+    const state: BulwarkState =
       attack === 'charge' ? 'chargeWindup' : attack === 'leap' ? 'leapWindup' : 'rainWindup';
     this.setState(state);
     ctx.emit({ type: 'bossWindup', x: this.centerX, y: this.centerY, attack });
@@ -257,7 +257,7 @@ export class KilnWarden extends Enemy<WardenState> {
       if (m.remaining <= 0) {
         m.fired = true;
         ctx.spawnProjectile({
-          kind: 'fallingEmber',
+          kind: 'plasmaRain',
           x: m.x - r.width / 2,
           y: this.arena.ceilingY,
           w: r.width,

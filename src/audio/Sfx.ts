@@ -25,7 +25,10 @@ export type Cue =
   | 'death'
   | 'menu'
   | 'confirm'
-  | 'victory';
+  | 'victory'
+  | 'backtrace'
+  | 'switch'
+  | 'gate';
 
 export class Sfx {
   private ctx: AudioContext | null = null;
@@ -165,6 +168,19 @@ export class Sfx {
       case 'confirm':
         this.tone('triangle', 520, 780, 0.12, 0.06);
         break;
+      case 'backtrace':
+        // A reversed swell: rises then snaps, like tape rewinding.
+        this.tone('sawtooth', 220, 1400, 0.22, 0.05);
+        this.noise(0.22, 0.25, 'bandpass', 600, 5000);
+        this.tone('sine', 880, 220, 0.18, 0.06, 0.22);
+        break;
+      case 'switch':
+        this.tone('square', 1200, 1200, 0.05, 0.04);
+        this.tone('square', 1600, 1600, 0.06, 0.04, 0.06);
+        break;
+      case 'gate':
+        this.noise(0.12, 0.15, 'highpass', 3000, 1500);
+        break;
       case 'victory':
         [262, 330, 392, 523, 659].forEach((f, i) => this.tone('triangle', f, f, 0.9, 0.06, i * 0.14));
         break;
@@ -187,7 +203,7 @@ export class Sfx {
       case 'playerDied':
         return this.play('death');
       case 'hit':
-        return this.play(e.killed && e.target !== 'projectile' ? 'kill' : e.target === 'projectile' ? 'burst' : 'hit');
+        return this.play(e.target === 'switch' ? 'switch' : e.killed && e.target !== 'projectile' ? 'kill' : e.target === 'projectile' ? 'burst' : 'hit');
       case 'enemyWindup':
       case 'bossWindup':
         return this.play('windup');
@@ -197,6 +213,12 @@ export class Sfx {
         return this.play('burst');
       case 'checkpoint':
         return this.play('checkpoint');
+      case 'backtrace':
+        return this.play('backtrace');
+      case 'switchHit':
+        return this.play('switch');
+      case 'timedGate':
+        return this.play('gate');
       case 'abilityUnlocked':
         return this.play('ability');
       case 'secretFound':
@@ -216,7 +238,7 @@ export class Sfx {
     }
   }
 
-  /** A very quiet two-oscillator cave drone for atmosphere. */
+  /** A very quiet two-oscillator city hum for atmosphere. */
   startDrone(): void {
     const ctx = this.ctx;
     if (!ctx || !this.master || this.drone) return;
