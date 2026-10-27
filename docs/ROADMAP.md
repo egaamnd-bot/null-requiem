@@ -2,7 +2,26 @@
 
 Principle: **don't add breadth until the current slice is stable and enjoyable.** Each milestone ends with a playtest and a go/no-go on feel.
 
-## Milestone 1 — Vertical slice (this PR)
+## Current milestone — 1.5: playable Android test build (in progress)
+
+Goal: the Producer installs the APK, taps Start, enters the game and controls the character with the touchscreen. No larger
+content milestone starts until this is accepted.
+
+Completed (automated evidence in `QA_STATUS.md`; device-unverified):
+- Android debug APK pipeline (PR #3), landscape lock, APK artifact with 14-day retention.
+- Tappable Title / Pause / Game-over / Victory menus (keyboard and gamepad preserved).
+- Rebuilt on-screen controls: d-pad, JMP / ATK / DSH / REW (Backtrace) / TLK, pause button; multi-touch; no stuck buttons.
+- NPC interact wired end to end (touch TLK and keyboard F/E).
+- Regression tests (layout, tracker, tap guard, Android config) and a Playwright touch smoke test.
+- Handover system: `AGENTS.md`, `docs/AI_HANDOVER.md`, `DEVLOG.md`, `QA_STATUS.md`.
+
+Pending:
+- Producer device test using the checklist in `QA_STATUS.md`.
+- Fix whatever the device test finds; then merge PR #3 (Producer decision).
+
+Blockers / risks: see `AI_HANDOVER.md`. Acceptance: all device-checklist rows pass on a real phone and CI is green on the merged commit.
+
+## Milestone 1 — Vertical slice (done, merged in PR #2)
 - Player controller and Backtrace
 - Two enemies and three rooms
 - Checkpoints, a Backtrace-gated puzzle and a secret
@@ -34,7 +53,7 @@ Driven by human playtest data, not new content.
 - Difficulty balancing, accessibility options (assist modes).
 
 ## Later
-- Optional touch controls. The input layer already produces a device-agnostic `HeldInput`.
+- Touch controls shipped in Milestone 1.5; later: rebinding/size/opacity options for the on-screen controls, haptics.
 - Performance budget, browser compatibility matrix, bundle splitting.
 - Packaging decision (web-only vs. desktop wrapper). Producer call.
 

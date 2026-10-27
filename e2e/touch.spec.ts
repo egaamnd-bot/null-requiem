@@ -44,8 +44,11 @@ class Fingers {
     await this.cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: this.points() });
   }
   async up(id: number) {
+    // CDP touchEnd lists the point(s) being RELEASED, not the ones that remain down.
+    const p = this.active.get(id);
+    if (!p) return;
+    await this.cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [{ x: p.x, y: p.y, id }] });
     this.active.delete(id);
-    await this.cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: this.points() });
   }
   async cancelAll() {
     await this.cdp.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
