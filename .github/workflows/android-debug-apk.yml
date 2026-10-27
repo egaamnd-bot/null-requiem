@@ -1,0 +1,107 @@
+name: Android Debug APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - chore/android-debug-apk-pipeline
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-android:
+    name: Test and build Android APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+          cache: npm
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install project dependencies
+        run: npm ci
+
+      - name: Run TypeScript checks
+        run: npm run typecheck
+
+      - name: Run automated tests
+        run: npm test
+
+      - name: Build web game
+        run: npm run build
+
+      - name: Install pinned Capacitor tooling for packaging
+        run: |
+          npm install --no-save --package-lock=false @capacitor/core@7.4.3 @capacitor/android@7.4.3
+          npm install --no-save --package-lock=false @capacitor/cli@7.4.3
+
+      - name: Generate Android project
+        run: |
+          npx cap add android
+          npx cap sync android
+
+      - name: Configure landscape orientation
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          manifest = Path("android/app/src/main/AndroidManifest.xml")
+          text = manifest.read_text()
+          activity = re.search(r'<activity\\b[^>]*>', text)
+          if not activity:
+              raise SystemExit("Could not find Android launcher activity in manifest")
+          tag = activity.group(0)
+          if 'android:screenOrientation=' in tag:
+              tag = re.sub(r'android:screenOrientation="[^"]*"', 'android:screenOrientation="landscape"', tag)
+          else:
+              tag = tag[:-1] + ' android:screenOrientation="landscape">'
+          manifest.write_text(text[:activity.start()] + tag + text[activity.end():])
+          print("Configured launcher activity for landscape orientation")
+          PY
+
+      - name: Build debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug
+
+      - name: Verify APK
+        shell: bash
+        run: |
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          echo "APK_PATH=$APK" >> "$GITHUB_ENV"
+          ls -lh "$APK"
+
+      - name: Upload installable debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: null-requiem-android-debug-${{ github.sha }}
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
