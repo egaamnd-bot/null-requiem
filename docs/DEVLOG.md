@@ -56,3 +56,23 @@ Further commits after `2980676`: `c37b996` (fixed my e2e helper: CDP `touchEnd` 
 - Docs-only commit follows (QA/handover/devlog updated with the above); it re-triggers CI on identical code.
 
 Next action for the next agent: see `docs/AI_HANDOVER.md` -> "Next action".
+
+
+## Session 2026-10-28 — Producer feedback: floating joystick, readability, art direction
+
+Agent: ChatGPT. Branch: `feature/floating-touch-and-visual-pass`, based on PR #3 branch head `983e4287786a23308c73aa930b88a9ffe1c2c443`.
+
+Requested outcomes:
+- Replace the fixed movement pad with a floating joystick.
+- Improve low-resolution/readability.
+- Move away from the previous flat procedural look toward the supplied purple/cyan illustrated action-platformer reference.
+
+Changes implemented:
+- `src/input/touchLayout.ts`: added a lower-left floating joystick activation zone and relative direction mapping.
+- `src/input/TouchTracker.ts`: each movement pointer stores its own origin/current point; supports multi-touch with action buttons.
+- `src/scenes/MobileControlsScene.ts`: joystick ring appears under the initial touch and the knob follows the thumb.
+- `src/main.ts`, `index.html`: render at capped device-pixel resolution, disable forced pixel-art scaling, allow smooth canvas scaling.
+- `src/render/textures.ts`, `src/render/RoomView.ts`: added illustrated neon-purple city/bridge background layers at 2x source resolution.
+- `tests/touchTracker.test.ts`, `tests/touchLayout.test.ts`: added floating joystick regression coverage.
+
+Not yet verified at handover: CI for final head, Android visual rendering, actual joystick feel/readability on phone. The Courier, enemies, NPCs and terrain still use procedural placeholder art; a dedicated sprite pack is required for a faithful match to the reference. Do not overstate the art pass.
