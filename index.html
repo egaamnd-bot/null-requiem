@@ -17,7 +17,7 @@
         -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
       }
       #game { width: 100vw; height: 100vh; height: 100dvh; display: flex; align-items: center; justify-content: center; }
-      canvas { image-rendering: pixelated; }
+      canvas { image-rendering: auto; display: block; touch-action: none; }
       noscript { color: #e8dcc8; font-family: system-ui, sans-serif; }
       /* Force landscape on mobile */
       @media screen and (orientation: portrait) and (max-width: 900px) {
