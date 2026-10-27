@@ -71,7 +71,7 @@ Changes implemented:
 - `src/input/touchLayout.ts`: added a lower-left floating joystick activation zone and relative direction mapping.
 - `src/input/TouchTracker.ts`: each movement pointer stores its own origin/current point; supports multi-touch with action buttons.
 - `src/scenes/MobileControlsScene.ts`: joystick ring appears under the initial touch and the knob follows the thumb.
-- `src/main.ts`, `index.html`: render at capped device-pixel resolution, disable forced pixel-art scaling, allow smooth canvas scaling.
+- `src/main.ts`, `index.html`: remove forced pixel-art scaling and allow smooth canvas scaling.
 - `src/render/textures.ts`, `src/render/RoomView.ts`: added illustrated neon-purple city/bridge background layers at 2x source resolution.
 - `tests/touchTracker.test.ts`, `tests/touchLayout.test.ts`: added floating joystick regression coverage.
 
