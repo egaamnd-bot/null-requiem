@@ -16,8 +16,11 @@ Completed (automated evidence in `QA_STATUS.md`; device-unverified):
 - Handover system: `AGENTS.md`, `docs/AI_HANDOVER.md`, `DEVLOG.md`, `QA_STATUS.md`.
 
 Pending:
-- Producer device test using the checklist in `QA_STATUS.md`.
-- Fix whatever the device test finds; then merge PR #3 (Producer decision).
+- Implement producer feedback on branch `feature/floating-touch-and-visual-pass`: floating joystick, high-DPI rendering, and illustrated neon-city backdrop.
+- CI validation and fresh APK build for the new branch head.
+- Producer device test: joystick feel, text readability, background art and actual Android rendering.
+- A faithful match to the supplied reference still needs a dedicated hand-painted Courier/enemy/NPC sprite pack; current actors and terrain remain procedural placeholders.
+- Fix any device findings; then merge PR #3 (Producer decision).
 
 Blockers / risks: see `AI_HANDOVER.md`. Acceptance: all device-checklist rows pass on a real phone and CI is green on the merged commit.
 
