@@ -20,7 +20,8 @@ concurrency:
 jobs:
   build-android:
     name: Test and build Android APK
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest began migrating to Ubuntu 26 on 2026-10-19, which Playwright's browser deps may not support yet.
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
 
     steps:
@@ -55,10 +56,29 @@ jobs:
         run: npm run build
 
       - name: Install Playwright Chromium for touch smoke tests
-        run: npx playwright install --with-deps chromium
+        shell: bash
+        run: |
+          set +e
+          npx playwright install --with-deps chromium > "$RUNNER_TEMP/pw-install.log" 2>&1
+          code=$?
+          tail -n 25 "$RUNNER_TEMP/pw-install.log"
+          if [ $code -ne 0 ]; then
+            # Surface the tail as an annotation so the failure reason is visible without opening raw logs.
+            echo "::error title=playwright install failed (exit $code)::$(head -n 2 /etc/os-release | tr '\n' ' ') | $(tail -n 12 "$RUNNER_TEMP/pw-install.log" | tr '\n' '|' | cut -c1-1500)"
+            exit $code
+          fi
 
       - name: Run browser touch smoke tests
-        run: npm run test:e2e
+        shell: bash
+        run: |
+          set +e
+          npm run test:e2e > "$RUNNER_TEMP/e2e.log" 2>&1
+          code=$?
+          tail -n 60 "$RUNNER_TEMP/e2e.log"
+          if [ $code -ne 0 ]; then
+            echo "::error title=e2e failed (exit $code)::$(grep -E '✘|Error|expect|Received|Expected|failed|passed' "$RUNNER_TEMP/e2e.log" | head -n 14 | tr '\n' '|' | cut -c1-2500)"
+            exit $code
+          fi
 
       - name: Upload Playwright report on failure
         if: failure()

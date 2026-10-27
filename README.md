@@ -6,6 +6,8 @@ This branch contains **Milestone 1: a playable vertical slice**. It has three co
 
 > The earlier Godot 4 top-down arena prototype is preserved in [`legacy/godot-prototype/`](legacy/godot-prototype/) for reference.
 
+> **AI developers:** start with [`AGENTS.md`](AGENTS.md) and [`docs/AI_HANDOVER.md`](docs/AI_HANDOVER.md).
+
 ## Quick start
 
 Requires Node.js 22.12+ (see `.nvmrc`).
@@ -22,6 +24,7 @@ npm run dev       # play at http://localhost:5173
 | `npm test` | Vitest unit and simulation tests |
 | `npm run build` | Typecheck, then production build into `dist/` |
 | `npm run preview` | Serve the production build at http://localhost:4173 |
+| `npm run test:e2e` | Playwright touch smoke tests against the production build (`npx playwright install chromium` first; build before running) |
 
 The build uses relative paths, so `dist/` can be served from any static host. It needs a web server, not `file://`; use `npm run preview` or `npx serve dist`.
 
@@ -38,10 +41,13 @@ The build uses relative paths, so `dist/` can be served from any static host. It
 | Drop through catwalk | Down + Jump | Down + A |
 | Dash | K, C or Shift | B / Circle, RB, RT |
 | **Backtrace** (once found) | L, V or Q | Y / Triangle, LB, LT |
+| Talk to NPCs / advance dialogue | F or E | Y / Triangle |
 | Pause | Esc or P | Start |
 | Mute | M | — |
 
 All bindings live in [`src/config/controls.ts`](src/config/controls.ts).
+
+**Touch (phones/tablets):** tap menu options directly. In game, an on-screen d-pad (left), JMP / ATK / DSH / REW (Backtrace) / TLK (talk) buttons (right) and a pause button (top right) appear on touch devices. Several fingers work at once (e.g. hold right and tap jump). Layout lives in [`src/input/touchLayout.ts`](src/input/touchLayout.ts).
 
 ## Backtrace
 
