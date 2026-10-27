@@ -105,10 +105,13 @@ test('in game: multi-touch holds move + jump together and releases cleanly', asy
   await startGame(page);
   const cdp = await page.context().newCDPSession(page);
   const f = new Fingers(page, cdp);
-  const right = { x: layout.dpad.x + layout.dpad.r * 0.8, y: layout.dpad.y };
+  // Floating joystick: touch down at a free point in the lower-left zone, then drag right.
+  const origin = { x: 70, y: 185 };
+  const right = { x: 122, y: 185 };
 
   const x0 = await playerX(page);
-  await f.down(1, right);
+  await f.down(1, origin);
+  await f.move(1, right);
   await f.down(2, { x: btn('jump').x, y: btn('jump').y });
   await expect.poll(async () => (await virt(page)).right && (await virt(page)).jump).toBe(true);
   await page.waitForTimeout(500);
@@ -137,7 +140,8 @@ test('in game: touchcancel releases every held button (no stuck input)', async (
   await startGame(page);
   const cdp = await page.context().newCDPSession(page);
   const f = new Fingers(page, cdp);
-  await f.down(1, { x: layout.dpad.x - layout.dpad.r * 0.8, y: layout.dpad.y });
+  await f.down(1, { x: 80, y: 185 });
+  await f.move(1, { x: 28, y: 185 });
   await f.down(2, { x: btn('attack').x, y: btn('attack').y });
   await expect.poll(async () => (await virt(page)).left && (await virt(page)).attack).toBe(true);
   await f.cancelAll();
