@@ -77,8 +77,8 @@ export class RoomView {
     // Skyline parallax — kept darker and lower-contrast than the playable terrain.
     makeBackdrop(scene, `far-${id}`, mix(theme.skyTop, theme.rock, 0.45), 'far', id.length * 31 + 7);
     makeBackdrop(scene, `mid-${id}`, mix(theme.skyTop, theme.rock, 0.6), 'mid', id.length * 17 + 3);
-    this.far = scene.add.tileSprite(0, 0, VIEW.width, VIEW.height, `far-${id}`).setOrigin(0).setScrollFactor(0).setDepth(DEPTH.far).setAlpha(0.7);
-    this.mid = scene.add.tileSprite(0, 0, VIEW.width, VIEW.height, `mid-${id}`).setOrigin(0).setScrollFactor(0).setDepth(DEPTH.mid).setAlpha(0.45);
+    this.far = scene.add.tileSprite(0, 0, VIEW.width, VIEW.height, `far-${id}`).setOrigin(0).setScrollFactor(0).setDepth(DEPTH.far).setAlpha(0.78).setTileScale(0.5, 0.5);
+    this.mid = scene.add.tileSprite(0, 0, VIEW.width, VIEW.height, `mid-${id}`).setOrigin(0).setScrollFactor(0).setDepth(DEPTH.mid).setAlpha(0.62).setTileScale(0.5, 0.5);
     this.add(this.far);
     this.add(this.mid);
 
