@@ -108,7 +108,7 @@ export class MobileControlsScene extends Phaser.Scene {
 
   private buildViews(): void {
     const l = this.layout;
-    const dpad = this.add.graphics().setDepth(1000).setScrollFactor(0);
+    const dpad = this.add.graphics().setDepth(1000).setScrollFactor(0).setVisible(false);
     this.dpadGfx = dpad;
     this.all.push(dpad);
     this.drawDpad();
@@ -140,23 +140,32 @@ export class MobileControlsScene extends Phaser.Scene {
 
   private drawDpad(): void {
     const g = this.dpadGfx;
-    if (!g) return;
-    const { x, y, r } = this.layout.dpad;
+    if (!g || !this.tracker) return;
+    const visual = this.tracker.joystickVisual();
     g.clear();
-    g.fillStyle(0x1a1a2e, 0.55);
-    g.fillCircle(x, y, r);
-    g.lineStyle(1.5, PALETTE.steel, 0.55);
-    g.strokeCircle(x, y, r);
-    const a = r * 0.34;
-    const lit = (k: HoldKey) => (this.padHeld.has(k) ? 0.95 : 0.45);
-    g.fillStyle(PALETTE.chrome, lit('left'));
-    g.fillTriangle(x - r * 0.62, y, x - r * 0.28, y - a, x - r * 0.28, y + a);
-    g.fillStyle(PALETTE.chrome, lit('right'));
-    g.fillTriangle(x + r * 0.62, y, x + r * 0.28, y - a, x + r * 0.28, y + a);
-    g.fillStyle(PALETTE.chrome, lit('up'));
-    g.fillTriangle(x, y - r * 0.62, x - a, y - r * 0.28, x + a, y - r * 0.28);
-    g.fillStyle(PALETTE.chrome, lit('down'));
-    g.fillTriangle(x, y + r * 0.62, x - a, y + r * 0.28, x + a, y + r * 0.28);
+    if (!visual) {
+      g.setVisible(false);
+      return;
+    }
+    g.setVisible(true);
+    const { origin, knob, radius: r } = visual;
+    // The pad appears exactly where the thumb first lands, then its knob follows the finger.
+    g.fillStyle(0x170f2c, 0.42);
+    g.fillCircle(origin.x, origin.y, r * 1.22);
+    g.lineStyle(2, PALETTE.cyan, 0.72);
+    g.strokeCircle(origin.x, origin.y, r * 1.22);
+    g.fillStyle(PALETTE.violet, 0.24);
+    g.fillCircle(origin.x, origin.y, r * 0.68);
+    g.lineStyle(1.5, PALETTE.chrome, 0.72);
+    g.strokeCircle(knob.x, knob.y, r * 0.43);
+    g.fillStyle(PALETTE.cyan, 0.42);
+    g.fillCircle(knob.x, knob.y, r * 0.36);
+    const a = r * 0.16;
+    const lit = (k: HoldKey) => (this.padHeld.has(k) ? 1 : 0.55);
+    if (this.padHeld.has('left')) { g.fillStyle(PALETTE.chrome, lit('left')); g.fillTriangle(knob.x-r*0.18,knob.y,knob.x+r*0.02,knob.y-a,knob.x+r*0.02,knob.y+a); }
+    if (this.padHeld.has('right')) { g.fillStyle(PALETTE.chrome, lit('right')); g.fillTriangle(knob.x+r*0.18,knob.y,knob.x-r*0.02,knob.y-a,knob.x-r*0.02,knob.y+a); }
+    if (this.padHeld.has('up')) { g.fillStyle(PALETTE.chrome, lit('up')); g.fillTriangle(knob.x,knob.y-r*0.18,knob.x-a,knob.y+r*0.02,knob.x+a,knob.y+r*0.02); }
+    if (this.padHeld.has('down')) { g.fillStyle(PALETTE.chrome, lit('down')); g.fillTriangle(knob.x,knob.y+r*0.18,knob.x-a,knob.y-r*0.02,knob.x+a,knob.y-r*0.02); }
   }
 
   private drawButton(v: BtnView): void {
@@ -244,6 +253,9 @@ export class MobileControlsScene extends Phaser.Scene {
     const padChanged = ['left', 'right', 'up', 'down'].some((k) => held.has(k as HoldKey) !== this.padHeld.has(k as HoldKey));
     if (padChanged) {
       this.padHeld = new Set((['left', 'right', 'up', 'down'] as HoldKey[]).filter((k) => held.has(k)));
+      this.drawDpad();
+    } else {
+      // Joystick origin and knob move even when the selected direction does not change.
       this.drawDpad();
     }
   }
