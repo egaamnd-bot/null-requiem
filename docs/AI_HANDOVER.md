@@ -86,7 +86,7 @@ docs, not executed; **[unverified]** = not checked.
 Producer feedback arrived after the prior touch-fix APK:
 1. The fixed-position left movement pad feels awkward. It has now been changed on branch `feature/floating-touch-and-visual-pass` to a floating joystick: touch anywhere in the lower-left movement zone to anchor it under the thumb, then drag to steer. Automated regression tests cover touch-down anchoring, directions, release, and multi-touch.
 2. The game looks low-resolution. The renderer now uses device-pixel resolution (capped at 3x), pixel-art scaling is no longer forced, and CSS no longer forces nearest-neighbour scaling.
-3. The producer's visual target is the supplied reference image: vivid purple/magenta atmospheric city, luminous cyan/green details, layered industrial bridges, painterly action-platformer presentation. Current actors/terrain are still procedural placeholder sprites; a new illustrated multi-layer skyline/bridge backdrop is in progress, but a complete hand-painted character/enemy sprite pack is still required for a faithful match.
+3. The producer's visual target is the supplied reference image: vivid purple/magenta atmospheric city, luminous cyan/green details, layered industrial bridges, painterly action-platformer presentation. Current actors/terrain are still procedural placeholder sprites; the illustrated multi-layer skyline/bridge backdrop and high-detail vector-rendered Courier sprite are implemented; CI and device review are still required. A complete hand-painted character/enemy/NPC sprite pack is still needed for a faithful match.
 
 Next:
 - Inspect CI on the feature branch and fix any typecheck/test/build failures.
