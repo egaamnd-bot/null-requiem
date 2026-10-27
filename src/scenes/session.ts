@@ -22,6 +22,7 @@ export interface Session {
   /** Simulation events are re-broadcast here as 'event'. */
   bus: Phaser.Events.EventEmitter;
   resume(): void;
+  pause(): void;
   retry(): void;
   quit(): void;
 }

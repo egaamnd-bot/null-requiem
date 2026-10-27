@@ -54,6 +54,23 @@ jobs:
       - name: Build web game
         run: npm run build
 
+      - name: Install Playwright Chromium for touch smoke tests
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser touch smoke tests
+        run: npm run test:e2e
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.sha }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Install pinned Capacitor tooling for packaging
         run: |
           # Install all Capacitor packages in one npm operation. Separate --no-save
@@ -85,6 +102,57 @@ jobs:
           print("Configured launcher activity for landscape orientation")
           PY
 
+      - name: Apply fullscreen immersive presentation
+        shell: bash
+        run: |
+          # Hide the system bars (swipe to reveal) and let the game use the display-cutout area,
+          # so the app fills the screen like a native game instead of a browser view.
+          MAIN=$(find android/app/src/main/java -name MainActivity.java | head -n 1)
+          test -n "$MAIN"
+          PKG=$(grep -m1 '^package ' "$MAIN" | sed -E 's/^package ([^;]+);/\1/')
+          cat > "$MAIN" <<JAVA
+          package $PKG;
+
+          import android.os.Build;
+          import android.os.Bundle;
+          import android.view.WindowManager;
+          import androidx.core.view.WindowCompat;
+          import androidx.core.view.WindowInsetsCompat;
+          import androidx.core.view.WindowInsetsControllerCompat;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+            @Override
+            public void onCreate(Bundle savedInstanceState) {
+              super.onCreate(savedInstanceState);
+              if (Build.VERSION.SDK_INT >= 28) {
+                getWindow().getAttributes().layoutInDisplayCutoutMode =
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+              }
+              applyImmersive();
+            }
+
+            @Override
+            public void onWindowFocusChanged(boolean hasFocus) {
+              super.onWindowFocusChanged(hasFocus);
+              if (hasFocus) applyImmersive();
+            }
+
+            private void applyImmersive() {
+              WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+              WindowInsetsControllerCompat controller =
+                  WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+              if (controller != null) {
+                controller.setSystemBarsBehavior(
+                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                controller.hide(WindowInsetsCompat.Type.systemBars());
+              }
+            }
+          }
+          JAVA
+          echo "Wrote $MAIN"
+          head -n 12 "$MAIN"
+
       - name: Build debug APK
         run: |
           cd android
@@ -98,6 +166,21 @@ jobs:
           test -s "$APK"
           echo "APK_PATH=$APK" >> "$GITHUB_ENV"
           ls -lh "$APK"
+
+      - name: Verify landscape orientation in built APK
+        shell: bash
+        run: |
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          TOOL=$(command -v apkanalyzer || find "${ANDROID_HOME:-$ANDROID_SDK_ROOT}" -name apkanalyzer -type f 2>/dev/null | head -n 1)
+          test -n "$TOOL" || { echo "apkanalyzer not found"; exit 1; }
+          "$TOOL" manifest print "$APK" > built-manifest.xml
+          echo "applicationId: $("$TOOL" manifest application-id "$APK")"
+          grep -n 'screenOrientation' built-manifest.xml
+          grep -q 'android:screenOrientation="landscape"' built-manifest.xml
+          echo "Built APK manifest declares landscape orientation"
+
+      - name: Record APK checksum
+        run: sha256sum android/app/build/outputs/apk/debug/app-debug.apk
 
       - name: Upload installable debug APK
         uses: actions/upload-artifact@v4

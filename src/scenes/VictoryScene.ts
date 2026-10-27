@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { VIEW } from '../config/tuning';
 import { InputManager } from '../input/InputManager';
+import { createTapTarget } from '../input/tapTarget';
 import { css, PALETTE, UI_FONT, UI_MONO } from '../render/palette';
 import { TEX } from '../render/textures';
 import { SCENES, type VictoryData } from './session';
@@ -15,6 +16,7 @@ export class VictoryScene extends Phaser.Scene {
   private victory!: VictoryData;
   private controls!: InputManager;
   private age = 0;
+  private leaving = false;
 
   constructor() {
     super(SCENES.victory);
@@ -23,6 +25,7 @@ export class VictoryScene extends Phaser.Scene {
   init(data: VictoryData): void {
     this.victory = data;
     this.age = 0;
+    this.leaving = false;
   }
 
   create(): void {
@@ -55,15 +58,30 @@ export class VictoryScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
     this.add
-      .text(W / 2, H - 46, 'End of the Null Requiem vertical slice - thank you for playing.\nPress Enter to return to the title', {
+      .text(W / 2, H - 62, 'End of the Null Requiem vertical slice - thank you for playing.', {
         fontFamily: UI_FONT,
         fontSize: '9px',
         color: css(PALETTE.steel),
         align: 'center',
-        lineSpacing: 4,
         resolution: 2,
       })
       .setOrigin(0.5);
+    const frame = this.add.rectangle(W / 2, H - 32, 190, 28, PALETTE.ink, 0.6).setStrokeStyle(1, PALETTE.cyan, 0.9);
+    this.add
+      .text(W / 2, H - 32, 'Return to title', { fontFamily: UI_MONO, fontSize: '12px', color: css(PALETTE.cyan), resolution: 2 })
+      .setOrigin(0.5);
+    this.add
+      .text(W / 2, H - 12, 'or press Enter', { fontFamily: UI_MONO, fontSize: '8px', color: css(PALETTE.steel), resolution: 2 })
+      .setOrigin(0.5);
+    createTapTarget(this, {
+      x: W / 2,
+      y: H - 32,
+      width: 190,
+      height: 32,
+      enabled: () => this.age > 1.2 && !this.leaving,
+      onPress: (down) => frame.setFillStyle(down ? PALETTE.violet : PALETTE.ink, down ? 0.85 : 0.6).setScale(down ? 0.97 : 1),
+      onTap: () => this.toTitle(),
+    });
     this.controls = new InputManager(this);
     this.controls.swallow();
     this.victory.services.sfx.play('victory');
@@ -75,7 +93,13 @@ export class VictoryScene extends Phaser.Scene {
     this.age += deltaMs / 1000;
     this.controls.update();
     if (this.age > 1.2 && (this.controls.justPressed('confirm') || this.controls.justPressed('attack'))) {
-      this.scene.start(SCENES.title, { services: this.victory.services });
+      this.toTitle();
     }
+  }
+
+  private toTitle(): void {
+    if (this.leaving) return;
+    this.leaving = true;
+    this.scene.start(SCENES.title, { services: this.victory.services });
   }
 }
