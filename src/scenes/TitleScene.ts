@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { VIEW } from '../config/tuning';
 import { loadProgression, Progression } from '../core/progression';
 import { InputManager } from '../input/InputManager';
+import { createTapTarget, type TapTarget } from '../input/tapTarget';
+import { hasTouchScreen } from './MobileControlsScene';
 import { css, PALETTE, UI_FONT, UI_MONO } from '../render/palette';
 import { TEX } from '../render/textures';
 import { SCENES, type Services } from './session';
@@ -13,6 +15,9 @@ export class TitleScene extends Phaser.Scene {
   private controls!: InputManager;
   private items: MenuItem[] = [];
   private labels: Phaser.GameObjects.Text[] = [];
+  private frames: Phaser.GameObjects.Rectangle[] = [];
+  private pressed: boolean[] = [];
+  private targets: TapTarget[] = [];
   private index = 0;
   private emblem!: Phaser.GameObjects.Image;
   private starting = false;
@@ -25,6 +30,9 @@ export class TitleScene extends Phaser.Scene {
     this.services = data.services;
     this.items = [];
     this.labels = [];
+    this.frames = [];
+    this.pressed = [];
+    this.targets = [];
     this.index = 0;
     this.starting = false;
   }
@@ -70,21 +78,48 @@ export class TitleScene extends Phaser.Scene {
     } else {
       this.items.push({ label: 'Start', action: () => this.begin(new Progression()) });
     }
+    const ITEM_W = 190;
+    const ITEM_H = 28;
+    const FIRST_Y = 176;
+    const STEP = 34;
     this.items.forEach((item, i) => {
+      const y = FIRST_Y + i * STEP;
+      this.frames.push(this.add.rectangle(W / 2, y, ITEM_W, ITEM_H, PALETTE.ink, 0.55).setStrokeStyle(1, PALETTE.steel, 0.6));
       this.labels.push(
-        this.add
-          .text(W / 2, 170 + i * 18, item.label, { fontFamily: UI_MONO, fontSize: '13px', color: css(PALETTE.mist), resolution: 2 })
-          .setOrigin(0.5),
+        this.add.text(W / 2, y, item.label, { fontFamily: UI_MONO, fontSize: '13px', color: css(PALETTE.mist), resolution: 2 }).setOrigin(0.5),
+      );
+      this.pressed.push(false);
+      // Real hit area: the whole framed button, not just the text glyphs.
+      this.targets.push(
+        createTapTarget(this, {
+          x: W / 2,
+          y,
+          width: ITEM_W,
+          height: ITEM_H + 4,
+          enabled: () => !this.starting,
+          onFocus: () => {
+            if (this.index !== i) {
+              this.index = i;
+              this.refresh();
+            }
+          },
+          onPress: (down) => {
+            this.pressed[i] = down;
+            this.refresh();
+          },
+          onTap: () => {
+            this.services.sfx.unlock();
+            item.action();
+          },
+        }),
       );
     });
 
+    const hint = hasTouchScreen()
+      ? 'Tap an option to begin\nOn-screen controls appear in game'
+      : 'Move  A/D or Left/Right    Jump  Space/Z    Strike  J/X    Dash  K/C/Shift    Backtrace  L/V\nAim strikes with W/S or Up/Down    Talk  F/E    Pause  Esc/P    Mute  M    Gamepad supported';
     this.add
-      .text(
-        W / 2,
-        H - 34,
-        'Move  A/D or Left/Right    Jump  Space/Z    Strike  J/X    Dash  K/C/Shift    Backtrace  L/V\nAim strikes with W/S or Up/Down    Pause  Esc/P    Mute  M    Gamepad supported',
-        { fontFamily: UI_MONO, fontSize: '8px', color: css(PALETTE.steel), align: 'center', lineSpacing: 4, resolution: 2 },
-      )
+      .text(W / 2, H - 22, hint, { fontFamily: UI_MONO, fontSize: '8px', color: css(PALETTE.steel), align: 'center', lineSpacing: 4, resolution: 2 })
       .setOrigin(0.5);
 
     this.controls = new InputManager(this);
@@ -96,8 +131,14 @@ export class TitleScene extends Phaser.Scene {
   private refresh(): void {
     this.labels.forEach((l, i) => {
       const sel = i === this.index;
-      l.setColor(css(sel ? PALETTE.cyan : PALETTE.steel));
+      const down = this.pressed[i] === true;
+      l.setColor(css(down ? PALETTE.chrome : sel ? PALETTE.cyan : PALETTE.steel));
       l.setText(sel ? `>  ${this.items[i]!.label}  <` : this.items[i]!.label);
+      this.frames[i]
+        ?.setFillStyle(down ? PALETTE.violet : PALETTE.ink, down ? 0.85 : 0.55)
+        .setStrokeStyle(1, sel ? PALETTE.cyan : PALETTE.steel, sel ? 0.9 : 0.6)
+        .setScale(down ? 0.97 : 1);
+      l.setScale(down ? 0.97 : 1);
     });
   }
 

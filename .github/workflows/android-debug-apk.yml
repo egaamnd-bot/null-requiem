@@ -1,0 +1,231 @@
+name: Android Debug APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - chore/android-debug-apk-pipeline
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-android:
+    name: Test and build Android APK
+    # Pinned: ubuntu-latest began migrating to Ubuntu 26 on 2026-10-19, which Playwright's browser deps may not support yet.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+          cache: npm
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Install project dependencies
+        run: npm ci
+
+      - name: Run TypeScript checks
+        run: npm run typecheck
+
+      - name: Run automated tests
+        run: npm test
+
+      - name: Build web game
+        run: npm run build
+
+      - name: Install Playwright Chromium for touch smoke tests
+        shell: bash
+        run: |
+          set +e
+          npx playwright install --with-deps chromium > "$RUNNER_TEMP/pw-install.log" 2>&1
+          code=$?
+          tail -n 25 "$RUNNER_TEMP/pw-install.log"
+          if [ $code -ne 0 ]; then
+            # Surface the tail as an annotation so the failure reason is visible without opening raw logs.
+            echo "::error title=playwright install failed (exit $code)::$(head -n 2 /etc/os-release | tr '\n' ' ') | $(tail -n 12 "$RUNNER_TEMP/pw-install.log" | tr '\n' '|' | cut -c1-1500)"
+            exit $code
+          fi
+
+      - name: Run browser touch smoke tests
+        shell: bash
+        run: |
+          set +e
+          npm run test:e2e > "$RUNNER_TEMP/e2e.log" 2>&1
+          code=$?
+          tail -n 60 "$RUNNER_TEMP/e2e.log"
+          if [ $code -ne 0 ]; then
+            echo "::error title=e2e failed (exit $code)::$(grep -E '✘|Error|expect|Received|Expected|failed|passed' "$RUNNER_TEMP/e2e.log" | head -n 14 | tr '\n' '|' | cut -c1-2500)"
+            exit $code
+          fi
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.sha }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Install pinned Capacitor tooling for packaging
+        run: |
+          # Install all Capacitor packages in one npm operation. Separate --no-save
+          # installs prune the earlier packages because they are not in package.json.
+          npm install --no-save --package-lock=false @capacitor/core@7.4.3 @capacitor/android@7.4.3 @capacitor/cli@7.4.3
+
+      - name: Generate Android project
+        run: |
+          npx cap add android
+          npx cap sync android
+
+      - name: Configure landscape orientation
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          manifest = Path("android/app/src/main/AndroidManifest.xml")
+          text = manifest.read_text()
+          activity = re.search(r'<activity\b[^>]*>', text)
+          if not activity:
+              raise SystemExit("Could not find Android launcher activity in manifest")
+          tag = activity.group(0)
+          if 'android:screenOrientation=' in tag:
+              tag = re.sub(r'android:screenOrientation="[^"]*"', 'android:screenOrientation="landscape"', tag)
+          else:
+              tag = tag[:-1] + ' android:screenOrientation="landscape">'
+          manifest.write_text(text[:activity.start()] + tag + text[activity.end():])
+          print("Configured launcher activity for landscape orientation")
+          PY
+
+      - name: Apply fullscreen immersive presentation
+        shell: bash
+        run: |
+          # Hide the system bars (swipe to reveal) and let the game use the display-cutout area,
+          # so the app fills the screen like a native game instead of a browser view.
+          MAIN=$(find android/app/src/main/java -name MainActivity.java | head -n 1)
+          test -n "$MAIN"
+          PKG=$(grep -m1 '^package ' "$MAIN" | sed -E 's/^package ([^;]+);/\1/')
+          cat > "$MAIN" <<JAVA
+          package $PKG;
+
+          import android.os.Build;
+          import android.os.Bundle;
+          import android.view.WindowManager;
+          import androidx.core.view.WindowCompat;
+          import androidx.core.view.WindowInsetsCompat;
+          import androidx.core.view.WindowInsetsControllerCompat;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+            @Override
+            public void onCreate(Bundle savedInstanceState) {
+              super.onCreate(savedInstanceState);
+              if (Build.VERSION.SDK_INT >= 28) {
+                getWindow().getAttributes().layoutInDisplayCutoutMode =
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+              }
+              applyImmersive();
+            }
+
+            @Override
+            public void onWindowFocusChanged(boolean hasFocus) {
+              super.onWindowFocusChanged(hasFocus);
+              if (hasFocus) applyImmersive();
+            }
+
+            private void applyImmersive() {
+              WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+              WindowInsetsControllerCompat controller =
+                  WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+              if (controller != null) {
+                controller.setSystemBarsBehavior(
+                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                controller.hide(WindowInsetsCompat.Type.systemBars());
+              }
+            }
+          }
+          JAVA
+          echo "Wrote $MAIN"
+          head -n 12 "$MAIN"
+
+      - name: Build debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug
+
+      - name: Verify APK
+        shell: bash
+        run: |
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          echo "APK_PATH=$APK" >> "$GITHUB_ENV"
+          ls -lh "$APK"
+
+      - name: Verify landscape orientation in built APK
+        shell: bash
+        run: |
+          set +e
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          TOOL=$(command -v apkanalyzer || find "$SDK" -name apkanalyzer -type f 2>/dev/null | head -n 1)
+          AAPT2=$(find "$SDK/build-tools" -name aapt2 -type f 2>/dev/null | sort -V | tail -n 1)
+          echo "apkanalyzer=$TOOL aapt2=$AAPT2"
+          OK=0
+          LINES=""
+          if [ -n "$TOOL" ]; then
+            "$TOOL" manifest print "$APK" > built-manifest.xml 2> apkanalyzer.err
+            echo "applicationId: $("$TOOL" manifest application-id "$APK")"
+            LINES="$(grep -n 'screenOrientation' built-manifest.xml | head -n 3 | tr '\n' '|')"
+            echo "apkanalyzer: $LINES"
+            # Enum attributes may print as their name or as the raw value (0 == landscape).
+            grep -Eq 'android:screenOrientation="(landscape|0)"' built-manifest.xml && OK=1
+          fi
+          if [ "$OK" -ne 1 ] && [ -n "$AAPT2" ]; then
+            "$AAPT2" dump xmltree --file AndroidManifest.xml "$APK" > aapt2-manifest.txt 2> aapt2.err
+            L2="$(grep -n 'screenOrientation' aapt2-manifest.txt | head -n 3 | tr '\n' '|')"
+            echo "aapt2: $L2"
+            LINES="$LINES aapt2: $L2"
+            grep -Eq 'screenOrientation.*(=0x0|=0 |=landscape|\(0x0\)|\)0x0$)' aapt2-manifest.txt && OK=1
+          fi
+          if [ "$OK" -ne 1 ]; then
+            echo "::error title=landscape not confirmed in built APK::tool=$TOOL aapt2=$AAPT2 | $LINES | $(head -c 300 apkanalyzer.err 2>/dev/null) | $(head -n 25 built-manifest.xml 2>/dev/null | tr '\n' '|' | cut -c1-1500)"
+            exit 1
+          fi
+          echo "Built APK manifest declares landscape orientation"
+
+      - name: Record APK checksum
+        run: sha256sum android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload installable debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: null-requiem-android-debug-${{ github.sha }}
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14

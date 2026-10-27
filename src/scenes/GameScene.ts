@@ -12,6 +12,7 @@ import { Fx } from '../render/Fx';
 import { DEPTH, RoomView } from '../render/RoomView';
 import { TEX } from '../render/textures';
 import { ROOMS, START_ROOM } from '../world/rooms';
+import { virtualButtons } from '../input/virtualButtons';
 import { MOBILE_SCENE } from './MobileControlsScene';
 import { SCENES, type GameSceneData, type Services, type Session, type VictoryData } from './session';
 
@@ -86,12 +87,16 @@ export class GameScene extends Phaser.Scene {
       world: this.world,
       services: this.services,
       bus: this.bus,
+      pause: () => this.pause(),
       resume: () => this.resume(),
       retry: () => this.retry(),
       quit: () => this.quit(),
     };
     this.scene.launch(SCENES.ui, { session });
-    this.scene.launch(MOBILE_SCENE);
+    this.scene.launch(MOBILE_SCENE, {
+      isActive: () => this.world.flow.state === 'playing' && !this.transitioning,
+      onPause: () => this.pause(),
+    });
 
     const onBlur = () => this.pause();
     this.game.events.on(Phaser.Core.Events.BLUR, onBlur);
@@ -254,6 +259,9 @@ export class GameScene extends Phaser.Scene {
     if (world.flow.state === 'playing' && !this.transitioning && this.controls.justPressed('pause')) {
       this.pause();
     }
+    if (world.flow.state === 'playing' && !this.transitioning && this.controls.justPressed('interact')) {
+      this.latch.pressInteract();
+    }
 
     this.latch.sample(this.controls.held());
 
@@ -310,6 +318,7 @@ export class GameScene extends Phaser.Scene {
     (window as unknown as { nullRequiem?: unknown }).nullRequiem = {
       world: this.world,
       scene: this,
+      virtualButtons,
     };
   }
 }

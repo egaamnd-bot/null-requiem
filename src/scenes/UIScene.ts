@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { VIEW } from '../config/tuning';
 import type { GameEvent } from '../core/events';
 import { InputManager } from '../input/InputManager';
+import { createTapTarget, type TapTarget } from '../input/tapTarget';
 import { css, PALETTE, UI_FONT, UI_MONO } from '../render/palette';
 import { TEX } from '../render/textures';
 import { SCENES, type Session } from './session';
@@ -12,6 +13,9 @@ const H = VIEW.height;
 interface Menu {
   container: Phaser.GameObjects.Container;
   labels: Phaser.GameObjects.Text[];
+  frames: Phaser.GameObjects.Rectangle[];
+  pressed: boolean[];
+  targets: TapTarget[];
   actions: (() => void)[];
   index: number;
 }
@@ -39,6 +43,11 @@ export class UIScene extends Phaser.Scene {
   private hurtFlash = 0;
   private pauseMenu!: Menu;
   private gameOver!: Phaser.GameObjects.Container;
+  private gameOverTargets: TapTarget[] = [];
+  private gameOverPressed: boolean[] = [];
+  private gameOverFrames: Phaser.GameObjects.Rectangle[] = [];
+  private wasPaused = false;
+  private wasOver = false;
   private overlayFrames = 0;
   private readonly onEvent = (e: GameEvent) => this.handleEvent(e);
 
@@ -52,6 +61,11 @@ export class UIScene extends Phaser.Scene {
     this.toastTimer = 0;
     this.bannerTimer = 0;
     this.overlayFrames = 0;
+    this.gameOverTargets = [];
+    this.gameOverPressed = [];
+    this.gameOverFrames = [];
+    this.wasPaused = false;
+    this.wasOver = false;
     this.bossLag = 1;
   }
 
@@ -117,16 +131,40 @@ export class UIScene extends Phaser.Scene {
         .setOrigin(0.5)
         .setLetterSpacing(5),
     );
-    const labels = items.map(([label], i) => {
-      const t = this.add
-        .text(W / 2, 116 + i * 20, label, { fontFamily: UI_FONT, fontSize: '12px', color: css(PALETTE.mist), resolution: 2 })
-        .setOrigin(0.5);
-      c.add(t);
-      return t;
+    const menu: Menu = { container: c, labels: [], frames: [], pressed: [], targets: [], actions: items.map(([, act]) => act), index: 0 };
+    items.forEach(([label], i) => {
+      const y = 112 + i * 32;
+      const frame = this.add.rectangle(W / 2, y, 200, 26, PALETTE.ink, 0.6).setStrokeStyle(1, PALETTE.steel, 0.6);
+      const t = this.add.text(W / 2, y, label, { fontFamily: UI_FONT, fontSize: '12px', color: css(PALETTE.mist), resolution: 2 }).setOrigin(0.5);
+      c.add([frame, t]);
+      menu.frames.push(frame);
+      menu.labels.push(t);
+      menu.pressed.push(false);
+      menu.targets.push(
+        createTapTarget(this, {
+          x: W / 2,
+          y,
+          width: 200,
+          height: 30,
+          container: c,
+          enabled: () => this.menuLive(),
+          onFocus: () => {
+            menu.index = i;
+          },
+          onPress: (down) => {
+            menu.pressed[i] = down;
+          },
+          onTap: () => {
+            this.session.services.sfx.play('confirm');
+            menu.index = 0;
+            menu.actions[i]?.();
+          },
+        }),
+      );
     });
     c.add(
       this.add
-        .text(W / 2, H - 40, 'Up/Down choose   Enter/Space confirm   Esc resume   M mute', {
+        .text(W / 2, H - 28, 'Tap an option  -  or Up/Down, Enter/Space confirm, Esc resume', {
           fontFamily: UI_MONO,
           fontSize: '8px',
           color: css(PALETTE.steel),
@@ -134,7 +172,7 @@ export class UIScene extends Phaser.Scene {
         })
         .setOrigin(0.5),
     );
-    return { container: c, labels, actions: items.map(([, a]) => a), index: 0 };
+    return menu;
   }
 
   private buildGameOver(): Phaser.GameObjects.Container {
@@ -142,27 +180,55 @@ export class UIScene extends Phaser.Scene {
     c.add(this.add.rectangle(0, 0, W, H, PALETTE.void, 0.78).setOrigin(0));
     c.add(
       this.add
-        .text(W / 2, H / 2 - 22, 'SIGNAL LOST', { fontFamily: UI_FONT, fontSize: '18px', color: css(PALETTE.danger), resolution: 2 })
+        .text(W / 2, H / 2 - 52, 'SIGNAL LOST', { fontFamily: UI_FONT, fontSize: '18px', color: css(PALETTE.danger), resolution: 2 })
         .setOrigin(0.5)
         .setLetterSpacing(4)
         .setShadow(0, 0, css(PALETTE.magenta), 8, false, true),
     );
+    const buttons: [string, () => void][] = [
+      ['Resync at last relay', () => this.session.retry()],
+      ['Return to title', () => this.session.quit()],
+    ];
+    buttons.forEach(([label, action], i) => {
+      const y = H / 2 - 14 + i * 34;
+      const frame = this.add.rectangle(W / 2, y, 210, 28, PALETTE.ink, 0.6).setStrokeStyle(1, PALETTE.steel, 0.7);
+      const t = this.add.text(W / 2, y, label, { fontFamily: UI_FONT, fontSize: '11px', color: css(PALETTE.chrome), resolution: 2 }).setOrigin(0.5);
+      c.add([frame, t]);
+      this.gameOverFrames.push(frame);
+      this.gameOverPressed.push(false);
+      this.gameOverTargets.push(
+        createTapTarget(this, {
+          x: W / 2,
+          y,
+          width: 210,
+          height: 32,
+          container: c,
+          enabled: () => this.overLive(),
+          onPress: (down) => {
+            this.gameOverPressed[i] = down;
+            frame.setFillStyle(down ? PALETTE.violet : PALETTE.ink, down ? 0.85 : 0.6).setScale(down ? 0.97 : 1);
+          },
+          onTap: () => {
+            this.session.services.sfx.play('confirm');
+            action();
+          },
+        }),
+      );
+    });
     c.add(
       this.add
-        .text(W / 2, H / 2 + 10, 'Press Enter / Space to resync at the last relay', {
-          fontFamily: UI_FONT,
-          fontSize: '10px',
-          color: css(PALETTE.chrome),
-          resolution: 2,
-        })
-        .setOrigin(0.5),
-    );
-    c.add(
-      this.add
-        .text(W / 2, H / 2 + 28, 'Esc: return to title', { fontFamily: UI_MONO, fontSize: '8px', color: css(PALETTE.steel), resolution: 2 })
+        .text(W / 2, H / 2 + 62, 'Enter / Space: resync    Esc: title', { fontFamily: UI_MONO, fontSize: '8px', color: css(PALETTE.steel), resolution: 2 })
         .setOrigin(0.5),
     );
     return c;
+  }
+
+  private menuLive(): boolean {
+    return this.session.world.flow.state === 'paused' && this.overlayFrames >= 2;
+  }
+
+  private overLive(): boolean {
+    return this.session.world.flow.state === 'gameover' && this.overlayFrames >= 2;
   }
 
   private showToast(text: string, seconds = 3.2): void {
@@ -273,7 +339,15 @@ export class UIScene extends Phaser.Scene {
       menu.index = (menu.index + (inp.justPressed('up') ? n - 1 : 1)) % n;
       sfx.play('menu');
     }
-    menu.labels.forEach((l, i) => l.setColor(css(i === menu.index ? PALETTE.cyan : PALETTE.steel)));
+    menu.labels.forEach((l, i) => {
+      const sel = i === menu.index;
+      const down = menu.pressed[i] === true;
+      l.setColor(css(down ? PALETTE.chrome : sel ? PALETTE.cyan : PALETTE.steel)).setScale(down ? 0.97 : 1);
+      menu.frames[i]
+        ?.setFillStyle(down ? PALETTE.violet : PALETTE.ink, down ? 0.85 : 0.6)
+        .setStrokeStyle(1, sel ? PALETTE.cyan : PALETTE.steel, sel ? 0.9 : 0.6)
+        .setScale(down ? 0.97 : 1);
+    });
     // Ignore input on the frame the overlay opened (the same key press that opened it).
     if (this.overlayFrames < 2) return;
     if (inp.justPressed('back') || inp.justPressed('pause')) {
@@ -299,6 +373,14 @@ export class UIScene extends Phaser.Scene {
     this.pauseMenu.container.setVisible(paused);
     this.gameOver.setVisible(over);
     this.overlayFrames = paused || over ? this.overlayFrames + 1 : 0;
+    // Re-arm the tap targets every time an overlay opens, and drop any press left over from before.
+    if (paused && !this.wasPaused) {
+      this.pauseMenu.index = 0;
+      this.pauseMenu.targets.forEach((t) => t.reset());
+    }
+    if (over && !this.wasOver) this.gameOverTargets.forEach((t) => t.reset());
+    this.wasPaused = paused;
+    this.wasOver = over;
 
     if (paused) this.updateMenu(this.pauseMenu);
     if (over && this.overlayFrames >= 2) {

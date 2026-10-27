@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { GAMEPAD_BINDINGS, GAMEPAD_STICK_DEADZONE, KEYBOARD_BINDINGS, type Action } from '../config/controls';
 import type { HeldInput } from '../core/input';
-import { virtualButtons } from './virtualButtons';
+import { mergeHeld, virtualButtons } from './virtualButtons';
 
 const ACTIONS = Object.keys(KEYBOARD_BINDINGS) as Action[];
 
@@ -75,7 +75,9 @@ export class InputManager {
     const next = new Map<Action, boolean>();
     for (const action of ACTIONS) {
       const keys = this.keys.get(action) ?? [];
-      const down = keys.some((k) => k.isDown) || this.padDown(action, pad);
+      // The on-screen talk button feeds the same edge detection as the keyboard/gamepad interact bindings.
+      const virtual = action === 'interact' && virtualButtons.interact;
+      const down = keys.some((k) => k.isDown) || this.padDown(action, pad) || virtual;
       const tap = keys.some((k) => tappedKeys.has(k));
       this.tapped.set(action, tap);
       next.set(action, down || tap);
@@ -95,21 +97,19 @@ export class InputManager {
   }
 
   held(): HeldInput {
-    return {
-      left: this.isDown('left') || virtualButtons.left,
-      right: this.isDown('right') || virtualButtons.right,
-      up: this.isDown('up') || virtualButtons.up,
-      down: this.isDown('down') || virtualButtons.down,
-      jump: this.isDown('jump') || virtualButtons.jump,
-      attack: this.isDown('attack') || virtualButtons.attack,
-      dash: this.isDown('dash') || virtualButtons.dash,
-      backtrace: this.isDown('backtrace') || virtualButtons.backtrace,
-    };
-  }
-
-  /** Returns true if the interact virtual button was just pressed (touch only). */
-  get interactPressed(): boolean {
-    return virtualButtons.interact;
+    return mergeHeld(
+      {
+        left: this.isDown('left'),
+        right: this.isDown('right'),
+        up: this.isDown('up'),
+        down: this.isDown('down'),
+        jump: this.isDown('jump'),
+        attack: this.isDown('attack'),
+        dash: this.isDown('dash'),
+        backtrace: this.isDown('backtrace'),
+      },
+      virtualButtons,
+    );
   }
 
   /** Treat everything currently held as already handled (no presses on the next frame). */

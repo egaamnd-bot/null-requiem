@@ -234,63 +234,83 @@ interface CourierPose {
  * across the face and a long data-cable tail trailing from the collar. Drawn facing right.
  */
 function drawCourier(ctx: Ctx, pose: CourierPose): void {
-  const H = 28;
+  // 2x vector-rendered Courier: silver hair, long dark coat, magenta scarf and a cyan energy blade.
+  // The world simulation remains in logical pixels; the source texture carries finer detail.
+  ctx.save();
+  ctx.scale(2, 2);
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
   const bob = pose.bob ?? 0;
   const lean = pose.lean ?? 0;
   const flare = pose.flare ?? 0;
   const stride = pose.stride ?? 0;
   const tail = pose.tail ?? 0;
   const stretch = pose.stretch ?? 0;
-  const jacket = pose.pale ? PALETTE.chrome : 0x1c2236;
-  const hood = pose.pale ? PALETTE.white : 0x262e48;
-  const trim = PALETTE.steel;
-  const cx = 12 + lean;
+  const cx = 12 + lean * 0.5;
   const top = 3 + bob - stretch;
-  const footY = H - 2;
+  const footY = 27;
+  const coat = ctx.createLinearGradient(cx-7,top,cx+7,footY);
+  coat.addColorStop(0, pose.pale ? '#f3efff' : '#454064');
+  coat.addColorStop(0.48, '#211c3b');
+  coat.addColorStop(1, '#101427');
+  const metal = ctx.createLinearGradient(cx-5,top,cx+5,footY);
+  metal.addColorStop(0,'#f8f4ff'); metal.addColorStop(1,'#7e8bb8');
 
-  // Legs and boots
-  px(ctx, 0x10131f, cx - 3 + stride, footY - 4, 2, 5);
-  px(ctx, 0x10131f, cx + 1 - stride, footY - 4, 2, 5);
-  px(ctx, PALETTE.steel, cx - 3 + stride, footY, 3, 1, 0.8);
-  px(ctx, PALETTE.steel, cx + 1 - stride, footY, 3, 1, 0.8);
+  // Boots and articulated legs.
+  ctx.fillStyle='#111426';
+  ctx.beginPath(); ctx.moveTo(cx-4+stride,footY-6); ctx.lineTo(cx-1+stride,footY-6); ctx.lineTo(cx-1,footY-1); ctx.lineTo(cx-6,footY); ctx.lineTo(cx-7,footY-2); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(cx+1-stride,footY-6); ctx.lineTo(cx+4-stride,footY-6); ctx.lineTo(cx+7,footY-2); ctx.lineTo(cx+6,footY); ctx.lineTo(cx+1,footY-1); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#7b8aa9'; ctx.lineWidth=0.8;
+  ctx.beginPath();ctx.moveTo(cx-5+stride,footY-1);ctx.lineTo(cx-2+stride,footY-1);ctx.moveTo(cx+2-stride,footY-1);ctx.lineTo(cx+6,footY-1);ctx.stroke();
 
-  // Jacket: cropped, flares at the hem
-  poly(ctx, jacket, [
-    [cx - 4, top + 9],
-    [cx + 4, top + 9],
-    [cx + 5 + flare * 0.6, footY - 4],
-    [cx - 5 - flare - lean * 0.4, footY - 4],
-  ]);
-  px(ctx, trim, cx - 5 - flare, footY - 5, 10 + flare * 1.6, 1, 0.7);
-  // Chest light strip
-  px(ctx, PALETTE.cyan, cx + 2, top + 12, 1, 4, pose.pale ? 0.4 : 0.85);
-
-  // Hood with a high, squared collar
-  poly(ctx, hood, [
-    [cx - 5, top + 10],
-    [cx - 5, top + 3],
-    [cx - 2, top - 1],
-    [cx + 3, top - 1],
-    [cx + 5, top + 3],
-    [cx + 5, top + 10],
-  ]);
-  // Face shadow and the visor band
-  px(ctx, PALETTE.ink, cx - 1, top + 3, 6, 5);
-  const visor = pose.visor ?? 1;
-  px(ctx, PALETTE.cyan, cx - 1, top + 5, 6, 2, visor);
-  px(ctx, PALETTE.white, cx + 3, top + 5, 2, 1, visor * 0.9);
-  px(ctx, trim, cx - 5, top + 3, 1, 7, 0.7);
-
-  // Data-cable tail from the collar, glowing at the tip
-  ctx.strokeStyle = css(PALETTE.magenta, pose.pale ? 0.4 : 0.9);
-  ctx.lineWidth = 1;
+  // Long split coat, with a flowing asymmetric hem.
+  ctx.fillStyle=coat;
   ctx.beginPath();
-  ctx.moveTo(cx - 5, top + 8);
-  ctx.quadraticCurveTo(cx - 8 - tail, top + 9 - tail * 0.4, cx - 11 - tail, top + 12 - tail * 0.7);
-  ctx.stroke();
-  px(ctx, PALETTE.magenta, cx - 12 - tail, top + 11 - tail * 0.7, 2, 2, pose.pale ? 0.4 : 1);
-}
+  ctx.moveTo(cx-5,top+9); ctx.quadraticCurveTo(cx,top+7,cx+5,top+10);
+  ctx.lineTo(cx+6+flare*0.45,footY-4); ctx.lineTo(cx+1,footY-7);
+  ctx.lineTo(cx-2,footY-3); ctx.lineTo(cx-6-flare*0.4,footY-4); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#8c8bbd';ctx.lineWidth=0.65;
+  ctx.beginPath();ctx.moveTo(cx-4,top+12);ctx.lineTo(cx-3,footY-6);ctx.moveTo(cx+3,top+12);ctx.lineTo(cx+2,footY-7);ctx.stroke();
+  ctx.strokeStyle='#42f5ee';ctx.lineWidth=1.2;
+  ctx.beginPath();ctx.moveTo(cx+1,top+13);ctx.lineTo(cx+2,top+19);ctx.stroke();
 
+  // Shoulder mantle and magenta scarf, trailing behind the dash.
+  ctx.fillStyle='#17162f';
+  ctx.beginPath();ctx.moveTo(cx-5,top+9);ctx.lineTo(cx-8,top+14);ctx.lineTo(cx-5,top+19);ctx.lineTo(cx-2,top+12);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#ff57c8';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(cx-5,top+8);ctx.quadraticCurveTo(cx-10-tail*0.45,top+9-tail*0.15,cx-11-tail,top+12-tail*0.25);ctx.stroke();
+  ctx.strokeStyle='#ffb4ed';ctx.lineWidth=0.55;
+  ctx.beginPath();ctx.moveTo(cx-5,top+9);ctx.quadraticCurveTo(cx-9-tail*0.4,top+10-tail*0.15,cx-11-tail,top+12-tail*0.25);ctx.stroke();
+
+  // Head and high swept silver hair.
+  ctx.fillStyle='#14162a';
+  ctx.beginPath();ctx.ellipse(cx,top+5,5.2,6.2,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=metal;
+  ctx.beginPath();
+  ctx.moveTo(cx-5,top+5);ctx.lineTo(cx-6,top+1);ctx.lineTo(cx-2,top+2);
+  ctx.lineTo(cx,top-2);ctx.lineTo(cx+1,top+1);ctx.lineTo(cx+5,top-1);
+  ctx.lineTo(cx+4,top+3);ctx.lineTo(cx+6,top+5);ctx.lineTo(cx+3,top+7);
+  ctx.lineTo(cx-3,top+7);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#ffffff';ctx.lineWidth=0.6;
+  ctx.beginPath();ctx.moveTo(cx-3,top+2);ctx.lineTo(cx-1,top);ctx.moveTo(cx+1,top+2);ctx.lineTo(cx+4,top+1);ctx.stroke();
+  ctx.fillStyle='#17162b';
+  ctx.beginPath();ctx.moveTo(cx-4,top+5);ctx.lineTo(cx+4,top+5);ctx.lineTo(cx+3,top+10);ctx.lineTo(cx-3,top+10);ctx.closePath();ctx.fill();
+  ctx.fillStyle=pose.pale?'#ff86d4':'#55fff2';
+  ctx.fillRect(cx-2,top+6,5,1.5);
+  ctx.fillStyle='#ffffff';ctx.fillRect(cx+1,top+6,1.6,0.7);
+
+  // Signature mono-blade. It brightens in attack/dash poses.
+  const bladeAlpha = pose.pale ? 0.4 : (pose.flare || pose.lean ? 0.98 : 0.75);
+  ctx.save();
+  ctx.translate(cx+5,top+13);
+  ctx.rotate(pose.lean ? -0.58 : 0.22);
+  ctx.shadowColor='#4efff2';ctx.shadowBlur=5;
+  ctx.fillStyle='rgba(54,245,239,'+bladeAlpha+')';
+  ctx.beginPath();ctx.moveTo(-0.9,0);ctx.lineTo(2.1,0);ctx.lineTo(1.2,11);ctx.lineTo(0,14);ctx.lineTo(-0.7,10);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#f1ffff';ctx.lineWidth=0.7;ctx.beginPath();ctx.moveTo(0,1);ctx.lineTo(0.2,10);ctx.stroke();
+  ctx.restore();
+  ctx.restore();
+}
 function makePlayer(scene: Phaser.Scene): void {
   const poses: Record<PlayerFrame, CourierPose> = {
     idle0: { bob: 0, tail: 0 },
@@ -305,7 +325,7 @@ function makePlayer(scene: Phaser.Scene): void {
     attack: { lean: 2, stride: 1, tail: 2, flare: 1 },
     hurt: { pale: true, lean: -2, flare: 2, visor: 0.3 },
   };
-  for (const f of PLAYER_FRAMES) canvasTexture(scene, playerKey(f), 24, 28, (ctx) => drawCourier(ctx, poses[f]));
+  for (const f of PLAYER_FRAMES) canvasTexture(scene, playerKey(f), 48, 56, (ctx) => drawCourier(ctx, poses[f]));
 }
 
 // ---------------------------------------------------------------- Scrap Hound
@@ -834,48 +854,134 @@ function makeHud(scene: Phaser.Scene): void {
 
 /** Tileable city backdrop layers: a far skyline with lit windows, and near overpass pillars with signs. */
 export function makeBackdrop(scene: Phaser.Scene, key: string, tint: number, layer: 'far' | 'mid', seed: number): void {
-  const W = 512;
-  const H = 300;
+  // High-detail illustrated cyberpunk scenery, deliberately rendered above logical resolution.
+  // This is an original procedural art pass: layered violet haze, luminous windows, curved
+  // elevated rails and heavy foreground silhouettes, rather than flat pixel-block buildings.
+  const W = 960;
+  const H = 540;
   canvasTexture(scene, key, W, H, (ctx) => {
     const rng = createRng(seed);
+    const glow = (x: number, y: number, r: number, color: string, alpha = 1) => {
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, color.replace('ALPHA', String(0.5 * alpha)));
+      g.addColorStop(1, color.replace('ALPHA', '0'));
+      ctx.fillStyle = g;
+      ctx.fillRect(x-r, y-r, r*2, r*2);
+    };
     if (layer === 'far') {
-      for (let x = 0; x < W; ) {
-        const w = 18 + rng() * 34;
-        const h = 90 + rng() * 170;
+      const sky = ctx.createLinearGradient(0, 0, 0, H);
+      sky.addColorStop(0, '#30104e');
+      sky.addColorStop(0.45, '#8a287f');
+      sky.addColorStop(0.72, '#ec5db2');
+      sky.addColorStop(1, '#24163e');
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, W, H);
+      glow(735, 148, 240, 'rgba(255,153,231,ALPHA)', 0.8);
+      glow(225, 270, 230, 'rgba(91,77,255,ALPHA)', 0.8);
+      // Large pale moon / atmospheric light source.
+      const moon = ctx.createRadialGradient(740, 145, 12, 740, 145, 120);
+      moon.addColorStop(0, 'rgba(255,242,255,0.92)');
+      moon.addColorStop(0.72, 'rgba(255,191,246,0.55)');
+      moon.addColorStop(1, 'rgba(255,160,245,0)');
+      ctx.fillStyle = moon;
+      ctx.beginPath(); ctx.arc(740,145,120,0,Math.PI*2); ctx.fill();
+      // Far skyline: varied towers, rounded roofs, lit windows and aerial bridges.
+      for (let x = -12; x < W + 30;) {
+        const w = 28 + rng() * 66;
+        const h = 145 + rng() * 260;
         const top = H - h;
-        px(ctx, tint, x, top, w, h, 0.95);
-        if (rng() < 0.4) px(ctx, tint, x + w * 0.4, top - 12 - rng() * 14, 2, 26, 0.95); // antenna
-        // Windows: sparse lit cells
-        for (let wy = top + 6; wy < H - 6; wy += 6) {
-          for (let wx = x + 3; wx < x + w - 3; wx += 5) {
-            const r = rng();
-            if (r < 0.1) px(ctx, PALETTE.sodium, wx, wy, 2, 2, 0.55);
-            else if (r < 0.14) px(ctx, PALETTE.cyan, wx, wy, 2, 2, 0.45);
+        const grad = ctx.createLinearGradient(x, top, x+w, H);
+        grad.addColorStop(0, css(mix(tint, 0x9c3eae, 0.52), 0.96));
+        grad.addColorStop(1, css(mix(tint, 0x17152f, 0.58), 0.98));
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        if (rng() > 0.55) {
+          ctx.moveTo(x, H); ctx.lineTo(x, top+18); ctx.quadraticCurveTo(x+w*0.5, top-22, x+w, top+18); ctx.lineTo(x+w,H);
+        } else {
+          ctx.moveTo(x, H); ctx.lineTo(x, top+8); ctx.lineTo(x+w*0.78, top); ctx.lineTo(x+w, top+16); ctx.lineTo(x+w,H);
+        }
+        ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = 'rgba(231,139,255,0.24)'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(x+4,top+22); ctx.lineTo(x+4,H); ctx.stroke();
+        for (let wy = top+28; wy < H-16; wy += 17+rng()*7) {
+          for (let wx = x+7; wx < x+w-7; wx += 13+rng()*5) {
+            if (rng() < 0.44) {
+              const colors = ['#a6ffbd','#69f5ff','#ffd0fb','#ffb7d7'];
+              ctx.fillStyle = colors[Math.floor(rng()*colors.length)] || '#a6ffbd';
+              ctx.globalAlpha = 0.35 + rng()*0.55;
+              ctx.fillRect(wx, wy, 4+rng()*2, 6+rng()*3);
+              ctx.globalAlpha = 1;
+            }
           }
         }
-        x += w + 2 + rng() * 6;
-      }
-    } else {
-      for (let i = 0; i < 5; i++) {
-        const x = (i / 5) * W + rng() * 40;
-        const w = 22 + rng() * 18;
-        px(ctx, tint, x, 0, w, H, 0.9);
-        // Overpass deck spanning between pillars
-        px(ctx, tint, x - 30, 40 + rng() * 30, w + 110, 12, 0.9);
-        // Unreadable neon sign blocks (shapes only, no text)
-        if (rng() < 0.8) {
-          const sc = rng() < 0.5 ? PALETTE.magenta : PALETTE.cyan;
-          const sy = 90 + rng() * 120;
-          px(ctx, sc, x + 4, sy, w - 8, 2, 0.6);
-          for (let k = 0; k < 3; k++) px(ctx, sc, x + 6 + k * ((w - 14) / 3), sy + 5, (w - 18) / 3, 6, 0.35);
-          px(ctx, sc, x + 4, sy + 14, w - 8, 2, 0.6);
+        if (rng() < 0.58) {
+          ctx.strokeStyle = 'rgba(82,255,224,0.72)'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(x+w*0.55,top); ctx.lineTo(x+w*0.55,top-26-rng()*26); ctx.stroke();
+          glow(x+w*0.55,top-24,22,'rgba(71,255,205,ALPHA)',0.65);
         }
-        px(ctx, mix(tint, PALETTE.white, 0.3), x + 2, 0, 1, H, 0.12);
+        x += w + 7 + rng()*13;
+      }
+      // Atmospheric rain and a faint distant elevated transit line.
+      ctx.strokeStyle = 'rgba(216,178,255,0.15)'; ctx.lineWidth = 1;
+      for (let i=0;i<90;i++) {
+        const x=rng()*W, y=rng()*H;
+        ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x-7,y+20+rng()*18); ctx.stroke();
+      }
+      ctx.strokeStyle = 'rgba(28,23,57,0.9)'; ctx.lineWidth = 13;
+      ctx.beginPath(); ctx.moveTo(0,330); ctx.bezierCurveTo(240,300,440,370,960,305); ctx.stroke();
+      ctx.strokeStyle = 'rgba(118,241,232,0.58)'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(0,320); ctx.bezierCurveTo(240,290,440,360,960,295); ctx.stroke();
+    } else {
+      // Mid-ground industrial bridges and enormous curved conduits frame the play space.
+      const haze = ctx.createLinearGradient(0,0,0,H);
+      haze.addColorStop(0,'rgba(173,67,189,0.03)');
+      haze.addColorStop(0.6,'rgba(29,25,66,0.30)');
+      haze.addColorStop(1,'rgba(5,8,25,0.88)');
+      ctx.fillStyle=haze; ctx.fillRect(0,0,W,H);
+      for (let i=0;i<7;i++) {
+        const x=i*165-60, w=50+rng()*38;
+        const grad=ctx.createLinearGradient(x,0,x+w,0);
+        grad.addColorStop(0,'rgba(11,17,43,0.88)');
+        grad.addColorStop(0.5,'rgba(49,44,91,0.88)');
+        grad.addColorStop(1,'rgba(8,13,35,0.96)');
+        ctx.fillStyle=grad;
+        ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x+w*0.75,0); ctx.lineTo(x+w,H); ctx.lineTo(x-12,H); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle='rgba(89,255,227,0.32)'; ctx.lineWidth=3;
+        ctx.beginPath(); ctx.moveTo(x+w*0.65,0); ctx.lineTo(x+w*0.88,H); ctx.stroke();
+        for(let wy=30;wy<H-30;wy+=48) {
+          ctx.fillStyle=rng()>0.5?'rgba(113,255,207,0.72)':'rgba(255,104,213,0.62)';
+          ctx.fillRect(x+12,wy,7,18);
+        }
+      }
+      // Heavy elevated walkway, arch ribs and a luminous under-rail.
+      ctx.lineCap='round';
+      ctx.strokeStyle='rgba(5,10,29,0.96)'; ctx.lineWidth=46;
+      ctx.beginPath(); ctx.moveTo(-40,360); ctx.bezierCurveTo(180,315,350,390,510,350); ctx.bezierCurveTo(680,310,820,345,1000,295); ctx.stroke();
+      ctx.strokeStyle='rgba(43,57,91,0.98)'; ctx.lineWidth=30;
+      ctx.beginPath(); ctx.moveTo(-40,352); ctx.bezierCurveTo(180,307,350,382,510,342); ctx.bezierCurveTo(680,302,820,337,1000,287); ctx.stroke();
+      ctx.strokeStyle='rgba(83,255,223,0.75)'; ctx.lineWidth=4;
+      ctx.beginPath(); ctx.moveTo(-40,337); ctx.bezierCurveTo(180,292,350,367,510,327); ctx.bezierCurveTo(680,287,820,322,1000,272); ctx.stroke();
+      ctx.strokeStyle='rgba(9,14,37,0.98)'; ctx.lineWidth=22;
+      ctx.beginPath(); ctx.moveTo(90,540); ctx.bezierCurveTo(165,320,360,315,455,540); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(560,540); ctx.bezierCurveTo(640,350,820,340,920,540); ctx.stroke();
+      ctx.strokeStyle='rgba(124,80,169,0.78)'; ctx.lineWidth=7;
+      ctx.beginPath(); ctx.moveTo(90,540); ctx.bezierCurveTo(165,320,360,315,455,540); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(560,540); ctx.bezierCurveTo(640,350,820,340,920,540); ctx.stroke();
+      // Glowing cables, signal lamps and scattered foreground rain.
+      for(let i=0;i<18;i++) {
+        const x=rng()*W, y=80+rng()*370;
+        const color=rng()>0.5?'rgba(63,255,218,0.9)':'rgba(255,72,210,0.85)';
+        glow(x,y,18,color,0.5);
+        ctx.fillStyle=color; ctx.beginPath(); ctx.arc(x,y,2+rng()*2,0,Math.PI*2); ctx.fill();
+      }
+      ctx.strokeStyle='rgba(195,207,255,0.22)'; ctx.lineWidth=1;
+      for(let i=0;i<65;i++) {
+        const x=rng()*W,y=rng()*H;
+        ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-5-rng()*4,y+12+rng()*16);ctx.stroke();
       }
     }
   });
 }
-
 export function makeAllTextures(scene: Phaser.Scene): void {
   makeEffects(scene);
   makePlayer(scene);
