@@ -76,6 +76,20 @@ NPC dialogue text display, performance.
 - The built APK's manifest is checked with `apkanalyzer manifest print` for `android:screenOrientation="landscape"`.
 - Debug-signed test APK only; not a store release.
 
+## Producer feedback — current visual/touch pass
+
+Feedback: fixed left joystick is uncomfortable; game is too low-resolution; existing style does not match the supplied reference (colorful purple/magenta atmospheric city, bright cyan/green lights, dramatic industrial bridges, illustrated action-platformer art).
+
+Implementation branch: `feature/floating-touch-and-visual-pass` (based on PR #3 head `983e4287786a23308c73aa930b88a9ffe1c2c443`).
+
+Changes on this branch:
+- Floating joystick: anchor at the first touch anywhere in the lower-left movement zone, track thumb movement, clamp the visible knob, preserve independent action-button fingers.
+- Added unit tests for dynamic anchor, directional movement, release, and multi-touch.
+- Renderer uses device-pixel resolution capped at 3x; removed forced pixelated canvas CSS and nearest-neighbour pixel-art mode.
+- Replaced flat block skyline textures with high-resolution procedural illustrated skyline, moon/haze, windows, rain, luminous cables, elevated rails and curved industrial bridge ribs.
+
+Validation status: **pending CI on the latest branch head and physical-device test**. Do not claim readability, performance, touch feel, or final art direction is verified until the Producer tests the new APK. Important art limitation: Courier/enemy/NPC/terrain textures are still procedural placeholder art; the new backdrop is a direction-setting pass, not a complete hand-painted asset pack.
+
 ## Device verification status — **NOT DONE**
 
 Producer to test on a real Android phone and mark each row. Until every row passes, do not claim mobile input is fixed.
