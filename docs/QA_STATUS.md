@@ -1,31 +1,52 @@
 # QA Status — NULL REQUIEM
 
-Last updated: 2026-10-28 (Claude). Labels: **verified** (command/CI result recorded here), **inferred**, **unverified**.
+Last updated: 2026-11-02 (Claude). Labels: **verified** (command/CI result recorded here), **inferred**, **unverified**.
 Automated results below are NOT physical-device verification.
 
 ## Latest CI evidence
 
-<!-- CI_EVIDENCE_START -->
-Code commit built and verified: **`31f1ce477fa9450b7d2257b637dc3fbffb9d57c7`** (branch `chore/android-debug-apk-pipeline`, PR #3).
+Code commit built and verified: **`be5ca3ebf561b073ed2f636983c8c94488f2c95b`** (branch `milestone/full-production`, PR #4).
 
 | Check | Result (verified from GitHub Actions API) |
 |---|---|
-| "Android Debug APK" push run | **success** — https://github.com/egaamnd-bot/null-requiem/actions/runs/40583546432 |
-| "Android Debug APK" pull_request run | success — https://github.com/egaamnd-bot/null-requiem/actions/runs/40583554319 |
-| "CI" (pull_request) | success — https://github.com/egaamnd-bot/null-requiem/actions/runs/40583554474 |
-| Steps inside the push run | typecheck, unit tests, web build, Playwright Chromium install, **browser touch smoke tests**, Capacitor `cap add android`, landscape manifest patch, immersive `MainActivity` patch, `assembleDebug`, APK existence check, **built-APK landscape check**, checksum, artifact upload: all success |
-| APK artifact | `null-requiem-android-debug-31f1ce477fa9450b7d2257b637dc3fbffb9d57c7`, 6,897,708 bytes (zip), expires 2026-11-10 (14-day retention). Download from the run page above, section **Artifacts**; the zip contains `app-debug.apk` |
+| "CI" run | **success** — https://github.com/egaamnd-bot/null-requiem/actions/runs/41459226783 |
+| "Android Debug APK" run | **success** — https://github.com/egaamnd-bot/null-requiem/actions/runs/41459226709 |
+| Steps inside the APK run | typecheck, unit tests, web build, Playwright touch smoke, Capacitor `cap add android`, landscape patch, immersive patch, `assembleDebug`, APK verify, **built-APK landscape check**, checksum, artifact upload: all success |
+| APK artifact | `null-requiem-android-debug-be5ca3ebf561b073ed2f636983c8c94488f2c95b`, 7,172,731 bytes (zip, contains `app-debug.apk`), expires 2026-11-16; Download from the run page, section **Artifacts** (GitHub login required) |
 
-Caveats: the Playwright run uses `retries: 1` in CI, so a test that failed once and passed on retry would still be green (the
-per-test counts are not readable from the sandbox, because raw job logs return 403). Unit-test counts come from the local run
-(145); the CI step only reports pass/fail here. The exact orientation text found in the built manifest is not recorded (the step
-fails unless it is confirmed, and it passed).
+History: the first run on this branch (`d6bb11f`) failed in "Unit tests": `tests/collision.test.ts` fuzz test timed out at the
+5 s default on the CI runner after the world grew to 19 rooms. Fixed by raising `testTimeout` to 30 s in `vite.config.ts`
+(no test removed or weakened); `be5ca3e` is green. Docs-only commits after it rebuild identical code.
 
-Earlier runs on this branch this session (history): `c2b6335` first CI run failed at Playwright install (runner moved to Ubuntu 26);
-`2980676` and `c37b996` failed at e2e helper bug / orientation-check formatting respectively; both fixed in `31f1ce4`.
+## Local sandbox results (2026-11-02)
 
-A docs-only commit follows `31f1ce4` on the same branch and triggers its own rebuild of identical code; check the PR #3 checks for that run.
-<!-- CI_EVIDENCE_END -->
+- `npx tsc --noEmit`: pass. `npx vitest run`: **498/498 tests, 27 files** (viewport, settings, touch layout/tracker, enemy roster,
+  abilities, progression v1→v2 migration, interactables, quests/dialogue, pattern bosses, reachability calibration, campaign
+  data + physics reachability + ability gating, headless campaign playthrough, menu model, music, generated-docs freshness, manifest).
+- `npm run build`: pass. Playwright touch smoke (local Chromium, Pixel 7 landscape): 11/11.
+- **Unverified:** the headless playthrough drives scripted inputs and world APIs, not a human; difficulty, length and feel are
+  unmeasured. The final-art swap path (`public/assets/final/manifest.json`) is unit-planned (`planSheet`) but has **not** been
+  exercised in a browser with real files.
+
+## Physical-device testing required (Producer)
+
+Joystick feel anywhere in the left half, view fit on your phone (notch/safe areas), HUD readability, dialogue panel taps, menu
+taps (map/journal/gear/settings/vendor), audio on Android, sustained performance, battery/thermals, and boss fairness.
+Use `docs/PLAYTEST_CHECKLIST.md`.
+
+## Known issues / open items
+
+- Tileset/background and extra Courier animation art hooks are `needs-engine-work`; audio files are not loadable yet.
+- GitHub job logs are not downloadable from the sandbox; failures are read via check-run annotations.
+- GitHub Actions warns about Node 20 actions and the ubuntu-latest migration; the APK workflow pins `ubuntu-24.04`.
+
+## Device verification status — **NOT DONE**
+
+No physical-device result exists. Nothing in this file may be read as device verification.
+
+---
+
+Older (pre-milestone) QA history follows.
 
 ## Local sandbox results (2026-10-28, Claude)
 
