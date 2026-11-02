@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { applyRenderScale } from '../render/renderScaleRuntime';
 import { view } from '../config/view';
 import { VIEW_CHANGED } from '../render/viewportDom';
 import type { GameEvent } from '../core/events';
@@ -103,6 +104,7 @@ export class UIScene extends Phaser.Scene {
   }
 
   create(): void {
+    applyRenderScale(this);
     this.controls = new InputManager(this);
     this.controls.swallow();
 

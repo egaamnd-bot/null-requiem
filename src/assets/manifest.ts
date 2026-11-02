@@ -26,7 +26,8 @@ const courier = (id: string, name: string, purpose: string, anims: Record<string
     locations: COURIER_LOC,
     priority: 'P0',
     placeholder: 'procedural-legacy',
-    keys,
+    // An empty list means "derive dedicated keys from the animation names" (extra animations have no legacy textures).
+    keys: keys.length ? keys : undefined,
     ...extra,
   });
 
@@ -39,10 +40,10 @@ const PLAYER: AssetDef[] = [
   courier('player_courier_dash', 'Courier — Dash', 'Horizontal dash (0.2 s). Stretched, afterimage friendly.', { dash: anim(1, 1, false) }, ['player-dash']),
   courier('player_courier_attack', 'Courier — Attack', 'Rail-blade swing; the slash arc is a separate effect. Final art may use up to 4 frames.', { attack: anim(1, 16, false) }, ['player-attack'], { note: 'The view shows this frame for the whole active window; extra frames are driven once the final sheet arrives.' }),
   courier('player_courier_hurt', 'Courier — Hurt', 'Knocked back and stunned (0.25 s).', { hurt: anim(1, 1, false) }, ['player-hurt']),
-  courier('player_courier_backtrace', 'Courier — Backtrace Arrival', 'The Courier materialising at the echo point after a rewind.', { backtrace: anim(6, 16, false, 'Dissolve in from cyan glitch shards') }, [], { placeholder: 'spec-only', integration: 'needs-engine-work', note: 'Not yet played by the player view (the arrival uses fx_backtrace_arrival).' }),
-  courier('player_courier_airjump', 'Courier — Kinetic Coil Air Jump', 'Second jump in mid-air: coil flares at the boots.', { airjump: anim(3, 14, false) }, [], { placeholder: 'spec-only', integration: 'needs-engine-work' }),
-  courier('player_courier_interact', 'Courier — Interact', 'Reaching out to a terminal or NPC.', { interact: anim(3, 8, false) }, [], { placeholder: 'spec-only', integration: 'needs-engine-work' }),
-  courier('player_courier_death', 'Courier — Death', 'Signal loss: the Courier flickers and falls.', { death: anim(6, 10, false) }, [], { placeholder: 'spec-only', integration: 'needs-engine-work' }),
+  courier('player_courier_backtrace', 'Courier — Backtrace Arrival', 'The Courier materialising at the echo point after a rewind.', { backtrace: anim(6, 16, false, 'Dissolve in from cyan glitch shards') }, [], { placeholder: 'code-drawn', note: 'Plays over the Courier for 6 frames after a Backtrace (R6). Without art the normal pose continues.' }),
+  courier('player_courier_airjump', 'Courier — Kinetic Coil Air Jump', 'Second jump in mid-air: coil flares at the boots.', { airjump: anim(3, 14, false) }, [], { placeholder: 'code-drawn' }),
+  courier('player_courier_interact', 'Courier — Interact', 'Reaching out to a terminal or NPC.', { interact: anim(3, 8, false) }, [], { placeholder: 'code-drawn' }),
+  courier('player_courier_death', 'Courier — Death', 'Signal loss: the Courier flickers and falls.', { death: anim(6, 10, false) }, [], { placeholder: 'code-drawn' }),
 ];
 
 // ───────────────────────────────────────────────────────────────────────────────────────── PACK 02 — ENEMIES
@@ -134,7 +135,7 @@ const boss = (s: Omit<Spec, 'category' | 'pack'>): AssetDef => def({ ...s, categ
 const BOSSES: AssetDef[] = [
   boss({
     id: 'boss_bulwark_9', name: 'BULWARK-9', purpose: 'Riot-control mech miniboss (charge, leap, plasma rain).',
-    w: 56, h: 48, hitbox: { w: 34, h: 30, offsetX: 11, offsetY: 18 },
+    w: 48, h: 40, hitbox: { w: 34, h: 30, offsetX: 7, offsetY: 10 },
     anims: { idle: anim(1, 1), windup: anim(1, 1), charge: anim(1, 1), leap: anim(1, 1), stunned: anim(1, 1), dead: anim(1, 1) },
     description: 'A squat decommissioned riot mech: slab-like torso, drop-down visor with a single red slit, hydraulic piston legs, shoulder-mounted plasma launchers. Peeling Precinct stencil, sparks from the neck when stunned.',
     palette: ['#1a1a22', '#6a6a82', '#ff3b4e', '#ffb02e'], locations: ['Precinct Vault'],
@@ -173,10 +174,10 @@ const npc = (id: string, name: string, desc: string, palette: string[], loc: str
     anims: { idle: anim(4, 3), talk: anim(2, 5) }, description: desc, palette, locations: loc, shape: 'npc', colors, ...extra,
   });
 const NPCS: AssetDef[] = [
-  npc('npc_zero', 'Zero', 'A street informant in a hooded green rain-poncho, face half-covered by a scarf, one cybernetic eye ring glowing cyan.', ['#0c1c18', '#2a8a6a', '#3cf2ff'], ['Rainline Alley'], [0x2a8a6a, 0x3cf2ff, 0x3cf2ff], { placeholder: 'procedural-legacy', anims: { idle: anim(1, 1) }, keys: ['npc-zero'], priority: 'P0' }),
-  npc('npc_mira', 'Mira', 'A survivor archivist in a patchwork coat covered in tiny paper tags, round glasses, a satchel of memory shards.', ['#1c1018', '#a04a8a', '#ffb02e'], ['Transit Stacks'], [0xa04a8a, 0xffb02e, 0xff3ea5], { placeholder: 'procedural-legacy', anims: { idle: anim(1, 1) }, keys: ['npc-mira'], priority: 'P0' }),
+  npc('npc_zero', 'Zero', 'A street informant in a hooded green rain-poncho, face half-covered by a scarf, one cybernetic eye ring glowing cyan.', ['#0c1c18', '#2a8a6a', '#3cf2ff'], ['Rainline Alley'], [0x2a8a6a, 0x3cf2ff, 0x3cf2ff], { w: 20, h: 28, hitbox: { w: 12, h: 22, offsetX: 4, offsetY: 6 }, placeholder: 'procedural-legacy', anims: { idle: anim(1, 1) }, keys: ['npc-zero'], priority: 'P0' }),
+  npc('npc_mira', 'Mira', 'A survivor archivist in a patchwork coat covered in tiny paper tags, round glasses, a satchel of memory shards.', ['#1c1018', '#a04a8a', '#ffb02e'], ['Transit Stacks'], [0xa04a8a, 0xffb02e, 0xff3ea5], { w: 20, h: 28, hitbox: { w: 12, h: 22, offsetX: 4, offsetY: 6 }, placeholder: 'procedural-legacy', anims: { idle: anim(1, 1) }, keys: ['npc-mira'], priority: 'P0' }),
   def({
-    id: 'npc_terminal', name: 'Terminal', category: 'npc', pack: 'pack-03', purpose: 'Readable data terminal (lore logs, tutorial, power console).', w: 24, h: 32, anims: { idle: anim(1, 1) },
+    id: 'npc_terminal', name: 'Terminal', category: 'npc', pack: 'pack-03', purpose: 'Readable data terminal (lore logs, tutorial, power console).', w: 20, h: 28, anims: { idle: anim(1, 1) },
     description: 'A waist-high wall-mounted CRT terminal with a green-violet screen, bundles of cable, a blinking cursor. Reads as "interact here".', palette: ['#14102a', '#7755cc', '#4dff9a'],
     locations: ['Depot', 'Precinct', 'Cells', 'Reactor', 'Archive', 'Nave'], placeholder: 'procedural-legacy', keys: ['npc-terminal'], priority: 'P0', shape: 'terminal',
   }),
@@ -186,7 +187,7 @@ const NPCS: AssetDef[] = [
   npc('npc_street_informant', 'Wren (Street Informant)', 'A wiry young informant on a rooftop perch in an oversized yellow windbreaker, a cap on backwards, a pocket full of paper maps.', ['#2a2410', '#e8d030', '#3cf2ff'], ['Undercity Plaza'], [0xe8d030, 0x3cf2ff, 0xff3ea5], { priority: 'P1' }),
   npc('npc_black_market_trader', 'Kestrel (Black-Market Trader)', 'A sleek trader with a long burgundy coat lined with glowing contraband vials, a half-mask of gold filigree, a rolling display case.', ['#240a18', '#a02a5a', '#ffd070'], ['Undercity Plaza'], [0xa02a5a, 0xffd070, 0xff3ea5], { priority: 'P0' }),
   npc('npc_temporal_researcher', 'Dr. Vesper (Temporal Researcher)', 'A lean scientist in a cracked lab coat over a pressure suit, hair streaked with static-white, a tablet projecting rewinding clock faces.', ['#0c1c28', '#3a8ac8', '#e8ffff'], ['Reactor Hall'], [0x3a8ac8, 0xe8ffff, 0x3cf2ff], { priority: 'P1' }),
-  npc('npc_desert_man', 'Desert Man (Rainline Wanderer)', 'A weathered wanderer from beyond the city walls in a sun-bleached sand-coloured robe and layered wraps over a dark rain-slicker, wide travel hood, a cracked amber visor pushed up on the forehead, a canteen and rolled blanket on the back. Out of place in the rain: dry-coloured, calm, unhurried.', ['#2a2014', '#c9a46a', '#ffb02e', '#3cf2ff'], ['Rainline Alley'], [0xc9a46a, 0xffb02e, 0x3cf2ff], { priority: 'P0', placeholder: 'spec-only', integration: 'needs-engine-work', keys: [], note: 'NEW id (Production Pack 01). Not placed in any room and has no NPC-registry entry yet: delivering art is safe; showing him needs a content hook (registry + dialogue), which the Producer has not requested.' }),
+  npc('npc_desert_man', 'Desert Man (Rainline Wanderer)', 'A weathered wanderer from beyond the city walls in a sun-bleached sand-coloured robe and layered wraps over a dark rain-slicker, wide travel hood, a cracked amber visor pushed up on the forehead, a canteen and rolled blanket on the back. Out of place in the rain: dry-coloured, calm, unhurried.', ['#2a2014', '#c9a46a', '#ffb02e', '#3cf2ff'], ['Rainline Alley'], [0xc9a46a, 0xffb02e, 0x3cf2ff], { priority: 'P0', shape: 'wanderer', note: 'NEW id (Production Pack 01). Independent NPC in Rainline Alley; speaking to him completes the first main-quest objective. Idle and talk rows are both played by NpcView.' }),
   npc('npc_null_echo', 'Null Echo (Erased Survivor)', 'A faded, looping figure in the Courier\'s silhouette with a pale face and a missing-pixel patch where an identity should be.', ['#14102a', '#9b59ff', '#e8dcc8'], ['Undercroft'], [0x9b59ff, 0xe8dcc8, 0x3cf2ff], { priority: 'P2', shape: 'echo' }),
 ];
 

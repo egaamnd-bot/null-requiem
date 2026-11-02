@@ -13,9 +13,10 @@ export interface NpcRegistryEntry {
   vendor?: readonly ('backtraceWindow' | 'backtraceCooldown' | 'backtraceBurst' | 'signalRegen')[];
 }
 
-export const NPC_KINDS_ALL = ['zero', 'mira', 'terminal', 'mechanic', 'medic', 'officer', 'trader', 'informant', 'researcher', 'echo'] as const;
+export const NPC_KINDS_ALL = ['zero', 'mira', 'terminal', 'mechanic', 'medic', 'officer', 'trader', 'informant', 'researcher', 'echo', 'desertman'] as const;
 
 export const NPC_REGISTRY: Record<string, NpcRegistryEntry> = {
+  'desert-man': { id: 'desert-man', name: 'DESERT MAN', kind: 'desertman', dialogue: 'desert-man', verb: 'Talk', archetype: 'wanderer from beyond the walls' },
   zero: { id: 'zero', name: 'ZERO', kind: 'zero', dialogue: 'zero', archetype: 'street informant' },
   mira: { id: 'mira', name: 'MIRA', kind: 'mira', dialogue: 'mira', archetype: 'survivor archivist' },
   'ghost-terminal': { id: 'ghost-terminal', name: 'GHOST TERMINAL', kind: 'terminal', dialogue: 'ghost-terminal', verb: 'Read', archetype: 'narrative terminal' },

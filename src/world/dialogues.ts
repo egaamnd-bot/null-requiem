@@ -42,6 +42,27 @@ export const FRAGMENT_LORE: Readonly<Record<string, string>> = {
 
 export const DIALOGUES: Record<string, DialogueDef> = {
   // ─────────────────────────────────────────────────────────────── RAINLINE ALLEY
+  // ─────────────────────────────────────────────────────────────── RA — the Desert Man (independent of ZERO)
+  'desert-man': {
+    id: 'desert-man',
+    entries: [{ when: { flag: 'depot-door-open' }, node: 'after' }, { when: { flag: 'met-desert-man' }, node: 'again' }, { node: 'w0' }],
+    nodes: {
+      ...chain(
+        'w',
+        say(
+          'DESERT MAN',
+          'Easy. You are the first thing in a week that moved without being told to.',
+          'I walked in from beyond the walls. Out there the sand keeps nothing. Here the rain keeps everything, and nobody asks it to.',
+          'You carry something at your neck that hums like a wire in a storm. I have seen that hum on others. They did not walk away from it.',
+          'Go east, into the depot. There is a loud one in a green poncho who will tell you what it is. I only walked here. He knows the road.',
+        ),
+        { last: [{ setFlag: 'met-desert-man' }] },
+      ),
+      again: { speaker: 'DESERT MAN', text: 'East, courier. The depot door does not open for people who stand in the rain and think.' },
+      after: { speaker: 'DESERT MAN', text: 'The old door opened. Good. Water finds the way. So will you.' },
+    },
+  },
+
   zero: {
     id: 'zero',
     entries: [{ when: { flag: 'depot-door-open' }, node: 'after' }, { when: { flag: 'met-zero' }, node: 'again' }, { node: 'z0' }],

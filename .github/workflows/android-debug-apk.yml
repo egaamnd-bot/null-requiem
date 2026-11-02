@@ -7,6 +7,7 @@ on:
       - main
       - chore/android-debug-apk-pipeline
       - 'milestone/**'
+      - 'feature/**'
   pull_request:
     branches:
       - main
@@ -96,7 +97,9 @@ jobs:
         run: |
           # Install all Capacitor packages in one npm operation. Separate --no-save
           # installs prune the earlier packages because they are not in package.json.
-          npm install --no-save --package-lock=false @capacitor/core@7.4.3 @capacitor/android@7.4.3 @capacitor/cli@7.4.3
+          # --legacy-peer-deps: npm 10's arborist crashes with "Cannot read properties of null (reading 'edgesOut')" on this install since
+          # 2026-11-02. It only changes how the Capacitor peer ranges resolve for the packaging step; the project install above uses npm ci.
+          npm install --no-save --package-lock=false --legacy-peer-deps @capacitor/core@7.4.3 @capacitor/android@7.4.3 @capacitor/cli@7.4.3
 
       - name: Generate Android project
         run: |

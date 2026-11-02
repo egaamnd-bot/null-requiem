@@ -10,11 +10,11 @@ export const QUESTS: QuestDef[] = [
     id: 'main-1',
     title: 'Dead Man Walking',
     category: 'main',
-    summary: 'Someone in the alley knows what is on your spine.',
+    summary: 'A stranger in the alley has been waiting for you.',
     autoTurnIn: true,
     sequential: true,
     objectives: [
-      { id: 'zero', type: 'flag', target: 'met-zero', text: 'Speak with the figure in Rainline Alley' },
+      { id: 'wanderer', type: 'flag', target: 'met-desert-man', text: 'Speak with the Desert Man in Rainline Alley' },
       { id: 'module', type: 'collect', target: 'depot:backtrace', text: 'Recover the Backtrace module in the Rainline Depot' },
     ],
     rewards: { scrap: 20, flags: ['main-1-done'], text: '20 scrap' },

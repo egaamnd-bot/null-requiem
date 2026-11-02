@@ -11,7 +11,10 @@ import { PALETTE } from './palette';
 import { DEPTH } from './RoomView';
 import type { NpcEntity } from '../core/npc';
 import type { PanoptixUnit } from '../core/enemies/panoptixUnit';
-import { AssetSprite, texScale } from './assetRuntime';
+import { ASSET_BY_ID } from '../assets/manifest';
+import { AssetSprite, frameKey } from './assetRuntime';
+import { OneShotTrack, type CourierShot, type ShotDef } from './courierAnim';
+import { fxFrameKeys, playFxSprite } from './fxSprites';
 import { ENEMY_ASSET, ManifestEnemyView } from './CampaignViews';
 import { houndKey, playerKey, TEX, bulwarkKey, droneKey, npcKey, panoptixKey, type PlayerFrame, type PanoptixFrame } from './textures';
 
@@ -36,11 +39,37 @@ export class PlayerView {
   private runClock = 0;
   private lastAttackId = -1;
   private slashTimer = 0;
+  private shots: OneShotTrack | null = null;
+  private slashFrames: Record<'side' | 'up' | 'down', string[] | null> = { side: null, up: null, down: null };
+  private clock = 0;
 
   constructor(scene: Phaser.Scene) {
     this.glow = scene.add.image(0, 0, TEX.glowSoft).setTint(PALETTE.cyan).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.3).setScale(1.2).setDepth(DEPTH.player - 1);
     this.sprite = scene.add.image(0, 0, playerKey('idle0')).setOrigin(0.5, 1).setDepth(DEPTH.player).setScale(0.65);
     this.slash = scene.add.image(0, 0, TEX.slashSide).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.player + 1).setVisible(false);
+    // R6/R8: optional painted extras. Each is used only when its full frame set was delivered; otherwise nothing changes.
+    const defs: Partial<Record<CourierShot, ShotDef>> = {};
+    for (const anim of ['backtrace', 'airjump', 'interact', 'death'] as const) {
+      const keys = fxFrameKeys(scene, `player_courier_${anim}`, anim);
+      const a = ASSET_BY_ID.get(`player_courier_${anim}`)?.anims[anim];
+      if (keys && a) defs[anim] = { frames: a.frames, fps: a.fps, hold: anim === 'death' };
+    }
+    this.shots = Object.keys(defs).length ? new OneShotTrack(defs) : null;
+    for (const [dir, id] of [['side', 'fx_slash_side'], ['up', 'fx_slash_up'], ['down', 'fx_slash_down']] as const) {
+      const keys = fxFrameKeys(scene, id, 'slash');
+      // Frame 1 doubles as the legacy texture, so only a delivered multi-frame sheet (frames 2+ exist) animates.
+      this.slashFrames[dir] = keys && keys.length > 1 ? keys : null;
+    }
+  }
+
+  /** Start a painted one-shot (no-op without art). `t` is the scene clock in seconds. */
+  trigger(anim: CourierShot): void {
+    this.shots?.start(anim, this.clock);
+  }
+
+  /** Clear a held death pose on respawn. */
+  reset(): void {
+    this.shots?.clear();
   }
 
   /** Bounce/squash cues from simulation events. */
@@ -68,16 +97,18 @@ export class PlayerView {
       this.runClock += dt * (Math.abs(b.vx) / 150) * 10;
       frame = (['run0', 'run1', 'run2', 'run3'] as const)[Math.floor(this.runClock) % 4] ?? 'run0';
     } else frame = Math.floor(time / 450) % 2 === 0 ? 'idle0' : 'idle1';
-    const pkey = playerKey(frame);
-    this.sprite.setTexture(pkey);
-    const k = texScale(this.sprite.scene, pkey);
+    this.clock = time / 1000;
+    if (!p.dead && this.shots?.active === 'death') this.shots.clear();
+    const shot = this.shots?.frameAt(this.clock) ?? null;
+    if (shot) this.sprite.setTexture(frameKey(ASSET_BY_ID.get(`player_courier_${shot.anim}`)!, shot.anim, shot.index));
+    else this.sprite.setTexture(playerKey(frame));
 
     // Squash and stretch (decays exponentially, so it's frame-rate independent).
     this.squash *= Math.exp(-12 * dt);
     const s = this.squash;
     const sx = 1 + s * 0.18;
     const sy = 1 - s * 0.18;
-    this.sprite.setScale((p.isDashing ? 0.84 : 0.65 * sx) * k, (p.isDashing ? 0.55 : 0.65 * sy) * k);
+    this.sprite.setScale(p.isDashing ? 0.84 : 0.65 * sx, p.isDashing ? 0.55 : 0.65 * sy);
 
     // Invulnerability blink, death fade.
     const inv = p.health.isInvulnerable && !p.dead;
@@ -90,12 +121,19 @@ export class PlayerView {
     // Slash arc appears for the active window plus a short fade.
     if (p.attackPhase === 'active' && p.attackId !== this.lastAttackId) {
       this.lastAttackId = p.attackId;
+      // R8: a delivered Glitch Strike effect plays in front of the Courier on top of the normal arc.
+      if (p.isGlitchStrike) playFxSprite(this.sprite.scene, 'fx_glitch_strike', 'strike', feetX + p.facing * 24, feetY - 18, { depth: DEPTH.player + 2, flipX: p.facing < 0, additive: true });
       this.slashTimer = COMBAT.attack.active + 0.06;
       const key = p.attackDir === 'up' ? TEX.slashUp : p.attackDir === 'down' ? TEX.slashDown : TEX.slashSide;
       this.slash.setTexture(key);
     }
     if (this.slashTimer > 0 && !p.dead) {
       this.slashTimer -= dt;
+      const frames = this.slashFrames[p.attackDir === 'up' ? 'up' : p.attackDir === 'down' ? 'down' : 'side'];
+      if (frames) {
+        const total = COMBAT.attack.active + 0.06;
+        this.slash.setTexture(frames[Math.min(frames.length - 1, Math.floor((1 - this.slashTimer / total) * frames.length))]!);
+      }
       const hb = p.hitbox();
       const cx = feetX;
       const cy = feetY - b.h / 2;
@@ -178,8 +216,11 @@ class HoundView implements EnemyView {
   private readonly sprite: Phaser.GameObjects.Image;
   private readonly glow: Phaser.GameObjects.Image;
   private readonly tell: Phaser.GameObjects.Image;
+  /** R8: painted telegraph glint frames (null = the code-drawn spark). */
+  private readonly tellFrames: string[] | null;
 
   constructor(scene: Phaser.Scene) {
+    this.tellFrames = fxFrameKeys(scene, 'fx_enemy_telegraph', 'glint');
     this.glow = scene.add.image(0, 0, TEX.glow).setTint(PALETTE.danger).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.enemies - 1);
     this.sprite = scene.add.image(0, 0, houndKey('walk0')).setOrigin(0.5, 1).setDepth(DEPTH.enemies);
     this.tell = scene.add.image(0, 0, TEX.spark).setTint(PALETTE.white).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.enemies + 1).setVisible(false);
@@ -197,12 +238,15 @@ class HoundView implements EnemyView {
       shake = Math.sin(time / 18) * 1;
     } else if (g.state === 'lunge') key = houndKey('lunge');
     else if (g.state === 'recover') key = houndKey('recover');
-    this.sprite.setTexture(key).setScale(texScale(this.sprite.scene, key)).setPosition(fx + shake, fy).setFlipX(g.facing < 0);
+    this.sprite.setTexture(key).setPosition(fx + shake, fy).setFlipX(g.facing < 0);
     flash(this.sprite, g.flash > 0);
     const glowA = g.state === 'windup' ? 0.75 : g.state === 'recover' ? 0.12 : 0.35;
     this.glow.setPosition(fx, fy - 4).setAlpha(glowA).setScale(g.state === 'windup' ? 0.9 : 0.6);
     // A pale glint above the eye announces the lunge.
-    this.tell.setVisible(g.state === 'windup' && g.stateTime > 0.1).setPosition(fx + g.facing * 9, fy - 14).setScale(1 + Math.sin(time / 40) * 0.4);
+    this.tell.setVisible(g.state === 'windup' && g.stateTime > 0.1).setPosition(fx + g.facing * 9, fy - 14);
+    if (this.tellFrames) {
+      this.tell.setTexture(this.tellFrames[Math.floor((time / 1000) * 14) % this.tellFrames.length]!).setTint(0xffffff).setScale(1);
+    } else this.tell.setScale(1 + Math.sin(time / 40) * 0.4);
   }
 
   destroy(): void {
@@ -230,7 +274,7 @@ class DroneView implements EnemyView {
     const cy = Math.round(pos.y + b.h / 2);
     const charging = w.state === 'windup';
     const key = charging ? droneKey('charge') : droneKey(Math.floor(time / 300) % 2 === 0 ? 'idle0' : 'idle1');
-    this.sprite.setTexture(key).setScale(texScale(this.sprite.scene, key)).setPosition(cx, cy + 4).setFlipX(w.facing < 0);
+    this.sprite.setTexture(key).setPosition(cx, cy + 4).setFlipX(w.facing < 0);
     flash(this.sprite, w.flash > 0);
     this.glow.setPosition(cx, cy);
     this.core.setPosition(cx, cy).setScale(0.25 + w.charge * 0.55).setAlpha(0.5 + w.charge * 0.5);
@@ -285,7 +329,7 @@ export class BossView {
       default:
         break;
     }
-    this.sprite.setTexture(key).setScale(texScale(this.sprite.scene, key)).setPosition(fx + shake, fy).setFlipX(boss.facing < 0);
+    this.sprite.setTexture(key).setPosition(fx + shake, fy).setFlipX(boss.facing < 0);
     flash(this.sprite, boss.flash > 0);
     const hot = boss.state.endsWith('Windup') ? 0.6 + boss.windupProgress * 0.4 : boss.state === 'stunned' || boss.state === 'dead' ? 0.1 : 0.4;
     this.glow.setPosition(fx, fy - 16).setAlpha(hot * (boss.phase === 2 ? 1.2 : 1)).setScale(boss.phase === 2 ? 1.3 : 1.05);
@@ -430,16 +474,8 @@ export class ProjectileViews {
  * Renders a single NPC (zero / mira / terminal).
  * Gentle idle float; a pulsing talk-indicator dot appears when the NPC is active.
  */
-/** NPC sprite kinds that come from the asset manifest (the first three are legacy hand-drawn textures). */
-export const NPC_ASSET: Readonly<Record<string, string>> = {
-  mechanic: 'npc_station_mechanic',
-  medic: 'npc_underground_medic',
-  officer: 'npc_former_officer',
-  trader: 'npc_black_market_trader',
-  informant: 'npc_street_informant',
-  researcher: 'npc_temporal_researcher',
-  echo: 'npc_null_echo',
-};
+export { NPC_ASSET } from '../assets/assetMap';
+import { NPC_ASSET } from '../assets/assetMap';
 
 export class NpcView {
   private readonly asset: AssetSprite | null;

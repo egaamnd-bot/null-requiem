@@ -6,7 +6,11 @@ import { Tile, type TileGrid } from '../core/tiles';
 import type { GameWorld, RoomState } from '../core/world';
 import { css, mix, PALETTE } from './palette';
 import { ITEMS } from '../world/items';
+import { applyWorldSize, viewScaleOf } from './assetRuntime';
+import { propKey, RAINLINE_PROPS, ROOM_PROPS } from '../world/props';
 import { canvasTexture, makeBackdrop, px, TEX } from './textures';
+import { autotileIndex, catwalkIndex } from '../assets/autotile';
+import { tilesetFor, type Tileset } from './tileset';
 import { WTEX } from './worldTextures';
 
 export const DEPTH = {
@@ -22,6 +26,8 @@ export const DEPTH = {
   player: 20,
   projectiles: 25,
   fx: 30,
+  /** Painted foreground silhouettes (R4): in front of the playfield, behind the HUD scenes. */
+  fg: 40,
   vignette: 100,
 } as const;
 
@@ -51,6 +57,12 @@ export class RoomView {
   private readonly sky: Phaser.GameObjects.Image;
   private readonly far: Phaser.GameObjects.TileSprite;
   private readonly mid: Phaser.GameObjects.TileSprite;
+  private readonly fg: Phaser.GameObjects.TileSprite | null = null;
+  /** Tile scale of each parallax layer (world px per texture px); keeps world-space parallax speed independent of texture size. */
+  private farScale = 0.5;
+  private midScale = 0.5;
+  private fgScale = 0.5;
+  private readonly hazardFrames: { img: Phaser.GameObjects.Image; keys: string[]; phase: number }[] = [];
   private readonly pulses: Pulse[] = [];
   private readonly relays: { id: string; img: Phaser.GameObjects.Image; glow: Phaser.GameObjects.Image }[] = [];
   private readonly pickups: { id: string; img: Phaser.GameObjects.Image; glow: Phaser.GameObjects.Image; baseY: number }[] = [];
@@ -79,20 +91,34 @@ export class RoomView {
     this.sky = scene.add.image(0, 0, skyKey).setOrigin(0).setDisplaySize(view.width, view.height).setScrollFactor(0).setDepth(DEPTH.sky);
     this.add(this.sky);
 
-    // Skyline parallax — kept darker and lower-contrast than the playable terrain.
+    // Skyline parallax — kept darker and lower-contrast than the playable terrain. Painted art (R2) replaces the generated
+    // layers when `env_<region>_bg_far/mid` were delivered; the generated ones stay as the fallback.
     makeBackdrop(scene, `far-${id}`, mix(theme.skyTop, theme.rock, 0.45), 'far', id.length * 31 + 7);
     makeBackdrop(scene, `mid-${id}`, mix(theme.skyTop, theme.rock, 0.6), 'mid', id.length * 17 + 3);
-    this.far = scene.add.tileSprite(0, 0, view.width, view.height, `far-${id}`).setOrigin(0).setScrollFactor(0).setDepth(DEPTH.far).setAlpha(0.78).setTileScale(0.5, 0.5);
-    this.mid = scene.add.tileSprite(0, 0, view.width, view.height, `mid-${id}`).setOrigin(0).setScrollFactor(0).setDepth(DEPTH.mid).setAlpha(0.62).setTileScale(0.5, 0.5);
+    const region = room.def.region;
+    const finalKey = (suffix: string): string | null => (region && scene.textures.exists(`env-${region}-${suffix}`) ? `env-${region}-${suffix}` : null);
+    const farFinal = finalKey('bg-far');
+    const midFinal = finalKey('bg-mid');
+    this.farScale = this.fitHeightScale(farFinal ?? `far-${id}`, farFinal ? 1 : 0.5);
+    this.midScale = this.fitHeightScale(midFinal ?? `mid-${id}`, midFinal ? 1 : 0.5);
+    this.far = scene.add.tileSprite(0, 0, view.width, view.height, farFinal ?? `far-${id}`).setOrigin(0).setScrollFactor(0).setDepth(DEPTH.far).setAlpha(farFinal ? 1 : 0.78).setTileScale(this.farScale, this.farScale);
+    this.mid = scene.add.tileSprite(0, 0, view.width, view.height, midFinal ?? `mid-${id}`).setOrigin(0).setScrollFactor(0).setDepth(DEPTH.mid).setAlpha(midFinal ? 1 : 0.62).setTileScale(this.midScale, this.midScale);
     this.add(this.far);
     this.add(this.mid);
+    // R4: painted foreground silhouettes, one of four strips per room (top/bottom bands only, by art contract).
+    if (region) {
+      const strip = Math.floor(hash(id.length, id.charCodeAt(0), 11) * 4);
+      const fgKey = `env_${region}_fg_silhouette__fg_${strip}`;
+      if (scene.textures.exists(fgKey)) {
+        this.fgScale = this.fitHeightScale(fgKey, 1);
+        this.fg = this.add(scene.add.tileSprite(0, 0, view.width, view.height, fgKey).setOrigin(0).setScrollFactor(0).setDepth(DEPTH.fg).setTileScale(this.fgScale, this.fgScale));
+      }
+    }
 
-    const terrainKey = `terrain-${id}`;
-    const grid = room.grid;
-    canvasTexture(scene, terrainKey, grid.widthPx, grid.heightPx, (ctx) => this.drawTerrain(ctx, grid, room));
-    this.add(scene.add.image(0, 0, terrainKey).setOrigin(0).setDepth(DEPTH.terrain));
+    this.buildTerrain(room, scene);
+    this.buildProps(room);
 
-    this.buildLights(grid, room);
+    this.buildLights(room.grid, room);
     this.buildObjects(room);
   }
 
@@ -101,18 +127,79 @@ export class RoomView {
     return obj;
   }
 
-  private drawTerrain(ctx: CanvasRenderingContext2D, grid: TileGrid, room: RoomState): void {
+  /** World px per texture px so a layer exactly fits the logical view height (placeholders are 540 px tall -> 0.5). */
+  private fitHeightScale(key: string, fallback: number): number {
+    const src = this.scene.textures.get(key)?.getSourceImage() as { height?: number } | undefined;
+    return src?.height ? view.height / src.height : fallback;
+  }
+
+  /** Texture pixels per world pixel for the terrain: crisp at the current render scale, never more than the 4x master. */
+  private terrainScale(final: boolean): number {
+    return final ? Math.min(4, Math.max(2, view.renderScale)) : 2;
+  }
+
+  /** Terrain is baked into chunks (≤ 32 tiles wide) so no texture exceeds mobile GPU limits, at 2x for crispness (R0). */
+  private buildTerrain(room: RoomState, scene: Phaser.Scene): void {
+    const grid = room.grid;
+    const id = room.def.id;
+    const tiles = tilesetFor(scene, room.def.region);
+    const S = this.terrainScale(!!tiles);
+    const CH = 32;
+    for (let c0 = 0; c0 < grid.cols; c0 += CH) {
+      const c1 = Math.min(grid.cols, c0 + CH);
+      const key = `terrain-${id}-${c0}`;
+      const w = (c1 - c0) * TILE_SIZE;
+      canvasTexture(scene, key, w * S, grid.heightPx * S, (ctx) => {
+        ctx.scale(S, S);
+        ctx.translate(-c0 * TILE_SIZE, 0);
+        this.drawTerrain(ctx, grid, room, c0, c1, tiles, scene);
+      });
+      applyWorldSize(scene.textures.get(key), S, w, grid.heightPx);
+      this.add(scene.add.image(c0 * TILE_SIZE, 0, key).setOrigin(0).setDepth(DEPTH.terrain));
+    }
+    if (tiles) {
+      // Live-current tiles animate through the delivered hazard frames (4 @ 6 fps).
+      for (let r = 0; r < grid.rows; r++) {
+        for (let c = 0; c < grid.cols; c++) {
+          if (grid.get(c, r) !== Tile.Hazard) continue;
+          const img = scene.add.image(c * TILE_SIZE, r * TILE_SIZE, tiles.hazard[0]!).setOrigin(0).setDepth(DEPTH.terrain + 1);
+          this.add(img);
+          this.hazardFrames.push({ img, keys: [...tiles.hazard], phase: (c * 0.37) % 1 });
+        }
+      }
+    }
+  }
+
+  private drawTerrain(ctx: CanvasRenderingContext2D, grid: TileGrid, room: RoomState, c0: number, c1: number, tiles: Tileset | null, scene: Phaser.Scene): void {
     const theme = room.def.theme;
     const ts = TILE_SIZE;
     const solid = (c: number, r: number) => grid.get(c, r) === Tile.Solid || !grid.inBounds(c, r);
     const face = mix(theme.rock, theme.edge, 0.08);
     const deep = mix(theme.rock, PALETTE.void, 0.35);
     const seam = mix(theme.rock, PALETTE.void, 0.45);
+    const draw = (key: string, x: number, y: number) => {
+      const src = scene.textures.get(key).getSourceImage() as CanvasImageSource;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(src, x, y, ts, ts);
+      ctx.imageSmoothingEnabled = false;
+    };
     for (let r = 0; r < grid.rows; r++) {
-      for (let c = 0; c < grid.cols; c++) {
+      for (let c = c0; c < c1; c++) {
         const t = grid.get(c, r);
         const x = c * ts;
         const y = r * ts;
+        if (tiles) {
+          // Painted tileset (R3): auto-tile solids by their 4 neighbours, catwalk caps, details on enclosed tiles. Hazards are animated overlays.
+          if (t === Tile.Solid) {
+            const idx = autotileIndex(solid(c, r - 1), solid(c + 1, r), solid(c, r + 1), solid(c - 1, r));
+            draw(tiles.solid[idx]!, x, y);
+            if (idx === 15 && hash(c, r, 21) < 0.12) draw(tiles.details[Math.floor(hash(c, r, 22) * 8)]!, x, y);
+          } else if (t === Tile.OneWay) {
+            draw(tiles.catwalk[catwalkIndex(grid.get(c - 1, r) === Tile.OneWay, grid.get(c + 1, r) === Tile.OneWay)]!, x, y);
+          }
+          continue;
+        }
         if (t === Tile.Solid) {
           const enclosed = solid(c, r - 1) && solid(c, r + 1) && solid(c - 1, r) && solid(c + 1, r);
           px(ctx, enclosed ? deep : face, x, y, ts, ts);
@@ -156,6 +243,27 @@ export class RoomView {
           }
         }
       }
+    }
+  }
+
+  /** R5: decorative props from `ROOM_PROPS`, drawn behind the terrain so nothing overlaps the floor line. */
+  private buildProps(room: RoomState): void {
+    const region = room.def.region;
+    const list = ROOM_PROPS[room.def.id];
+    if (!region || !list) return;
+    for (const p of list) {
+      const key = propKey(region, RAINLINE_PROPS.indexOf(p.prop));
+      if (!this.scene.textures.exists(key)) continue;
+      const x = p.col * TILE_SIZE + TILE_SIZE / 2;
+      const y = (p.row + 1) * TILE_SIZE;
+      this.add(
+        this.scene.add
+          .image(x, y, key)
+          .setOrigin(0.5, 1)
+          .setScale(viewScaleOf(key))
+          .setFlipX(!!p.flip)
+          .setDepth(DEPTH.terrain - 1),
+      );
     }
   }
 
@@ -316,14 +424,22 @@ export class RoomView {
     this.sky.setDisplaySize(width, height);
     this.far.setSize(width, height);
     this.mid.setSize(width, height);
+    this.fg?.setSize(width, height);
   }
 
   update(time: number, camera: Phaser.Cameras.Scene2D.Camera): void {
     const t = time / 1000;
-    this.far.tilePositionX = camera.scrollX * 0.12;
-    this.far.tilePositionY = camera.scrollY * 0.06;
-    this.mid.tilePositionX = camera.scrollX * 0.3;
-    this.mid.tilePositionY = camera.scrollY * 0.15;
+    // World-space parallax speed is independent of the texture's pixel size: tilePosition is in texture px, so divide by the tile scale.
+    const PAR = 0.5; // the original generated layers (tile scale 0.5) define the feel
+    this.far.tilePositionX = (camera.scrollX * 0.12 * PAR) / this.farScale;
+    this.far.tilePositionY = (camera.scrollY * 0.06 * PAR) / this.farScale;
+    this.mid.tilePositionX = (camera.scrollX * 0.3 * PAR) / this.midScale;
+    this.mid.tilePositionY = (camera.scrollY * 0.15 * PAR) / this.midScale;
+    if (this.fg) {
+      this.fg.tilePositionX = (camera.scrollX * 1.15) / this.fgScale;
+      this.fg.tilePositionY = 0;
+    }
+    for (const h of this.hazardFrames) h.img.setTexture(h.keys[Math.floor((t * 6 + h.phase * 4) % h.keys.length)]!);
 
     for (const p of this.pulses) {
       const v = p.flicker

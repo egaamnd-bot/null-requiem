@@ -85,8 +85,8 @@ describe('the Rainline Depot echo-plate puzzle (first Backtrace lesson)', () => 
 });
 
 describe('story spine', () => {
-  it('Zero starts the story; the module completes main-1 and unlocks the next quests', () => {
-    const w = worldAt('alley', 19, 19);
+  it('the Desert Man starts the story; the module completes main-1 and unlocks the next quests', () => {
+    const w = worldAt('alley', 8, 19);
     w.room.enemies = [];
     expect(w.quests.status('main-1')).toBe('active');
     // Talk to Zero until the conversation closes.
@@ -94,11 +94,13 @@ describe('story spine', () => {
     expect(w.inDialogue).toBe(true);
     for (let i = 0; i < 12 && w.inDialogue; i++) stepWorld(w, 1, () => input({ interactPressed: true }));
     expect(w.inDialogue).toBe(false);
-    expect(w.progression.hasFlag('met-zero')).toBe(true);
+    expect(w.progression.hasFlag('met-desert-man')).toBe(true);
+    expect(w.progression.hasFlag('met-zero')).toBe(false);
     expect(w.quests.status('main-1')).toBe('active');
+    expect(w.quests.journal().find((q) => q.id === 'main-1')?.objectives[0]?.done).toBe(true);
 
     const depot = worldAt('alley_depot', 29, 17, (p) => {
-      p.setFlag('met-zero');
+      p.setFlag('met-desert-man');
       p.quests['main-1'] = { status: 'active', progress: {} };
     });
     depot.room.enemies = [];

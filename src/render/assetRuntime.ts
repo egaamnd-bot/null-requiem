@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { ASSET_BY_ID } from '../assets/manifest';
-import { parseFinalManifest, planSheet } from '../assets/sheet';
+import { parseFinalManifest, planSheet, planWorldSize } from '../assets/sheet';
+import { MANIFEST_VIEW_SCALE } from '../assets/assetMap';
 import type { AssetDef } from '../assets/types';
 
 /**
@@ -9,7 +10,7 @@ import type { AssetDef } from '../assets/types';
  *    (any resolution) never changes how big something is in the world.
  *  - `loadFinalAssets`: optional boot step that replaces placeholder textures with delivered sheets
  *    (public/assets/final/manifest.json). Missing files are not an error: placeholders stay.
- *  - `texScale`: for legacy views that size sprites by a constant, the factor that keeps final art the same world size.
+ *  - `applyWorldSize` (R1): replaced textures declare their world size, so legacy views need no per-view scaling.
  */
 
 const baseSize = new Map<string, { w: number; h: number }>();
@@ -19,13 +20,40 @@ export function noteBaseSize(key: string, w: number, h: number): void {
   if (!baseSize.has(key)) baseSize.set(key, { w, h });
 }
 
-/** Multiply a legacy view's constant scale by this so replaced (larger) textures keep their world size. */
-export function texScale(scene: Phaser.Scene, key: string): number {
-  const base = baseSize.get(key);
-  if (!base) return 1;
-  const src = scene.textures.get(key)?.getSourceImage() as { width?: number } | undefined;
-  const w = src?.width;
-  return w && w > 0 ? base.w / w : 1;
+const viewScales = new Map<string, number>();
+
+/** Declare the constant scale a view applies to a texture key (default 1). World textures drawn at 2x use 0.5, the Courier 0.65. */
+export function noteViewScale(key: string, scale: number): void {
+  viewScales.set(key, scale);
+}
+
+export function viewScaleOf(key: string): number {
+  return viewScales.get(key) ?? MANIFEST_VIEW_SCALE[key] ?? 1;
+}
+
+/**
+ * Make a replaced texture report its WORLD size (R1). Phaser draws a frame at `cut size / source.resolution`, and
+ * game objects take their `width/height` (origin, display size) from `frame.realWidth/realHeight`, so setting both makes
+ * a 4x painted frame occupy exactly the same world pixels as the placeholder it replaces: every existing view, scale
+ * constant, origin and hitbox stays correct without per-view code.
+ */
+export function applyWorldSize(texture: Phaser.Textures.Texture, resolution: number, worldW: number, worldH: number): void {
+  const frame = texture.get();
+  const source = texture.source[0];
+  if (!source || !frame) return;
+  source.resolution = resolution;
+  // `realWidth/realHeight` are getters over `data.sourceSize` (the un-trimmed size game objects take their width/height from).
+  const data = (frame as unknown as { data: { sourceSize: { w: number; h: number }; spriteSourceSize: { w: number; h: number } } }).data;
+  data.sourceSize.w = worldW;
+  data.sourceSize.h = worldH;
+  data.spriteSourceSize.w = worldW;
+  data.spriteSourceSize.h = worldH;
+  frame.width = worldW;
+  frame.height = worldH;
+  frame.halfWidth = worldW / 2;
+  frame.halfHeight = worldH / 2;
+  frame.centerX = worldW / 2;
+  frame.centerY = worldH / 2;
 }
 
 /** Texture key of a frame of a manifest asset. */
@@ -98,6 +126,7 @@ export function applyFinalAssets(scene: Phaser.Scene, done: (r: FinalLoadReport)
     else scene.load.image(`final:${id}`, `${import.meta.env.BASE_URL}assets/final/${manifest.assets[id]!.file}`);
   }
   scene.load.once(Phaser.Loader.Events.COMPLETE, () => {
+    const seen = new Set<string>();
     for (const id of ids) {
       const def = ASSET_BY_ID.get(id);
       const tex = scene.textures.exists(`final:${id}`) ? scene.textures.get(`final:${id}`) : null;
@@ -112,11 +141,19 @@ export function applyFinalAssets(scene: Phaser.Scene, done: (r: FinalLoadReport)
         continue;
       }
       for (const f of plan.frames) {
+        // A key listed twice in one manifest entry (shared placeholder frames) keeps its FIRST frame.
+        if (seen.has(f.key)) continue;
+        seen.add(f.key);
         if (scene.textures.exists(f.key)) scene.textures.remove(f.key);
         const c = scene.textures.createCanvas(f.key, f.w, f.h);
         if (!c) continue;
         c.getContext().drawImage(src, f.x, f.y, f.w, f.h, 0, 0, f.w, f.h);
         c.refresh();
+        // Tiling layers (parallax backgrounds, foreground strips) are sized by their tile scale, not by frame size.
+        if (def.category !== 'background') {
+          const w = planWorldSize(def, viewScaleOf(f.key), f);
+          applyWorldSize(c, w.resolution, w.frameW, w.frameH);
+        }
       }
       report.loaded.push(id);
     }

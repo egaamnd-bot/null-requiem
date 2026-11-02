@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { applyRenderScale, logicalPointer } from '../render/renderScaleRuntime';
 import { view } from '../config/view';
 import { VIEW_CHANGED } from '../render/viewportDom';
 import { getSettings } from '../state/settings';
@@ -76,6 +77,7 @@ export class MobileControlsScene extends Phaser.Scene {
   }
 
   create(): void {
+    applyRenderScale(this);
     if (!hasTouchScreen()) {
       this.scene.stop();
       return;
@@ -233,20 +235,22 @@ export class MobileControlsScene extends Phaser.Scene {
 
   private onDown(ptr: Phaser.Input.Pointer): void {
     if (!this.live()) return;
-    if (isOnPause(this.layout, ptr.x, ptr.y)) {
+    const at = logicalPointer(ptr);
+    if (isOnPause(this.layout, at.x, at.y)) {
       this.drawPause(true);
       this.time.delayedCall(140, () => this.drawPause(false));
       this.releaseAll();
       this.data0.onPause();
       return;
     }
-    this.tracker.down(ptr.id, ptr.x, ptr.y);
+    this.tracker.down(ptr.id, at.x, at.y);
     this.render();
   }
 
   private onMove(ptr: Phaser.Input.Pointer): void {
     if (!this.live() || !this.tracker.has(ptr.id)) return;
-    this.tracker.move(ptr.id, ptr.x, ptr.y);
+    const at = logicalPointer(ptr);
+    this.tracker.move(ptr.id, at.x, at.y);
     this.render();
   }
 

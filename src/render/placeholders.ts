@@ -1,3 +1,4 @@
+import { applyWorldSize } from './assetRuntime';
 import Phaser from 'phaser';
 import { ASSETS } from '../assets/manifest';
 import type { AssetDef, PlaceholderShape } from '../assets/types';
@@ -153,6 +154,48 @@ function drawHumanoid(ctx: Ctx, W: number, H: number, c: readonly [number, numbe
   } else {
     rect(ctx, cx + 5, ty + 4, 2, 7, body);
   }
+}
+
+/** Desert Man: a long sand-coloured robe with a deep hood, a raised amber visor, a canteen and a rolled blanket on the back. */
+function drawWanderer(ctx: Ctx, W: number, H: number, c: readonly [number, number, number], p: Pose): void {
+  const [main, accent, glow] = c;
+  const robe = rgb(mixc(main, 0xffffff, p.flash * 0.7));
+  const shade = rgb(mixc(main, 0x000000, 0.45));
+  const cx = W / 2 + p.lean * 0.5;
+  const feet = H - 1;
+  const sway = Math.sin(p.step * Math.PI * 2) * 0.8;
+  const ty = feet - 24 + p.bob;
+  // rolled blanket behind the shoulders
+  rect(ctx, cx - 9, ty + 1, 4, 14, rgb(mixc(accent, 0x000000, 0.35)));
+  // robe: long flared triangle down to the boots
+  ctx.fillStyle = robe;
+  ctx.beginPath();
+  ctx.moveTo(cx - 5, ty);
+  ctx.lineTo(cx + 5, ty);
+  ctx.lineTo(cx + 9 + sway, feet);
+  ctx.lineTo(cx - 9 + sway, feet);
+  ctx.closePath();
+  ctx.fill();
+  // layered wraps + belt
+  rect(ctx, cx - 6, ty + 8, 12, 2, rgb(accent));
+  rect(ctx, cx - 8 + sway, feet - 6, 16, 1.5, shade);
+  // hood
+  ctx.fillStyle = shade;
+  ctx.beginPath();
+  ctx.arc(cx + p.lean * 0.4, ty - 3, 6.5, Math.PI, 0);
+  ctx.lineTo(cx + 6 + p.lean * 0.4, ty + 2);
+  ctx.lineTo(cx - 6 + p.lean * 0.4, ty + 2);
+  ctx.closePath();
+  ctx.fill();
+  ellipse(ctx, cx + 1 + p.lean * 0.4, ty - 1, 3.6, 3.8, rgb(mixc(main, 0x000000, 0.2)));
+  // raised amber visor on the forehead (the identifying glint)
+  rect(ctx, cx - 3 + p.lean * 0.4, ty - 6, 8, 2, rgb(accent));
+  rect(ctx, cx + 2 + p.lean * 0.4, ty - 1.5, 2.5, 1.2, rgb(glow));
+  // canteen on the hip
+  ellipse(ctx, cx - 6, ty + 14, 2.2, 3, rgb(0x6a5a3a));
+  // arm: relaxed, or lifted in a small gesture while talking
+  if (p.talk > 0) rect(ctx, cx + 6, ty + 3, 2.5, 6, robe);
+  else rect(ctx, cx + 6, ty + 6, 2.5, 8, robe);
 }
 
 function drawHeavy(ctx: Ctx, W: number, H: number, c: readonly [number, number, number], p: Pose): void {
@@ -378,6 +421,9 @@ export function drawPlaceholderFrame(ctx: Ctx, def: AssetDef, anim: string, fram
     case 'npc':
       drawHumanoid(ctx, W, H, colors, pose, 'npc');
       break;
+    case 'wanderer':
+      drawWanderer(ctx, W, H, colors, pose);
+      break;
     case 'heavy':
       drawHeavy(ctx, W, H, colors, pose);
       break;
@@ -422,6 +468,8 @@ export function makePlaceholderActors(scene: Phaser.Scene): number {
         ctx.scale(PLACEHOLDER_RES, PLACEHOLDER_RES);
         drawPlaceholderFrame(ctx, def, name, i, a.frames);
         tex.refresh();
+        // R1: the frame reports its WORLD size (2x pixels per world pixel), same mechanism as delivered final art.
+        applyWorldSize(tex, PLACEHOLDER_RES, def.display.w, def.display.h);
         made++;
       }
     }

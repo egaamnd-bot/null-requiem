@@ -3,6 +3,7 @@ import type { GameEvent } from '../core/events';
 import { getSettings } from '../state/settings';
 import { PALETTE } from './palette';
 import { DEPTH } from './RoomView';
+import { playFxSprite } from './fxSprites';
 import { TEX } from './textures';
 
 /** Hit-stop durations (seconds of frozen simulation) — the "weight" of impacts. */
@@ -146,15 +147,21 @@ export class Fx {
       case 'playerDash':
         this.data.explode(8, e.x, e.y);
         break;
-      case 'backtrace':
-        this.streak(e.fromX, e.fromY, e.toX, e.toY);
-        this.ring(e.toX, e.toY, PALETTE.cyan, 1.5, 320);
+      case 'backtrace': {
+        // R8: painted streak + arrival burst when delivered; the particle streak and ring remain the placeholder.
+        const dx = e.toX - e.fromX;
+        const dy = e.toY - e.fromY;
+        const len = Math.hypot(dx, dy);
+        const streakArt = len > 4 && playFxSprite(this.scene, 'fx_backtrace_streak', 'streak', e.fromX, e.fromY, { depth: DEPTH.fx, rotation: Math.atan2(dy, dx), scaleX: len / 64, additive: true });
+        if (!streakArt) this.streak(e.fromX, e.fromY, e.toX, e.toY);
+        if (!playFxSprite(this.scene, 'fx_backtrace_arrival', 'burst', e.toX, e.toY, { depth: DEPTH.fx, additive: true })) this.ring(e.toX, e.toY, PALETTE.cyan, 1.5, 320);
         this.data.explode(18, e.toX, e.toY);
         this.stop(HITSTOP.backtrace);
         this.flash(120, 40, 200, 230);
         break;
+      }
       case 'hit':
-        this.sparks.explode(e.killed ? 14 : 7, e.x, e.y);
+        if (!playFxSprite(this.scene, 'fx_hit_spark', 'spark', e.x, e.y, { depth: DEPTH.fx, additive: true })) this.sparks.explode(e.killed ? 14 : 7, e.x, e.y);
         if (e.target === 'enemy' || e.target === 'boss') this.stop(e.killed ? HITSTOP.kill : HITSTOP.hit);
         if (e.target === 'wall') this.dust.explode(6, e.x, e.y);
         if (e.target === 'switch') this.arcs.explode(10, e.x, e.y);
@@ -239,6 +246,8 @@ export class Fx {
         this.ring(e.x, e.y, e.open ? PALETTE.cyan : PALETTE.magenta, 0.7, 240);
         break;
       case 'plateChanged':
+        // R8: painted clock-ring pulse when a plate is pressed (the plate itself sits at its feet).
+        if (e.pressed) playFxSprite(this.scene, 'fx_temporal_plate_pulse', 'pulse', e.x, e.y + 2, { depth: DEPTH.fx, additive: true });
         break;
       case 'scrapGained':
         this.data.explode(4, e.x, e.y);

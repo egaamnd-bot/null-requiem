@@ -102,3 +102,17 @@ scale for replaced textures; e2e menu coordinates updated for the new title/paus
 
 Not done / limits: final-art hooks for tilesets/backgrounds, extra Courier animations and audio file loading are spec-only
 (`needs-engine-work`). No physical-device testing.
+
+---
+
+## Session 2026-11-02 (night) — Art production foundation (Claude, Sonnet 5.5)
+
+Branch `feature/render-foundation` (from `milestone/full-production`). Producer decisions: Desert Man is a NEW NPC; implement R0 and R1; build the asset tool; then R2–R8; make the game ready for Gemini Pack 01.
+
+- Desert Man: registry entry `desert-man` (kind `desertman`), `wanderer` placeholder silhouette, dialogue graph, `main-1` objective now `met-desert-man`, placed at alley col 7; ZERO unchanged and still talks independently. The quest is still titled *Dead Man Walking* (the Producer remembered "Desert Man Walking").
+- R0: Phaser 4 has no game-level resolution, so the canvas is `logical × K` and cameras use origin (0,0) + zoom K (Phaser's own bounds clamp assumes origin 0.5, so camera bounds were removed; `CameraFollow` clamps). Pointers converted with `logicalPointer`. Measured: backing store 600×270 → 1200×540 on a 915×412 / DPR 2.625 phone profile. Software-render benchmark scales with pixels (not a phone result).
+- R1: first idea (multiply per-view scales) was dropped for a central mechanism: replaced textures set `source.resolution` and the frame's `sourceSize` (Phaser 4 `realWidth` is a getter over `data.sourceSize`). Placeholders of manifest actors use the same call.
+- Manifest audit fixes: relay/switch/hud cell/slash/legacy NPC/BULWARK sizes now match the game; door/plate/platform/node/emitter keys now point at the textures the views use; FX keys are dedicated (no more sharing particle textures); duplicate key owners are now a test failure; the `audio` field was never copied by `def()` (fixed earlier).
+- R2–R8 and the tool: see `docs/GEMINI_PACK_01_BRIEF.md` §7 and `docs/ASSET_INTEGRATION_GUIDE.md`.
+- Tests: 546 unit, 18 browser (touch, render scale, final-art world size, pixel measurement, painted layers, fallback).
+- CI note: the first run of a new branch needed `feature/**` in the APK workflow triggers (added).

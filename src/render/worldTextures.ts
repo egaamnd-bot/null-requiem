@@ -1,5 +1,6 @@
 import type Phaser from 'phaser';
-import { noteBaseSize } from './assetRuntime';
+import { noteBaseSize, noteViewScale } from './assetRuntime';
+import { propKey } from '../world/props';
 import { css, PALETTE } from './palette';
 
 /** Code-drawn textures for the campaign's interactive objects, pickups and extra HUD icons. */
@@ -35,6 +36,8 @@ export const WTEX = {
 
 function tex(scene: Phaser.Scene, key: string, w: number, h: number, draw: (ctx: Ctx) => void): void {
   noteBaseSize(key, w * 2, h * 2);
+  // World textures are drawn at 2x and every view displays them at 0.5.
+  noteViewScale(key, 0.5);
   if (scene.textures.exists(key)) scene.textures.remove(key);
   const t = scene.textures.createCanvas(key, w * 2, h * 2);
   if (!t) return;
@@ -56,7 +59,31 @@ function circle(ctx: Ctx, cx: number, cy: number, r: number, color: string): voi
   ctx.fill();
 }
 
+/** Placeholder Rainline props (48x48 world px, feet on the bottom edge). Original shapes; replaced by `env_rainline_props` art. */
+function makePropPlaceholders(scene: Phaser.Scene): void {
+  const shapes: ((c: Ctx) => void)[] = [
+    // dumpster
+    (c) => { fill(c, 0x2c3a3a, 8, 26, 32, 22); fill(c, 0x3a4c4c, 7, 23, 34, 4); fill(c, 0x1a2424, 8, 40, 32, 3); fill(c, 0x6a8a8a, 10, 30, 28, 1, 0.5); },
+    // fire escape
+    (c) => { fill(c, 0x4a3a30, 6, 4, 2, 44); fill(c, 0x4a3a30, 40, 4, 2, 44); for (let y = 8; y < 46; y += 8) fill(c, 0x6a4a3a, 6, y, 36, 2); for (let i = 0; i < 4; i++) fill(c, 0x5a4034, 14 + i * 7, 8, 1, 38, 0.8); },
+    // neon sign box
+    (c) => { fill(c, 0x14102a, 8, 14, 32, 18); fill(c, 0x3cf2ff, 10, 16, 28, 2, 0.9); fill(c, 0xff3ea5, 12, 22, 24, 2, 0.9); fill(c, 0x3cf2ff, 14, 28, 14, 2, 0.8); fill(c, 0x2a2a38, 22, 32, 4, 16); },
+    // rain pipes
+    (c) => { for (const x of [12, 22, 32]) { fill(c, 0x3a4658, x, 0, 6, 48); fill(c, 0x7a8aa8, x + 1, 0, 1, 48, 0.7); fill(c, 0x2a3040, x - 1, 20, 8, 3); } fill(c, 0x3cf2ff, 14, 44, 2, 3, 0.6); },
+    // crate stack
+    (c) => { fill(c, 0x5a4630, 6, 28, 22, 20); fill(c, 0x7a6040, 8, 30, 18, 2); fill(c, 0x4a3828, 22, 10, 20, 20); fill(c, 0x6a5238, 24, 12, 16, 2); fill(c, 0x2a1e12, 6, 38, 22, 1); },
+    // street lamp
+    (c) => { fill(c, 0x2a2a38, 22, 12, 4, 36); fill(c, 0x2a2a38, 22, 10, 14, 3); fill(c, 0xffe9a8, 32, 13, 7, 3); fill(c, 0xffe9a8, 28, 16, 14, 14, 0.12); },
+    // puddle (reflective patch on the floor)
+    (c) => { fill(c, 0x1a3a5a, 6, 44, 36, 3, 0.8); fill(c, 0x3cf2ff, 12, 44, 20, 1, 0.7); fill(c, 0xff3ea5, 28, 45, 8, 1, 0.5); },
+    // vent unit
+    (c) => { fill(c, 0x3a4054, 10, 24, 28, 24); fill(c, 0x555c74, 10, 24, 28, 2); circle(c, 24, 36, 8, css(0x14182a)); for (let i = -6; i <= 6; i += 3) fill(c, 0x7a8aa8, 24 + i, 30, 1, 12, 0.6); fill(c, 0x1a1e2e, 14, 46, 20, 2); },
+  ];
+  shapes.forEach((draw, i) => tex(scene, propKey('rainline', i), 48, 48, draw));
+}
+
 export function makeWorldTextures(scene: Phaser.Scene): void {
+  makePropPlaceholders(scene);
   // --- pickups (12x12 at 1x) ---
   tex(scene, WTEX.pickupScrap, 12, 12, (c) => {
     fill(c, 0xffb02e, 2, 6, 8, 4);

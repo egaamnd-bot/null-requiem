@@ -62,7 +62,7 @@ export type IntegrationStatus =
   /** The replacement path needs engine work that is not done yet (documented in the guide). */
   | 'needs-engine-work';
 
-export type PlaceholderShape = 'humanoid' | 'heavy' | 'stalker' | 'turret' | 'echo' | 'machine' | 'void' | 'npc' | 'terminal' | 'drone' | 'hound';
+export type PlaceholderShape = 'humanoid' | 'heavy' | 'stalker' | 'turret' | 'echo' | 'machine' | 'void' | 'npc' | 'terminal' | 'drone' | 'hound' | 'wanderer';
 
 export interface AssetDef {
   /** Stable id, e.g. `enemy_security_drone`. Never renamed. */

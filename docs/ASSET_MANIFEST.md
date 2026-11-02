@@ -15,10 +15,10 @@
 | `player_courier_dash` | Courier — Dash | player | 1 | P0 | procedural-legacy | swap-ready |
 | `player_courier_attack` | Courier — Attack | player | 1 | P0 | procedural-legacy | swap-ready |
 | `player_courier_hurt` | Courier — Hurt | player | 1 | P0 | procedural-legacy | swap-ready |
-| `player_courier_backtrace` | Courier — Backtrace Arrival | player | 6 | P0 | spec-only | needs-engine-work |
-| `player_courier_airjump` | Courier — Kinetic Coil Air Jump | player | 3 | P0 | spec-only | needs-engine-work |
-| `player_courier_interact` | Courier — Interact | player | 3 | P0 | spec-only | needs-engine-work |
-| `player_courier_death` | Courier — Death | player | 6 | P0 | spec-only | needs-engine-work |
+| `player_courier_backtrace` | Courier — Backtrace Arrival | player | 6 | P0 | code-drawn | swap-ready |
+| `player_courier_airjump` | Courier — Kinetic Coil Air Jump | player | 3 | P0 | code-drawn | swap-ready |
+| `player_courier_interact` | Courier — Interact | player | 3 | P0 | code-drawn | swap-ready |
+| `player_courier_death` | Courier — Death | player | 6 | P0 | code-drawn | swap-ready |
 
 ## Pack 02 — Core Enemies
 
@@ -45,27 +45,27 @@
 | `npc_street_informant` | Wren (Street Informant) | npc | 6 | P1 | procedural | swap-ready |
 | `npc_black_market_trader` | Kestrel (Black-Market Trader) | npc | 6 | P0 | procedural | swap-ready |
 | `npc_temporal_researcher` | Dr. Vesper (Temporal Researcher) | npc | 6 | P1 | procedural | swap-ready |
-| `npc_desert_man` | Desert Man (Rainline Wanderer) | npc | 6 | P0 | spec-only | needs-engine-work |
+| `npc_desert_man` | Desert Man (Rainline Wanderer) | npc | 6 | P0 | procedural | swap-ready |
 | `npc_null_echo` | Null Echo (Erased Survivor) | npc | 6 | P2 | procedural | swap-ready |
 
 ## Pack 04 — Environment
 
 | Id | Name | Category | Frames | Priority | Placeholder | Integration |
 | --- | --- | --- | ---: | :-: | --- | --- |
-| `env_rainline_tiles` | Rainline Alley — Tileset | tileset | 31 | P1 | code-drawn | needs-engine-work |
-| `env_rainline_bg_far` | Rainline Alley — Far Background | background | 1 | P1 | code-drawn | needs-engine-work |
-| `env_rainline_bg_mid` | Rainline Alley — Mid Background | background | 1 | P1 | code-drawn | needs-engine-work |
-| `env_rainline_fg_silhouette` | Rainline Alley — Foreground Silhouettes | background | 4 | P1 | spec-only | needs-engine-work |
-| `env_rainline_props` | Rainline Alley — Props | object | 8 | P1 | spec-only | needs-engine-work |
-| `env_transit_tiles` | Transit Stacks — Tileset | tileset | 31 | P1 | code-drawn | needs-engine-work |
-| `env_transit_bg_far` | Transit Stacks — Far Background | background | 1 | P1 | code-drawn | needs-engine-work |
-| `env_transit_bg_mid` | Transit Stacks — Mid Background | background | 1 | P1 | code-drawn | needs-engine-work |
-| `env_transit_fg_silhouette` | Transit Stacks — Foreground Silhouettes | background | 4 | P1 | spec-only | needs-engine-work |
+| `env_rainline_tiles` | Rainline Alley — Tileset | tileset | 31 | P1 | code-drawn | swap-ready |
+| `env_rainline_bg_far` | Rainline Alley — Far Background | background | 1 | P1 | code-drawn | swap-ready |
+| `env_rainline_bg_mid` | Rainline Alley — Mid Background | background | 1 | P1 | code-drawn | swap-ready |
+| `env_rainline_fg_silhouette` | Rainline Alley — Foreground Silhouettes | background | 4 | P1 | spec-only | swap-ready |
+| `env_rainline_props` | Rainline Alley — Props | object | 8 | P1 | code-drawn | swap-ready |
+| `env_transit_tiles` | Transit Stacks — Tileset | tileset | 31 | P1 | code-drawn | swap-ready |
+| `env_transit_bg_far` | Transit Stacks — Far Background | background | 1 | P1 | code-drawn | swap-ready |
+| `env_transit_bg_mid` | Transit Stacks — Mid Background | background | 1 | P1 | code-drawn | swap-ready |
+| `env_transit_fg_silhouette` | Transit Stacks — Foreground Silhouettes | background | 4 | P1 | spec-only | swap-ready |
 | `env_transit_props` | Transit Stacks — Props | object | 8 | P1 | spec-only | needs-engine-work |
-| `env_precinct_tiles` | Precinct Vault — Tileset | tileset | 31 | P1 | code-drawn | needs-engine-work |
-| `env_precinct_bg_far` | Precinct Vault — Far Background | background | 1 | P1 | code-drawn | needs-engine-work |
-| `env_precinct_bg_mid` | Precinct Vault — Mid Background | background | 1 | P1 | code-drawn | needs-engine-work |
-| `env_precinct_fg_silhouette` | Precinct Vault — Foreground Silhouettes | background | 4 | P1 | spec-only | needs-engine-work |
+| `env_precinct_tiles` | Precinct Vault — Tileset | tileset | 31 | P1 | code-drawn | swap-ready |
+| `env_precinct_bg_far` | Precinct Vault — Far Background | background | 1 | P1 | code-drawn | swap-ready |
+| `env_precinct_bg_mid` | Precinct Vault — Mid Background | background | 1 | P1 | code-drawn | swap-ready |
+| `env_precinct_fg_silhouette` | Precinct Vault — Foreground Silhouettes | background | 4 | P1 | spec-only | swap-ready |
 | `env_precinct_props` | Precinct Vault — Props | object | 8 | P1 | spec-only | needs-engine-work |
 | `obj_sync_relay` | Sync Relay | object | 3 | P0 | procedural-legacy | swap-ready |
 | `obj_security_door` | Security Door | object | 5 | P0 | procedural | swap-ready |
@@ -85,20 +85,20 @@
 
 | Id | Name | Category | Frames | Priority | Placeholder | Integration |
 | --- | --- | --- | ---: | :-: | --- | --- |
-| `env_undercity_tiles` | Neon Undercity — Tileset | tileset | 31 | P1 | code-drawn | needs-engine-work |
-| `env_undercity_bg_far` | Neon Undercity — Far Background | background | 1 | P1 | code-drawn | needs-engine-work |
-| `env_undercity_bg_mid` | Neon Undercity — Mid Background | background | 1 | P1 | code-drawn | needs-engine-work |
-| `env_undercity_fg_silhouette` | Neon Undercity — Foreground Silhouettes | background | 4 | P1 | spec-only | needs-engine-work |
+| `env_undercity_tiles` | Neon Undercity — Tileset | tileset | 31 | P1 | code-drawn | swap-ready |
+| `env_undercity_bg_far` | Neon Undercity — Far Background | background | 1 | P1 | code-drawn | swap-ready |
+| `env_undercity_bg_mid` | Neon Undercity — Mid Background | background | 1 | P1 | code-drawn | swap-ready |
+| `env_undercity_fg_silhouette` | Neon Undercity — Foreground Silhouettes | background | 4 | P1 | spec-only | swap-ready |
 | `env_undercity_props` | Neon Undercity — Props | object | 8 | P1 | spec-only | needs-engine-work |
-| `env_industrial_tiles` | Industrial Core — Tileset | tileset | 31 | P1 | code-drawn | needs-engine-work |
-| `env_industrial_bg_far` | Industrial Core — Far Background | background | 1 | P1 | code-drawn | needs-engine-work |
-| `env_industrial_bg_mid` | Industrial Core — Mid Background | background | 1 | P1 | code-drawn | needs-engine-work |
-| `env_industrial_fg_silhouette` | Industrial Core — Foreground Silhouettes | background | 4 | P1 | spec-only | needs-engine-work |
+| `env_industrial_tiles` | Industrial Core — Tileset | tileset | 31 | P1 | code-drawn | swap-ready |
+| `env_industrial_bg_far` | Industrial Core — Far Background | background | 1 | P1 | code-drawn | swap-ready |
+| `env_industrial_bg_mid` | Industrial Core — Mid Background | background | 1 | P1 | code-drawn | swap-ready |
+| `env_industrial_fg_silhouette` | Industrial Core — Foreground Silhouettes | background | 4 | P1 | spec-only | swap-ready |
 | `env_industrial_props` | Industrial Core — Props | object | 8 | P1 | spec-only | needs-engine-work |
-| `env_cathedral_tiles` | Null Cathedral — Tileset | tileset | 31 | P1 | code-drawn | needs-engine-work |
-| `env_cathedral_bg_far` | Null Cathedral — Far Background | background | 1 | P1 | code-drawn | needs-engine-work |
-| `env_cathedral_bg_mid` | Null Cathedral — Mid Background | background | 1 | P1 | code-drawn | needs-engine-work |
-| `env_cathedral_fg_silhouette` | Null Cathedral — Foreground Silhouettes | background | 4 | P1 | spec-only | needs-engine-work |
+| `env_cathedral_tiles` | Null Cathedral — Tileset | tileset | 31 | P1 | code-drawn | swap-ready |
+| `env_cathedral_bg_far` | Null Cathedral — Far Background | background | 1 | P1 | code-drawn | swap-ready |
+| `env_cathedral_bg_mid` | Null Cathedral — Mid Background | background | 1 | P1 | code-drawn | swap-ready |
+| `env_cathedral_fg_silhouette` | Null Cathedral — Foreground Silhouettes | background | 4 | P1 | spec-only | swap-ready |
 | `env_cathedral_props` | Null Cathedral — Props | object | 8 | P1 | spec-only | needs-engine-work |
 | `pickup_kinetic_coil` | Kinetic Coil | collectible | 4 | P0 | code-drawn | swap-ready |
 | `pickup_scrap` | Scrap Cache | collectible | 2 | P1 | code-drawn | swap-ready |
@@ -119,16 +119,16 @@
 | `fx_slash_up` | Slash — Up | fx-combat | 4 | P1 | code-drawn | swap-ready |
 | `fx_slash_down` | Slash — Down | fx-combat | 4 | P1 | code-drawn | swap-ready |
 | `fx_hit_spark` | Hit Spark | fx-combat | 5 | P1 | code-drawn | swap-ready |
-| `fx_glitch_strike` | Glitch Strike | fx-combat | 6 | P1 | code-drawn | placeholder |
+| `fx_glitch_strike` | Glitch Strike | fx-combat | 6 | P1 | code-drawn | swap-ready |
 | `fx_enemy_telegraph` | Enemy Telegraph Glint | fx-combat | 4 | P1 | code-drawn | swap-ready |
 | `fx_boss_floor_telegraph` | Boss Floor Telegraph | fx-combat | 7 | P0 | code-drawn | placeholder |
 | `fx_laser_beam` | Laser / Steam Beam | fx-combat | 10 | P1 | code-drawn | placeholder |
 | `fx_projectile_set` | Projectiles | fx-combat | 8 | P1 | code-drawn | swap-ready |
 | `fx_steam_vent` | Steam Plume | fx-combat | 6 | P1 | code-drawn | placeholder |
 | `fx_backtrace_arrival` | Backtrace Arrival Burst | fx-backtrace | 8 | P0 | code-drawn | swap-ready |
-| `fx_backtrace_echo` | Backtrace Echo (Afterimage) | fx-backtrace | 5 | P0 | procedural-legacy | swap-ready |
+| `fx_backtrace_echo` | Backtrace Echo (Afterimage) | fx-backtrace | 5 | P0 | code-drawn | swap-ready |
 | `fx_backtrace_streak` | Backtrace Streak | fx-backtrace | 4 | P1 | code-drawn | swap-ready |
-| `fx_temporal_plate_pulse` | Temporal Plate Pulse | fx-backtrace | 6 | P1 | code-drawn | placeholder |
+| `fx_temporal_plate_pulse` | Temporal Plate Pulse | fx-backtrace | 6 | P1 | code-drawn | swap-ready |
 | `fx_null_void` | Null Void Cracks | fx-backtrace | 18 | P0 | code-drawn | placeholder |
 
 ## Pack 07 — UI and Audio

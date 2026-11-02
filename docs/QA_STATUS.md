@@ -3,20 +3,43 @@
 Last updated: 2026-11-02 (Claude). Labels: **verified** (command/CI result recorded here), **inferred**, **unverified**.
 Automated results below are NOT physical-device verification.
 
-## Latest CI evidence
+## Latest CI evidence — `feature/render-foundation` (PR #5)
 
-Code commit built and verified: **`be5ca3ebf561b073ed2f636983c8c94488f2c95b`** (branch `milestone/full-production`, PR #4).
+Code commit built and verified: **`f58900dc9919d5b8af38ab1884580bc04cf34ed3`**.
 
-| Check | Result (verified from GitHub Actions API) |
+| Check | Result (GitHub Actions API) |
 |---|---|
-| "CI" run | **success** — https://github.com/egaamnd-bot/null-requiem/actions/runs/41459226783 |
-| "Android Debug APK" run | **success** — https://github.com/egaamnd-bot/null-requiem/actions/runs/41459226709 |
-| Steps inside the APK run | typecheck, unit tests, web build, Playwright touch smoke, Capacitor `cap add android`, landscape patch, immersive patch, `assembleDebug`, APK verify, **built-APK landscape check**, checksum, artifact upload: all success |
-| APK artifact | `null-requiem-android-debug-be5ca3ebf561b073ed2f636983c8c94488f2c95b`, 7,172,731 bytes (zip, contains `app-debug.apk`), expires 2026-11-16; Download from the run page, section **Artifacts** (GitHub login required) |
+| "CI" run | **success** — https://github.com/egaamnd-bot/null-requiem/actions/runs/41472309533 |
+| "CI" (pull_request) | **success** — https://github.com/egaamnd-bot/null-requiem/actions/runs/41472349791 |
+| "Android Debug APK" run | **success** — https://github.com/egaamnd-bot/null-requiem/actions/runs/41472309703 (typecheck, unit tests, build, Playwright, Capacitor, APK build/verify, built-APK landscape check, upload) |
+| APK artifact | `null-requiem-android-debug-f58900dc9919d5b8af38ab1884580bc04cf34ed3`, 7,201,253 bytes (zip, contains `app-debug.apk`), expires 2026-11-16 — download from the run page, section **Artifacts** (GitHub login required) |
 
-History: the first run on this branch (`d6bb11f`) failed in "Unit tests": `tests/collision.test.ts` fuzz test timed out at the
-5 s default on the CI runner after the world grew to 19 rooms. Fixed by raising `testTimeout` to 30 s in `vite.config.ts`
-(no test removed or weakened); `be5ca3e` is green. Docs-only commits after it rebuild identical code.
+Previous branch (`milestone/full-production`, PR #4, `be5ca3e`) was green and was playtested on a physical Android phone by the Producer ("core gameplay and controls work as intended" — Producer report, not an automated check).
+
+## Local sandbox results (2026-11-02)
+
+- `npx tsc --noEmit` pass; `npx vitest run` **546/546** (34 files); `npm run build` pass; Playwright (local Chromium, Pixel 7 landscape) **18/18**: touch controls (11), render scale (1), final-art world size / pixel measurement / painted layers / fallback / Courier interact frames (6).
+- Render scale measured on the production build (915×412, DPR 2.625): canvas 600×270 → **1200×540** at the default (K = 2); K = 3 → 1800×810; K = 4 → 2400×1080.
+- Benchmark in headless Chromium with a **software** renderer (not a phone GPU): K = 1/2/3/4 → 18/7/3/2 fps, i.e. cost scales with pixel count. **Unverified on a real device.**
+- **Unverified:** real painted art in the game (all browser tests use synthetic art); Gemini output quality; heat/battery at K ≥ 3.
+
+## Physical-device testing required (Producer)
+
+Settings → Render quality: compare Low / Balanced / High / Max for sharpness, frame rate and heat; check the Desert Man conversation and the
+quest tracker; check touch controls still behave (joystick, buttons, pause); confirm nothing looks stretched.
+
+## Known issues / open items
+
+- Audio files cannot be loaded yet; portraits have no renderer slot; projectile frames show only the first frame; props exist only for Rainline; tileset has no inner-corner cells.
+- GitHub job logs are not downloadable from the sandbox (read failures via check-run annotations). GitHub warns about Node 20 actions and the ubuntu-latest migration; the APK workflow pins `ubuntu-24.04`.
+
+## Device verification status
+
+The last device test (PR #4 build) passed per the Producer. **No device test of this branch exists yet.**
+
+---
+
+Older QA history follows.
 
 ## Local sandbox results (2026-11-02)
 
