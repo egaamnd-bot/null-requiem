@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import type { GameEvent } from '../core/events';
+import { getSettings } from '../state/settings';
 import { PALETTE } from './palette';
 import { DEPTH } from './RoomView';
 import { TEX } from './textures';
@@ -111,7 +112,11 @@ export class Fx {
   }
 
   private shake(duration: number, intensity: number): void {
-    this.scene.cameras.main.shake(duration, intensity);
+    if (getSettings().screenShake) this.scene.cameras.main.shake(duration, intensity);
+  }
+
+  private flash(duration: number, r: number, g: number, b: number): void {
+    if (!getSettings().reduceFlash) this.scene.cameras.main.flash(duration, r, g, b);
   }
 
   /** An expanding ring of light (Backtrace arrival burst, relay link). */
@@ -136,6 +141,7 @@ export class Fx {
         break;
       case 'playerJump':
         this.dust.explode(3, e.x, e.y);
+        if (e.air) this.ring(e.x, e.y, PALETTE.sodium, 0.8, 220);
         break;
       case 'playerDash':
         this.data.explode(8, e.x, e.y);
@@ -145,7 +151,7 @@ export class Fx {
         this.ring(e.toX, e.toY, PALETTE.cyan, 1.5, 320);
         this.data.explode(18, e.toX, e.toY);
         this.stop(HITSTOP.backtrace);
-        this.scene.cameras.main.flash(120, 40, 200, 230);
+        this.flash(120, 40, 200, 230);
         break;
       case 'hit':
         this.sparks.explode(e.killed ? 14 : 7, e.x, e.y);
@@ -160,7 +166,7 @@ export class Fx {
         this.sparks.explode(10, e.x, e.y);
         this.stop(HITSTOP.hurt);
         this.shake(140, 0.008);
-        this.scene.cameras.main.flash(90, 140, 20, 40);
+        this.flash(90, 140, 20, 40);
         break;
       case 'playerDied':
         this.data.explode(30, e.x, e.y);
@@ -181,7 +187,7 @@ export class Fx {
       case 'abilityUnlocked':
         this.data.explode(40, e.x, e.y);
         this.ring(e.x, e.y, PALETTE.cyan, 2.5, 600);
-        this.scene.cameras.main.flash(250, 40, 180, 220);
+        this.flash(250, 40, 180, 220);
         break;
       case 'secretFound':
         this.data.explode(26, e.x, e.y);
@@ -207,13 +213,44 @@ export class Fx {
         break;
       case 'bossPhase':
         this.shake(400, 0.008);
-        this.scene.cameras.main.flash(200, 160, 20, 40);
+        this.flash(200, 160, 20, 40);
         break;
       case 'bossDefeated':
         this.debris.explode(60, e.x, e.y);
         this.stop(HITSTOP.bossKill);
         this.shake(700, 0.012);
-        this.scene.cameras.main.flash(400, 200, 240, 255);
+        this.flash(400, 200, 240, 255);
+        break;
+      case 'enemyBlocked':
+        this.sparks.explode(6, e.x, e.y);
+        this.ring(e.x, e.y, PALETTE.steel, 0.6, 180);
+        break;
+      case 'bossStaggered':
+        this.arcs.explode(16, e.x, e.y);
+        this.stop(HITSTOP.hit * 2);
+        this.shake(200, 0.008);
+        break;
+      case 'echoRewind':
+        this.streak(e.fromX, e.fromY, e.toX, e.toY);
+        this.ring(e.toX, e.toY, PALETTE.violet, 1.2, 300);
+        break;
+      case 'doorChanged':
+        this.dust.explode(8, e.x, e.y);
+        this.ring(e.x, e.y, e.open ? PALETTE.cyan : PALETTE.magenta, 0.7, 240);
+        break;
+      case 'plateChanged':
+        break;
+      case 'scrapGained':
+        this.data.explode(4, e.x, e.y);
+        break;
+        break;
+      case 'loreFound':
+        this.data.explode(14, e.x, e.y);
+        this.ring(e.x, e.y, PALETTE.violet, 1, 400);
+        break;
+      case 'gameCompleted':
+        this.shake(900, 0.01);
+        this.flash(600, 220, 240, 255);
         break;
       default:
         break;

@@ -2,7 +2,21 @@
 
 Principle: **don't add breadth until the current slice is stable and enjoyable.** Each milestone ends with a playtest and a go/no-go on feel.
 
-## Milestone 1 — Vertical slice (this PR)
+## Current: Full-production milestone (M0–M12) — branch `milestone/full-production`, PR open, not merged
+
+Done on the branch (automated evidence in `QA_STATUS.md`): viewport + floating joystick (M1), 19-room interconnected world (M2),
+movement/combat (M3), enemy roster (M4), boss framework + 4 bosses (M5), NPCs/dialogue/quests/story (M6), progression/upgrades/
+collectibles/save v2 (M7), environmental puzzles (M8), UI/audio/feel (M9), asset manifest + placeholders + docs (M10), campaign
+docs (M11), CI + APK (M12).
+
+Pending:
+- Producer device playtest (feel, safe areas, performance, difficulty, length).
+- Final art (Gemini packs 01–07) and engine hooks for tilesets/backgrounds/extra Courier animations/audio files.
+- Balance pass from real play data.
+
+Next candidates (Producer to choose): content polish pass, accessibility options, localisation, controller testing, Steam/Play packaging.
+
+## Milestone 1 — Vertical slice (done, merged in PR #2)
 - Player controller and Backtrace
 - Two enemies and three rooms
 - Checkpoints, a Backtrace-gated puzzle and a secret
@@ -34,7 +48,7 @@ Driven by human playtest data, not new content.
 - Difficulty balancing, accessibility options (assist modes).
 
 ## Later
-- Optional touch controls. The input layer already produces a device-agnostic `HeldInput`.
+- Touch controls shipped in Milestone 1.5; later: rebinding/size/opacity options for the on-screen controls, haptics.
 - Performance budget, browser compatibility matrix, bundle splitting.
 - Packaging decision (web-only vs. desktop wrapper). Producer call.
 

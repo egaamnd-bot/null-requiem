@@ -1,4 +1,5 @@
 import type { GameEvent } from '../core/events';
+import { getSettings } from '../state/settings';
 
 /**
  * Tiny procedural sound effects synthesised with the Web Audio API — original placeholder
@@ -28,7 +29,20 @@ export type Cue =
   | 'victory'
   | 'backtrace'
   | 'switch'
-  | 'gate';
+  | 'gate'
+  | 'clang'
+  | 'coin'
+  | 'plate'
+  | 'door'
+  | 'quest'
+  | 'blink'
+  | 'telegraph'
+  | 'airjump'
+  | 'item'
+  | 'upgrade'
+  | 'record'
+  | 'rewindSelf'
+  | 'talk';
 
 export class Sfx {
   private ctx: AudioContext | null = null;
@@ -51,7 +65,7 @@ export class Sfx {
     try {
       this.ctx = new Ctor();
       this.master = this.ctx.createGain();
-      this.master.gain.value = this.muted ? 0 : 0.35;
+      this.master.gain.value = this.level();
       this.master.connect(this.ctx.destination);
       const len = this.ctx.sampleRate * 0.5;
       this.noiseBuffer = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
@@ -64,8 +78,26 @@ export class Sfx {
 
   toggleMute(): boolean {
     this.muted = !this.muted;
-    if (this.master && this.ctx) this.master.gain.setTargetAtTime(this.muted ? 0 : 0.35, this.ctx.currentTime, 0.05);
+    this.applySettings();
     return this.muted;
+  }
+
+  private level(): number {
+    return this.muted ? 0 : 0.35 * getSettings().sfxVolume;
+  }
+
+  /** Re-read player settings (volume) and apply them. */
+  applySettings(): void {
+    if (this.master && this.ctx) this.master.gain.setTargetAtTime(this.level(), this.ctx.currentTime, 0.05);
+    this.onSettings?.();
+  }
+
+  /** Hook so the music engine can follow settings changes. */
+  onSettings: (() => void) | null = null;
+
+  /** Shared audio context (the music engine plays through the same device). */
+  get audio(): { ctx: AudioContext; muted: boolean } | null {
+    return this.ctx ? { ctx: this.ctx, muted: this.muted } : null;
   }
 
   private tone(type: OscillatorType, f0: number, f1: number, dur: number, vol: number, delay = 0): void {
@@ -178,6 +210,55 @@ export class Sfx {
         this.tone('square', 1200, 1200, 0.05, 0.04);
         this.tone('square', 1600, 1600, 0.06, 0.04, 0.06);
         break;
+      case 'clang':
+        this.noise(0.12, 0.3, 'bandpass', 3200, 1800);
+        this.tone('square', 1500, 700, 0.1, 0.12);
+        break;
+      case 'coin':
+        this.tone('square', 880, 1320, 0.06, 0.1);
+        this.tone('square', 1320, 1760, 0.08, 0.1, 0.05);
+        break;
+      case 'plate':
+        this.tone('triangle', 220, 330, 0.12, 0.18);
+        this.tone('sine', 660, 660, 0.18, 0.08, 0.06);
+        break;
+      case 'door':
+        this.noise(0.28, 0.2, 'lowpass', 900, 200);
+        this.tone('sawtooth', 120, 70, 0.28, 0.1);
+        break;
+      case 'quest':
+        this.tone('triangle', 523, 523, 0.1, 0.14);
+        this.tone('triangle', 659, 659, 0.1, 0.14, 0.09);
+        this.tone('triangle', 784, 784, 0.18, 0.14, 0.18);
+        break;
+      case 'blink':
+        this.noise(0.14, 0.18, 'highpass', 4000, 800);
+        this.tone('sine', 1400, 300, 0.14, 0.1);
+        break;
+      case 'telegraph':
+        this.tone('sawtooth', 180, 420, 0.35, 0.09);
+        break;
+      case 'airjump':
+        this.tone('square', 420, 900, 0.12, 0.12);
+        this.noise(0.1, 0.1, 'highpass', 3000, 6000);
+        break;
+      case 'item':
+        this.tone('triangle', 660, 990, 0.1, 0.14);
+        break;
+      case 'upgrade':
+        for (let i = 0; i < 4; i++) this.tone('triangle', 440 * 2 ** (i / 3), 440 * 2 ** (i / 3), 0.14, 0.12, i * 0.07);
+        break;
+      case 'record':
+        this.tone('sine', 880, 440, 0.4, 0.1);
+        this.tone('sine', 1320, 660, 0.4, 0.06, 0.1);
+        break;
+      case 'rewindSelf':
+        this.tone('sawtooth', 900, 120, 0.5, 0.12);
+        this.noise(0.4, 0.12, 'bandpass', 2400, 300);
+        break;
+      case 'talk':
+        this.tone('square', 300 + Math.random() * 90, 300 + Math.random() * 90, 0.04, 0.05);
+        break;
       case 'gate':
         this.noise(0.12, 0.15, 'highpass', 3000, 1500);
         break;
@@ -191,7 +272,7 @@ export class Sfx {
   handle(e: GameEvent): void {
     switch (e.type) {
       case 'playerJump':
-        return this.play('jump');
+        return this.play(e.air ? 'airjump' : 'jump');
       case 'playerLand':
         return this.play('land');
       case 'playerAttack':
@@ -233,6 +314,37 @@ export class Sfx {
         return this.play('roar');
       case 'bossDefeated':
         return this.play('kill');
+      case 'enemyBlocked':
+        return this.play('clang');
+      case 'scrapGained':
+        return this.play('coin');
+      case 'plateChanged':
+        return this.play('plate');
+      case 'doorChanged':
+      case 'nodePowered':
+        return this.play(e.type === 'nodePowered' ? 'plate' : 'door');
+      case 'doorLocked':
+        return this.play('clang');
+      case 'questUpdated':
+        return this.play(e.status === 'progress' ? 'item' : 'quest');
+      case 'itemGained':
+        return this.play('item');
+      case 'upgradeGained':
+        return this.play('upgrade');
+      case 'loreFound':
+        return this.play('record');
+      case 'bossTelegraph':
+        return this.play('telegraph');
+      case 'bossStaggered':
+        return this.play('clang');
+      case 'echoRewind':
+        return this.play('rewindSelf');
+      case 'npcTalk':
+        return this.play('talk');
+      case 'dialogueOpened':
+        return this.play('menu');
+      case 'gameCompleted':
+        return this.play('victory');
       default:
         return;
     }

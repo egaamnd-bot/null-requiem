@@ -13,5 +13,7 @@ export default defineConfig({
   test: {
     include: ['tests/**/*.test.ts'],
     environment: 'node',
+    // The campaign has 19 rooms; fuzz and reachability tests simulate many fixed steps and run in parallel on small CI runners.
+    testTimeout: 30_000,
   },
 });

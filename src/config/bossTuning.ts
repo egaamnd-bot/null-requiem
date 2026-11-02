@@ -1,0 +1,46 @@
+/** Tuning for the pattern-driven bosses (KILN-7 and THE NULL). BULWARK-9 and PANOPTIX-0 keep their own tables. */
+
+export const KILN_7 = {
+  id: 'kiln-7',
+  name: 'KILN-7',
+  width: 60,
+  height: 46,
+  health: 28,
+  phase2: 0.66,
+  phase3: 0.33,
+  introTime: 1.4,
+  idleMin: 0.7,
+  idleMax: 1.1,
+  idleMinPhase3: 0.45,
+  contactDamage: 1,
+  piston: { lanes: 3, laneSpacing: 44, width: 22, telegraph: 1.0, telegraphPhase3: 0.8, active: 0.3, exposed: 2.0, damage: 2 },
+  vents: { width: 22, height: 74, telegraph: 0.75, active: 1.1, recover: 0.7, damage: 1 },
+  ember: { count: 5, windup: 0.75, stagger: 0.14, fallSpeed: 150, gravity: 380, width: 8, height: 14, damage: 1, recover: 0.9 },
+  sweep: { telegraph: 0.9, speed: 118, width: 14, height: 12, life: 4.2, damage: 1, exposed: 1.6 },
+  victoryDelay: 2.4,
+  deathTime: 2.2,
+} as const;
+
+export const THE_NULL = {
+  id: 'the-null',
+  name: 'THE NULL',
+  width: 22,
+  height: 36,
+  health: 34,
+  phase2: 0.66,
+  phase3: 0.33,
+  introTime: 2.0,
+  idleMin: 0.7,
+  idleMax: 1.1,
+  idleMinPhase3: 0.4,
+  contactDamage: 1,
+  /** Matches the Courier's base Backtrace window on purpose. */
+  echoWindow: 4.0,
+  imprint: { telegraph: 2.3, telegraphPhase3: 1.8, active: 0.35, exposed: 1.6, width: 30, height: 120, damage: 2 },
+  rewind: { telegraph: 1.5, active: 0.2, stunExposed: 2.6, telefragRadius: 30, telefragDamage: 3, heal: 2, exposedAfterNormal: 0.5, minDistance: 70 },
+  beams: { count: 3, telegraph: 1.0, active: 0.5, width: 16, damage: 1, exposed: 0.8 },
+  summon: { telegraph: 0.9, count: 2, exposed: 1.3 },
+  hover: { amplitude: 5, speed: 1.6 },
+  victoryDelay: 3.0,
+  deathTime: 3.0,
+} as const;

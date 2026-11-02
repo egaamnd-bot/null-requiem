@@ -11,6 +11,8 @@ import { PALETTE } from './palette';
 import { DEPTH } from './RoomView';
 import type { NpcEntity } from '../core/npc';
 import type { PanoptixUnit } from '../core/enemies/panoptixUnit';
+import { AssetSprite, texScale } from './assetRuntime';
+import { ENEMY_ASSET, ManifestEnemyView } from './CampaignViews';
 import { houndKey, playerKey, TEX, bulwarkKey, droneKey, npcKey, panoptixKey, type PlayerFrame, type PanoptixFrame } from './textures';
 
 /** Render-space position (interpolated between simulation steps). */
@@ -37,7 +39,7 @@ export class PlayerView {
 
   constructor(scene: Phaser.Scene) {
     this.glow = scene.add.image(0, 0, TEX.glowSoft).setTint(PALETTE.cyan).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.3).setScale(1.2).setDepth(DEPTH.player - 1);
-    this.sprite = scene.add.image(0, 0, playerKey('idle0')).setOrigin(0.5, 1).setDepth(DEPTH.player);
+    this.sprite = scene.add.image(0, 0, playerKey('idle0')).setOrigin(0.5, 1).setDepth(DEPTH.player).setScale(0.65);
     this.slash = scene.add.image(0, 0, TEX.slashSide).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.player + 1).setVisible(false);
   }
 
@@ -66,14 +68,16 @@ export class PlayerView {
       this.runClock += dt * (Math.abs(b.vx) / 150) * 10;
       frame = (['run0', 'run1', 'run2', 'run3'] as const)[Math.floor(this.runClock) % 4] ?? 'run0';
     } else frame = Math.floor(time / 450) % 2 === 0 ? 'idle0' : 'idle1';
-    this.sprite.setTexture(playerKey(frame));
+    const pkey = playerKey(frame);
+    this.sprite.setTexture(pkey);
+    const k = texScale(this.sprite.scene, pkey);
 
     // Squash and stretch (decays exponentially, so it's frame-rate independent).
     this.squash *= Math.exp(-12 * dt);
     const s = this.squash;
     const sx = 1 + s * 0.18;
     const sy = 1 - s * 0.18;
-    this.sprite.setScale(p.isDashing ? 1.25 : sx, p.isDashing ? 0.85 : sy);
+    this.sprite.setScale((p.isDashing ? 0.84 : 0.65 * sx) * k, (p.isDashing ? 0.55 : 0.65 * sy) * k);
 
     // Invulnerability blink, death fade.
     const inv = p.health.isInvulnerable && !p.dead;
@@ -133,7 +137,8 @@ export class EchoView {
       .setDepth(DEPTH.echo)
       .setTint(PALETTE.cyan)
       .setTintMode(Phaser.TintModes.FILL)
-      .setBlendMode(Phaser.BlendModes.ADD);
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setScale(0.65);
   }
 
   update(world: GameWorld, time: number): void {
@@ -192,7 +197,7 @@ class HoundView implements EnemyView {
       shake = Math.sin(time / 18) * 1;
     } else if (g.state === 'lunge') key = houndKey('lunge');
     else if (g.state === 'recover') key = houndKey('recover');
-    this.sprite.setTexture(key).setPosition(fx + shake, fy).setFlipX(g.facing < 0);
+    this.sprite.setTexture(key).setScale(texScale(this.sprite.scene, key)).setPosition(fx + shake, fy).setFlipX(g.facing < 0);
     flash(this.sprite, g.flash > 0);
     const glowA = g.state === 'windup' ? 0.75 : g.state === 'recover' ? 0.12 : 0.35;
     this.glow.setPosition(fx, fy - 4).setAlpha(glowA).setScale(g.state === 'windup' ? 0.9 : 0.6);
@@ -225,7 +230,7 @@ class DroneView implements EnemyView {
     const cy = Math.round(pos.y + b.h / 2);
     const charging = w.state === 'windup';
     const key = charging ? droneKey('charge') : droneKey(Math.floor(time / 300) % 2 === 0 ? 'idle0' : 'idle1');
-    this.sprite.setTexture(key).setPosition(cx, cy + 4).setFlipX(w.facing < 0);
+    this.sprite.setTexture(key).setScale(texScale(this.sprite.scene, key)).setPosition(cx, cy + 4).setFlipX(w.facing < 0);
     flash(this.sprite, w.flash > 0);
     this.glow.setPosition(cx, cy);
     this.core.setPosition(cx, cy).setScale(0.25 + w.charge * 0.55).setAlpha(0.5 + w.charge * 0.5);
@@ -280,7 +285,7 @@ export class BossView {
       default:
         break;
     }
-    this.sprite.setTexture(key).setPosition(fx + shake, fy).setFlipX(boss.facing < 0);
+    this.sprite.setTexture(key).setScale(texScale(this.sprite.scene, key)).setPosition(fx + shake, fy).setFlipX(boss.facing < 0);
     flash(this.sprite, boss.flash > 0);
     const hot = boss.state.endsWith('Windup') ? 0.6 + boss.windupProgress * 0.4 : boss.state === 'stunned' || boss.state === 'dead' ? 0.1 : 0.4;
     this.glow.setPosition(fx, fy - 16).setAlpha(hot * (boss.phase === 2 ? 1.2 : 1)).setScale(boss.phase === 2 ? 1.3 : 1.05);
@@ -314,6 +319,34 @@ export class BossView {
 }
 
 /** Keeps one view per live enemy, creating and destroying views as enemies come and go. */
+/** Elite marker for legacy enemy views (hound / drone): a pulsing magenta halo and spark. */
+class EliteAura implements EnemyView {
+  private readonly halo: Phaser.GameObjects.Image;
+  private readonly spark: Phaser.GameObjects.Image;
+
+  constructor(
+    scene: Phaser.Scene,
+    private readonly inner: EnemyView,
+  ) {
+    this.halo = scene.add.image(0, 0, TEX.glow).setTint(PALETTE.magenta).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.enemies - 1).setScale(1.1);
+    this.spark = scene.add.image(0, 0, TEX.spark).setTint(PALETTE.magenta).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.enemies + 2).setScale(1.6);
+  }
+
+  update(e: Enemy, pos: RenderPos, time: number): void {
+    this.inner.update(e, pos, time);
+    const cx = pos.x + e.body.w / 2;
+    const cy = pos.y + e.body.h / 2;
+    this.halo.setPosition(cx, cy).setAlpha(0.35 + Math.sin(time / 140) * 0.15);
+    this.spark.setPosition(cx, cy - e.body.h / 2 - 8).setAlpha(0.6 + Math.sin(time / 110) * 0.3);
+  }
+
+  destroy(): void {
+    this.inner.destroy();
+    this.halo.destroy();
+    this.spark.destroy();
+  }
+}
+
 export class EnemyViewRegistry {
   private readonly views = new Map<string, EnemyView>();
 
@@ -325,7 +358,9 @@ export class EnemyViewRegistry {
       live.add(e.id);
       let v = this.views.get(e.id);
       if (!v) {
-        v = e instanceof WatcherDrone ? new DroneView(this.scene) : new HoundView(this.scene);
+        if (ENEMY_ASSET[e.kind]) v = new ManifestEnemyView(this.scene, e.kind, e.elite);
+        else v = e instanceof WatcherDrone ? new DroneView(this.scene) : new HoundView(this.scene);
+        if (e.elite && !ENEMY_ASSET[e.kind]) v = new EliteAura(this.scene, v);
         this.views.set(e.id, v);
       }
       v.update(e, posOf(e), time);
@@ -395,13 +430,31 @@ export class ProjectileViews {
  * Renders a single NPC (zero / mira / terminal).
  * Gentle idle float; a pulsing talk-indicator dot appears when the NPC is active.
  */
+/** NPC sprite kinds that come from the asset manifest (the first three are legacy hand-drawn textures). */
+export const NPC_ASSET: Readonly<Record<string, string>> = {
+  mechanic: 'npc_station_mechanic',
+  medic: 'npc_underground_medic',
+  officer: 'npc_former_officer',
+  trader: 'npc_black_market_trader',
+  informant: 'npc_street_informant',
+  researcher: 'npc_temporal_researcher',
+  echo: 'npc_null_echo',
+};
+
 export class NpcView {
+  private readonly asset: AssetSprite | null;
   private readonly sprite: Phaser.GameObjects.Image;
   private readonly glow: Phaser.GameObjects.Image;
   private readonly talkBubble: Phaser.GameObjects.Image;
   private readonly baseY: number;
+  private readonly prompt: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene, npc: NpcEntity) {
+    this.prompt = scene.add
+      .text(npc.feetX, npc.feetY - 40, '', { fontFamily: 'monospace', fontSize: '8px', color: '#d8e1f0', backgroundColor: 'rgba(5,6,12,0.7)', padding: { x: 3, y: 1 }, resolution: 2 })
+      .setOrigin(0.5)
+      .setDepth(DEPTH.enemies + 3)
+      .setVisible(false);
     this.baseY = npc.feetY;
     const glowTint = npc.kind === 'terminal' ? PALETTE.violet : PALETTE.cyan;
     this.glow = scene.add
@@ -411,10 +464,11 @@ export class NpcView {
       .setAlpha(0.2)
       .setScale(0.6)
       .setDepth(DEPTH.enemies - 1);
-    this.sprite = scene.add
-      .image(npc.feetX, npc.feetY, npcKey(npc.kind))
-      .setOrigin(0.5, 1)
-      .setDepth(DEPTH.enemies);
+    const assetId = NPC_ASSET[npc.kind];
+    this.asset = assetId ? new AssetSprite(scene, assetId, DEPTH.enemies) : null;
+    this.sprite = this.asset
+      ? this.asset.image.setPosition(npc.feetX, npc.feetY)
+      : scene.add.image(npc.feetX, npc.feetY, npcKey(npc.kind)).setOrigin(0.5, 1).setDepth(DEPTH.enemies);
     // Pulsing talk-indicator shown when NPC is the active dialogue target
     this.talkBubble = scene.add
       .image(npc.feetX + 7, npc.feetY - 32, TEX.glow)
@@ -425,10 +479,12 @@ export class NpcView {
       .setVisible(false);
   }
 
-  update(isActive: boolean, time: number): void {
+  update(isActive: boolean, time: number, prompt: string | null = null): void {
     const t = time / 1000;
+    this.prompt.setVisible(prompt !== null && !isActive).setText(prompt ? `[${prompt}]` : '').setY(this.baseY - 40 + Math.sin(t * 5) * 1.5);
     // Gentle idle bob
     const bob = Math.sin(t * 1.1 + this.baseY * 0.01) * 0.7;
+    this.asset?.show(isActive ? 'talk' : 'idle', t);
     this.sprite.setY(this.baseY + bob);
     this.glow.setAlpha(0.15 + Math.sin(t * 2.0 + this.baseY * 0.01) * 0.06);
     // Talk bubble: pulse when active
@@ -443,6 +499,8 @@ export class NpcView {
     this.sprite.destroy();
     this.glow.destroy();
     this.talkBubble.destroy();
+    this.prompt.destroy();
+    this.asset?.destroy();
   }
 }
 

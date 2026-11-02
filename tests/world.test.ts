@@ -16,7 +16,8 @@ describe('Room data', () => {
       const { grid, markers } = TileGrid.fromAscii(room.layout, TILE_SIZE);
 
       it('is at least as large as the view, so the camera never shows outside the level', () => {
-        expect(grid.widthPx).toBeGreaterThanOrEqual(VIEW.width);
+        // The widest supported phone view (see core/viewport.ts) is 2.4:1 of the fixed 270 px height.
+        expect(grid.widthPx).toBeGreaterThanOrEqual(Math.max(VIEW.width, Math.ceil(VIEW.height * 2.4)));
         expect(grid.heightPx).toBeGreaterThanOrEqual(VIEW.height);
       });
 
@@ -205,8 +206,9 @@ describe('Ability-gated route (Transit Stacks timed gate)', () => {
     expect(world.room.grid.isSolid(74, 24)).toBe(false);
   });
 
-  it('the Backtrace module unlocks the ability, which survives death and retry', () => {
-    const world = worldAt('transit', 31, 7);
+  it('the Backtrace module (Rainline Depot) unlocks the ability, which survives death and retry', () => {
+    const world = worldAt('alley_depot', 30, 17);
+    world.room.enemies = [];
     expect(world.progression.has('backtrace')).toBe(false);
     const events = stepWorld(world, 2);
     expect(events.some((e) => e.type === 'abilityUnlocked')).toBe(true);
@@ -216,7 +218,7 @@ describe('Ability-gated route (Transit Stacks timed gate)', () => {
     expect(world.flow.state).toBe('gameover');
     expect(world.retry()).toBe(true);
     expect(world.progression.has('backtrace')).toBe(true);
-    expect(world.room.pickups.find((p) => p.kind === 'backtrace')?.taken).toBe(true);
+    expect(world.room.pickups.find((p) => p.def?.ability === 'backtrace')?.taken).toBe(true);
   });
 });
 
@@ -230,7 +232,8 @@ describe('Checkpoints, death and retry', () => {
     const events = stepWorld(world, 60, () => input({ moveX: 1 }));
     const cp = events.find((e) => e.type === 'checkpoint');
     expect(cp).toBeDefined();
-    expect(saved).toBe(1);
+    // The relay saves, and so does the lore record the Courier walks over on the way.
+    expect(saved).toBeGreaterThanOrEqual(1);
     expect(world.player.health.current).toBe(PLAYER.maxHealth);
     expect(world.progression.checkpoint).toEqual({ roomId: 'alley', x: tileX(13), y: tileFeet(19) });
 
@@ -249,7 +252,7 @@ describe('Checkpoints, death and retry', () => {
     expect(world.player.feetX).toBeCloseTo(tileX(13), 5);
     expect(world.player.feetY).toBeCloseTo(tileFeet(19), 5);
     // Enemies are restored on respawn.
-    expect(world.room.enemies.length).toBe(2);
+    expect(world.room.enemies.length).toBe(3);
   });
 
   it('death while attacking leaves a clean, controllable player after retry', () => {
@@ -380,18 +383,18 @@ describe('Secret: cracked wall and Integrity Cell', () => {
 });
 
 describe('Room transitions', () => {
-  it('walking through the east door of Rainline Alley leads to Transit Stacks', () => {
+  it('walking through the east door of Rainline Alley leads to the Rainline Depot', () => {
     const world = worldAt('alley', 60, 19);
     world.room.enemies = [];
     for (let i = 0; i < 120 && !world.pendingTransition; i++) world.step(input({ moveX: 1 }), DT);
-    expect(world.pendingTransition).toEqual({ room: 'transit', entry: 'west' });
+    expect(world.pendingTransition).toEqual({ room: 'alley_depot', entry: 'west' });
     // The simulation holds still while the screen fades.
     const x = world.player.body.x;
     world.step(input({ moveX: 1 }), DT);
     expect(world.player.body.x).toBe(x);
     world.completeTransition();
-    expect(world.room.def.id).toBe('transit');
-    expect(world.player.feetX).toBeCloseTo(tileX(3), 5);
+    expect(world.room.def.id).toBe('alley_depot');
+    expect(world.player.feetX).toBeCloseTo(tileX(4), 5);
     expect(world.drainEvents().some((e) => e.type === 'roomEntered')).toBe(true);
   });
 });
@@ -431,7 +434,7 @@ describe('Game flow', () => {
     expect(world.retry()).toBe(false); // must wait for the game-over prompt
   });
 
-  it('defeating BULWARK-9 seals then reopens the gate and leads to victory', () => {
+  it('defeating BULWARK-9 seals then reopens the gate and opens the way on (the campaign continues; only the final boss wins)', () => {
     const world = worldAt('precinct', 2, 15);
     const run = (frames: number, f: (i: number) => InputFrame = () => input()) => stepWorld(world, frames, f);
     world.player.health.grantInvulnerability(999);
@@ -454,7 +457,9 @@ describe('Game flow', () => {
     expect(world.progression.bossDefeated).toBe(true);
     expect(world.flow.state).toBe('playing');
     run(Math.ceil(BOSS.bulwarkUnit.victoryDelay / DT) + 2);
-    expect(world.flow.state).toBe('victory');
+    // Campaign change: BULWARK-9 is a miniboss now. The run continues and the defeat is persisted.
+    expect(world.flow.state).toBe('playing');
+    expect(world.progression.defeatedBosses.has('bulwark-9')).toBe(true);
   });
 
   it('dying to the boss resets the encounter on retry', () => {

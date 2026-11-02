@@ -1,10 +1,13 @@
 import Phaser from 'phaser';
-import { TILE_SIZE, VIEW } from '../config/tuning';
+import { TILE_SIZE } from '../config/tuning';
+import { view } from '../config/view';
 import { createRng } from '../core/math';
 import { Tile, type TileGrid } from '../core/tiles';
 import type { GameWorld, RoomState } from '../core/world';
 import { css, mix, PALETTE } from './palette';
+import { ITEMS } from '../world/items';
 import { canvasTexture, makeBackdrop, px, TEX } from './textures';
+import { WTEX } from './worldTextures';
 
 export const DEPTH = {
   sky: -100,
@@ -45,6 +48,7 @@ function hash(c: number, r: number, salt = 0): number {
  */
 export class RoomView {
   private readonly objects: Phaser.GameObjects.GameObject[] = [];
+  private readonly sky: Phaser.GameObjects.Image;
   private readonly far: Phaser.GameObjects.TileSprite;
   private readonly mid: Phaser.GameObjects.TileSprite;
   private readonly pulses: Pulse[] = [];
@@ -72,13 +76,14 @@ export class RoomView {
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, 4, 135);
     });
-    this.add(scene.add.image(0, 0, skyKey).setOrigin(0).setDisplaySize(VIEW.width, VIEW.height).setScrollFactor(0).setDepth(DEPTH.sky));
+    this.sky = scene.add.image(0, 0, skyKey).setOrigin(0).setDisplaySize(view.width, view.height).setScrollFactor(0).setDepth(DEPTH.sky);
+    this.add(this.sky);
 
     // Skyline parallax — kept darker and lower-contrast than the playable terrain.
     makeBackdrop(scene, `far-${id}`, mix(theme.skyTop, theme.rock, 0.45), 'far', id.length * 31 + 7);
     makeBackdrop(scene, `mid-${id}`, mix(theme.skyTop, theme.rock, 0.6), 'mid', id.length * 17 + 3);
-    this.far = scene.add.tileSprite(0, 0, VIEW.width, VIEW.height, `far-${id}`).setOrigin(0).setScrollFactor(0).setDepth(DEPTH.far).setAlpha(0.7);
-    this.mid = scene.add.tileSprite(0, 0, VIEW.width, VIEW.height, `mid-${id}`).setOrigin(0).setScrollFactor(0).setDepth(DEPTH.mid).setAlpha(0.45);
+    this.far = scene.add.tileSprite(0, 0, view.width, view.height, `far-${id}`).setOrigin(0).setScrollFactor(0).setDepth(DEPTH.far).setAlpha(0.78).setTileScale(0.5, 0.5);
+    this.mid = scene.add.tileSprite(0, 0, view.width, view.height, `mid-${id}`).setOrigin(0).setScrollFactor(0).setDepth(DEPTH.mid).setAlpha(0.62).setTileScale(0.5, 0.5);
     this.add(this.far);
     this.add(this.mid);
 
@@ -216,6 +221,31 @@ export class RoomView {
           s.add.image(cx, p.rect.y + 13, TEX.glowSoft).setTint(PALETTE.cyan).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.objects - 1),
         );
         this.pickups.push({ id: p.id, img, glow, baseY: img.y });
+      } else if (p.kind === 'scrap' || p.kind === 'upgrade' || p.kind === 'item' || p.kind === 'record' || p.kind === 'ability') {
+        const d = p.def;
+        const big = p.kind === 'ability';
+        const isModule = p.kind === 'ability' && d?.ability === 'backtrace';
+        const key = isModule
+          ? TEX.module
+          : p.kind === 'ability'
+            ? WTEX.pickupCoil
+            : p.kind === 'scrap'
+              ? WTEX.pickupScrap
+              : p.kind === 'upgrade'
+                ? WTEX.pickupUpgrade
+                : p.kind === 'record'
+                  ? WTEX.pickupRecord
+                  : WTEX.pickupItem;
+        const cy = p.rect.y + p.rect.h / 2;
+        const img = this.add(s.add.image(cx, big ? p.rect.y + p.rect.h : cy, key).setOrigin(0.5, big ? 1 : 0.5).setDepth(DEPTH.objects));
+        if (p.kind === 'item' && d?.item) img.setTint(ITEMS[d.item]?.color ?? 0xc9c9d8);
+        // World textures are drawn at 2x for crispness; the legacy module sprite is 1x.
+        img.setScale(isModule ? 1 : 0.5);
+        const tint = p.kind === 'scrap' ? PALETTE.sodium : p.kind === 'upgrade' ? PALETTE.violet : p.kind === 'record' ? PALETTE.mist : p.kind === 'ability' ? PALETTE.cyan : (d?.item ? ITEMS[d.item]?.color ?? PALETTE.cyan : PALETTE.cyan);
+        const glow = this.add(
+          s.add.image(cx, big ? p.rect.y + 13 : cy, TEX.glowSoft).setTint(tint).setBlendMode(Phaser.BlendModes.ADD).setScale(big ? 1 : 0.5).setDepth(DEPTH.objects - 1),
+        );
+        this.pickups.push({ id: p.id, img, glow, baseY: img.y });
       } else if (p.kind === 'fragment') {
         const cy = p.rect.y + p.rect.h / 2;
         const img = this.add(s.add.image(cx, cy, TEX.fragment).setDepth(DEPTH.objects));
@@ -281,6 +311,13 @@ export class RoomView {
     }
   }
 
+  /** The visible area changed: refit the screen-fixed backdrop layers. */
+  resize(width: number, height: number): void {
+    this.sky.setDisplaySize(width, height);
+    this.far.setSize(width, height);
+    this.mid.setSize(width, height);
+  }
+
   update(time: number, camera: Phaser.Cameras.Scene2D.Camera): void {
     const t = time / 1000;
     this.far.tilePositionX = camera.scrollX * 0.12;
@@ -306,7 +343,7 @@ export class RoomView {
     for (const p of this.pickups) {
       const state = room.pickups.find((x) => x.id === p.id);
       const taken = state?.taken ?? true;
-      if (state?.kind === 'backtrace') {
+      if (state?.kind === 'backtrace' || (state?.kind === 'ability' && state.def?.ability === 'backtrace')) {
         p.img.setTexture(taken ? TEX.moduleSpent : TEX.module);
         p.glow.setVisible(!taken).setAlpha(0.5 + Math.sin(t * 2) * 0.15);
       } else {
