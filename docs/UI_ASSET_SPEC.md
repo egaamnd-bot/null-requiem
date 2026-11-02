@@ -24,7 +24,7 @@ texture keys and no renderer hook**; the 8 `ui_portrait_*` are `needs-engine-wor
 | Settings rows | MenuScene | text + −/+ buttons, ON/OFF toggles | row step 24 | normal, pressed |
 | HUD integrity | UIScene | `ui_hud_cell` × max health | 8×12 per cell, step 10, at the top-left margin | full, empty |
 | HUD Backtrace | UIScene | `ui_hud_backtrace` + cooldown fill | 16×16 icon + 16×16 fill | ready, cooling |
-| HUD scrap / tracker / FPS | UIScene | icon (`icon_scrap` code-drawn 12×12) + text | top-left / top-centre | — |
+| HUD scrap / tracker / FPS | UIScene | icon (`icon_scrap`, code-drawn 10×10) + text | top-left / top-centre | — |
 | Boss bar | UIScene | rectangles | 200×4 (manifest asks 220×24 frame) | phase 1/2, lag |
 | Dialogue panel | UIScene | rectangles + text, ≤ 440×104, choices 15 px rows (17 step) | upper-middle | normal, choice selected |
 | Touch joystick | MobileControlsScene | Graphics circles | zone = left half; base radius 52 × scale | idle, active |
