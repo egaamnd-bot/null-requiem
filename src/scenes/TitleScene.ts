@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { applyRenderScale } from '../render/renderScaleRuntime';
 import { view } from '../config/view';
 import { VIEW_CHANGED } from '../render/viewportDom';
 import { loadProgression, Progression } from '../core/progression';
@@ -40,6 +41,7 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create(): void {
+    applyRenderScale(this);
     this.services.music.setTheme('title');
     const { width: W, height: H } = view;
     const onView = () => {

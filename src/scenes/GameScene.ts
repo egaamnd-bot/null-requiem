@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { applyRenderScale } from '../render/renderScaleRuntime';
 import { SIM } from '../config/tuning';
 import { view } from '../config/view';
 import { VIEW_CHANGED } from '../render/viewportDom';
@@ -75,6 +76,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
+    applyRenderScale(this);
     this.cameras.main.setBackgroundColor(0x05060c);
     this.cameras.main.setRoundPixels(true);
     this.controls = new InputManager(this);
@@ -148,8 +150,6 @@ export class GameScene extends Phaser.Scene {
     this.camFollow.setView(view.width, view.height);
     this.vignette.setDisplaySize(view.width, view.height);
     this.roomView?.resize(view.width, view.height);
-    const r = this.world.room;
-    this.cameras.main.setBounds(0, 0, r.grid.widthPx, r.grid.heightPx);
     this.camFollow.snap(this.world.player.centerX, this.world.player.centerY, this.world.player.facing);
   }
 
@@ -286,7 +286,6 @@ export class GameScene extends Phaser.Scene {
     const w = room.grid.widthPx;
     const h = room.grid.heightPx;
     this.fx.setRoom(w, h);
-    this.cameras.main.setBounds(0, 0, w, h);
     this.camFollow.setBounds({ width: w, height: h });
     const p = this.world.player;
     this.camFollow.snap(p.centerX, p.centerY, p.facing);

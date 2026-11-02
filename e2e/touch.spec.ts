@@ -24,8 +24,10 @@ async function syncView(page: Page) {
     return g ? { w: g.scale.gameSize.width, h: g.scale.gameSize.height } : null;
   });
   if (size) {
-    VIEW_W = size.w;
-    VIEW_H = size.h;
+    // R0: the canvas is logical x K; the logical height is fixed at 270, so K = canvas height / 270.
+    const k = size.h / 270;
+    VIEW_W = size.w / k;
+    VIEW_H = 270;
     layout = createTouchLayout(VIEW_W, VIEW_H);
   }
 }
@@ -256,4 +258,20 @@ test('in game: a joystick can be started high on the left half, not only in the 
   await f.move(1, { x: 200 - 40, y: 90 });
   await expect.poll(async () => (await virt(page)).left).toBe(true);
   await f.up(1);
+});
+
+test('render scale: the canvas backing store is logical x K, cameras zoom by K and the logical size is unchanged', async ({ page }) => {
+  await startGame(page);
+  const info = await page.evaluate(() => {
+    const g = (window as unknown as { nullRequiemGame: { scale: { gameSize: { width: number; height: number } }; scene: { getScene(k: string): { cameras: { main: { zoom: number; originX: number } } } } } }).nullRequiemGame;
+    const c = document.querySelector('canvas')!;
+    const cam = g.scene.getScene('game').cameras.main;
+    return { cw: c.width, ch: c.height, zoom: cam.zoom, ox: cam.originX, dpr: window.devicePixelRatio, cssH: c.clientHeight };
+  });
+  expect(info.ox).toBe(0);
+  expect(info.zoom).toBeGreaterThanOrEqual(1);
+  expect(info.ch).toBe(270 * info.zoom); // logical height is fixed at 270
+  expect(info.cw / info.ch).toBeCloseTo(VIEW_W / VIEW_H, 1); // same aspect: nothing stretched
+  // On a dense phone the default must be sharper than 1x (Pixel 7 landscape has dpr 2.625).
+  if (info.dpr > 1.5) expect(info.zoom).toBeGreaterThanOrEqual(2);
 });

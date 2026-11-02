@@ -3,6 +3,8 @@
  * Pure module (storage is injected) so it is unit-testable in Node.
  */
 
+import { isRenderQuality, type RenderQuality } from '../core/renderScale';
+
 export interface Settings {
   version: 1;
   musicVolume: number;
@@ -15,6 +17,8 @@ export interface Settings {
   /** Reduce full-screen flashes (photosensitivity). */
   reduceFlash: boolean;
   showFps: boolean;
+  /** Internal render resolution (R0). `auto` = 2× with an FPS safety net. */
+  renderQuality: RenderQuality;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -26,6 +30,7 @@ export const DEFAULT_SETTINGS: Settings = {
   screenShake: true,
   reduceFlash: false,
   showFps: false,
+  renderQuality: 'auto',
 };
 
 export interface KeyValueStore {
@@ -52,6 +57,7 @@ export function sanitizeSettings(raw: unknown): Settings {
     screenShake: bool(o.screenShake, d.screenShake),
     reduceFlash: bool(o.reduceFlash, d.reduceFlash),
     showFps: bool(o.showFps, d.showFps),
+    renderQuality: isRenderQuality(o.renderQuality) ? o.renderQuality : d.renderQuality,
   };
 }
 

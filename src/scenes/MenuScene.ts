@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { RENDER_QUALITIES } from '../core/renderScale';
+import { applyRenderScale } from '../render/renderScaleRuntime';
 import { view } from '../config/view';
 import { InputManager } from '../input/InputManager';
 import { createTapTarget, type TapTarget } from '../input/tapTarget';
@@ -69,6 +71,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   create(): void {
+    applyRenderScale(this);
     this.controls = new InputManager(this);
     this.controls.swallow();
     this.game.events.on(VIEW_CHANGED, this.onViewChanged);
@@ -388,6 +391,10 @@ export class MenuScene extends Phaser.Scene {
       this.renderContent();
     };
     const step = (v: number, d: number, lo: number, hi: number) => Math.round(Math.min(hi, Math.max(lo, v + d)) * 100) / 100;
+    const Q = RENDER_QUALITIES;
+    const qNow = Q.indexOf(set.renderQuality);
+    const qLabel: Record<string, string> = { auto: `Auto ${view.renderScale}x`, low: 'Low 1x', balanced: 'Balanced 2x', high: 'High 3x', max: 'Max 4x' };
+    row('Render quality', qLabel[set.renderQuality] ?? set.renderQuality, () => apply({ renderQuality: Q[(qNow + Q.length - 1) % Q.length]! }), () => apply({ renderQuality: Q[(qNow + 1) % Q.length]! }));
     row('Music volume', `${Math.round(set.musicVolume * 100)}%`, () => apply({ musicVolume: step(set.musicVolume, -0.1, 0, 1) }), () => apply({ musicVolume: step(set.musicVolume, 0.1, 0, 1) }));
     row('Effects volume', `${Math.round(set.sfxVolume * 100)}%`, () => apply({ sfxVolume: step(set.sfxVolume, -0.1, 0, 1) }), () => apply({ sfxVolume: step(set.sfxVolume, 0.1, 0, 1) }));
     row('Touch control size', `${Math.round(set.controlScale * 100)}%`, () => apply({ controlScale: step(set.controlScale, -0.05, 0.8, 1.2) }), () => apply({ controlScale: step(set.controlScale, 0.05, 0.8, 1.2) }));

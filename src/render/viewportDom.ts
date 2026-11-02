@@ -1,5 +1,8 @@
 import type Phaser from 'phaser';
-import { setView, view } from '../config/view';
+import { setRenderScale, setView, view } from '../config/view';
+import { canvasSize, chooseRenderScale } from '../core/renderScale';
+import { getSettings } from '../state/settings';
+import { applyRenderScale } from './renderScaleRuntime';
 import { computeViewSize, insetsToLogical, NO_INSETS, type CssInsets } from '../core/viewport';
 
 /** Reads env(safe-area-inset-*) through a hidden probe element (CSS env() is not readable from JS directly). */
@@ -27,6 +30,9 @@ function windowSize(): { w: number; h: number } {
   return { w: vv?.width ?? window.innerWidth, h: vv?.height ?? window.innerHeight };
 }
 
+/** Set by the FPS guard (main.ts) when `auto` quality could not hold frame rate. */
+export const renderGuard = { demoted: false };
+
 /** Compute the logical view for the current window and publish it to the shared `view` object. */
 export function applyWindowView(): { width: number; height: number } {
   const { w, h } = windowSize();
@@ -35,6 +41,18 @@ export function applyWindowView(): { width: number; height: number } {
   // After FIT the canvas is w wide at most; the ratio logical/CSS is width-based.
   const safe = insetsToLogical(css, Math.min(w, h * (size.width / size.height)), size);
   setView(size.width, size.height, safe);
+  // R0: physical resolution is chosen separately from the logical view.
+  const dpr = window.devicePixelRatio || 1;
+  const shownHeight = Math.min(h, w * (size.height / size.width));
+  setRenderScale(
+    chooseRenderScale({
+      quality: getSettings().renderQuality,
+      deviceHeightPx: shownHeight * dpr,
+      logicalWidth: size.width,
+      logicalHeight: size.height,
+      demoted: renderGuard.demoted,
+    }),
+  );
   return size;
 }
 
@@ -52,14 +70,20 @@ export const VIEW_CHANGED = 'null-requiem:view-changed';
 export function installViewportWatcher(game: Phaser.Game): () => void {
   let raf = 0;
   let last = JSON.stringify([view.width, view.height, view.safe]);
+  let lastK = view.renderScale;
   const evaluate = () => {
     raf = 0;
     const size = applyWindowView();
     const sig = JSON.stringify([view.width, view.height, view.safe]);
-    if (size.width !== game.scale.gameSize.width || size.height !== game.scale.gameSize.height) {
-      game.scale.setGameSize(size.width, size.height);
+    const px = canvasSize(size.width, size.height, view.renderScale);
+    if (px.width !== game.scale.gameSize.width || px.height !== game.scale.gameSize.height) {
+      game.scale.setGameSize(px.width, px.height);
     }
     game.scale.refresh();
+    if (view.renderScale !== lastK) {
+      lastK = view.renderScale;
+      for (const sc of game.scene.getScenes(false)) applyRenderScale(sc);
+    }
     if (sig !== last) {
       last = sig;
       game.events.emit(VIEW_CHANGED);
@@ -71,6 +95,8 @@ export function installViewportWatcher(game: Phaser.Game): () => void {
   };
   window.addEventListener('resize', schedule);
   window.addEventListener('orientationchange', schedule);
+  game.events.on('settings-changed', schedule);
+  game.events.on('render-scale-reevaluate', schedule);
   window.visualViewport?.addEventListener('resize', schedule);
   // Immersive mode / cutout insets are often applied a moment after load.
   const timers = [300, 1200, 3000].map((ms) => window.setTimeout(schedule, ms));
@@ -78,6 +104,8 @@ export function installViewportWatcher(game: Phaser.Game): () => void {
     window.removeEventListener('resize', schedule);
     window.removeEventListener('orientationchange', schedule);
     window.visualViewport?.removeEventListener('resize', schedule);
+    game.events.off('settings-changed', schedule);
+    game.events.off('render-scale-reevaluate', schedule);
     timers.forEach((t) => window.clearTimeout(t));
     if (raf) cancelAnimationFrame(raf);
   };

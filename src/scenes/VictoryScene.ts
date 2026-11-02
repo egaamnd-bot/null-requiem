@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { applyRenderScale } from '../render/renderScaleRuntime';
 import { view } from '../config/view';
 import { VIEW_CHANGED } from '../render/viewportDom';
 import { InputManager } from '../input/InputManager';
@@ -37,6 +38,7 @@ export class VictoryScene extends Phaser.Scene {
   }
 
   create(): void {
+    applyRenderScale(this);
     const { width: W, height: H } = view;
     const onView = () => {
       if (!this.leaving) this.scene.restart(this.victory);

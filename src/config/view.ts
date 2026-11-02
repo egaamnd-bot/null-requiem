@@ -9,9 +9,15 @@ export const view = {
   height: 270,
   /** Safe-area insets in logical pixels (display cutouts, rounded corners). */
   safe: { ...NO_INSETS } as CssInsets,
+  /** R0: canvas backing-store pixels per logical pixel (cameras zoom by this; every coordinate stays logical). */
+  renderScale: 1,
   /** Margins HUD and touch controls should respect (safe insets with a sensible minimum). */
   margin: hudMargins(NO_INSETS),
 };
+
+export function setRenderScale(k: number): void {
+  view.renderScale = Math.max(1, Math.floor(k) || 1);
+}
 
 export function setView(width: number, height: number, safe: CssInsets): void {
   view.width = width;
