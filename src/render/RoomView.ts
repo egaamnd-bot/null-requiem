@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { TILE_SIZE, VIEW } from '../config/tuning';
+import { TILE_SIZE } from '../config/tuning';
+import { view } from '../config/view';
 import { createRng } from '../core/math';
 import { Tile, type TileGrid } from '../core/tiles';
 import type { GameWorld, RoomState } from '../core/world';
@@ -45,6 +46,7 @@ function hash(c: number, r: number, salt = 0): number {
  */
 export class RoomView {
   private readonly objects: Phaser.GameObjects.GameObject[] = [];
+  private readonly sky: Phaser.GameObjects.Image;
   private readonly far: Phaser.GameObjects.TileSprite;
   private readonly mid: Phaser.GameObjects.TileSprite;
   private readonly pulses: Pulse[] = [];
@@ -72,13 +74,14 @@ export class RoomView {
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, 4, 135);
     });
-    this.add(scene.add.image(0, 0, skyKey).setOrigin(0).setDisplaySize(VIEW.width, VIEW.height).setScrollFactor(0).setDepth(DEPTH.sky));
+    this.sky = scene.add.image(0, 0, skyKey).setOrigin(0).setDisplaySize(view.width, view.height).setScrollFactor(0).setDepth(DEPTH.sky);
+    this.add(this.sky);
 
     // Skyline parallax — kept darker and lower-contrast than the playable terrain.
     makeBackdrop(scene, `far-${id}`, mix(theme.skyTop, theme.rock, 0.45), 'far', id.length * 31 + 7);
     makeBackdrop(scene, `mid-${id}`, mix(theme.skyTop, theme.rock, 0.6), 'mid', id.length * 17 + 3);
-    this.far = scene.add.tileSprite(0, 0, VIEW.width, VIEW.height, `far-${id}`).setOrigin(0).setScrollFactor(0).setDepth(DEPTH.far).setAlpha(0.78).setTileScale(0.5, 0.5);
-    this.mid = scene.add.tileSprite(0, 0, VIEW.width, VIEW.height, `mid-${id}`).setOrigin(0).setScrollFactor(0).setDepth(DEPTH.mid).setAlpha(0.62).setTileScale(0.5, 0.5);
+    this.far = scene.add.tileSprite(0, 0, view.width, view.height, `far-${id}`).setOrigin(0).setScrollFactor(0).setDepth(DEPTH.far).setAlpha(0.78).setTileScale(0.5, 0.5);
+    this.mid = scene.add.tileSprite(0, 0, view.width, view.height, `mid-${id}`).setOrigin(0).setScrollFactor(0).setDepth(DEPTH.mid).setAlpha(0.62).setTileScale(0.5, 0.5);
     this.add(this.far);
     this.add(this.mid);
 
@@ -279,6 +282,13 @@ export class RoomView {
       );
       this.switches.push({ img, glow });
     }
+  }
+
+  /** The visible area changed: refit the screen-fixed backdrop layers. */
+  resize(width: number, height: number): void {
+    this.sky.setDisplaySize(width, height);
+    this.far.setSize(width, height);
+    this.mid.setSize(width, height);
   }
 
   update(time: number, camera: Phaser.Cameras.Scene2D.Camera): void {

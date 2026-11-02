@@ -30,6 +30,15 @@ export class TouchTracker {
     if (!state) return;
     if (state.joystickOrigin) {
       state.joystickPoint = { x, y };
+      // Floating behaviour: if the thumb travels beyond the stick's reach, drag the anchor along with it,
+      // so reversing direction is instant instead of requiring the whole overshoot to be undone.
+      const reach = this.layout.dpad.r * this.layout.dpadReach;
+      const o = state.joystickOrigin;
+      const d = Math.hypot(x - o.x, y - o.y);
+      if (d > reach) {
+        const k = (d - reach) / d;
+        state.joystickOrigin = { x: o.x + (x - o.x) * k, y: o.y + (y - o.y) * k };
+      }
       state.keys = joystickKeysAt(this.layout, state.joystickOrigin, x, y);
     } else {
       state.keys = holdKeysAt(this.layout, x, y);

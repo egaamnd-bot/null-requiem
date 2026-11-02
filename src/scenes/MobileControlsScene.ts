@@ -1,4 +1,7 @@
 import Phaser from 'phaser';
+import { view } from '../config/view';
+import { VIEW_CHANGED } from '../render/viewportDom';
+import { getSettings } from '../state/settings';
 import { TouchTracker } from '../input/TouchTracker';
 import { createTouchLayout, isOnPause, type ActionButton, type HoldKey, type TouchLayout } from '../input/touchLayout';
 import { clearVirtualButtons, virtualButtons } from '../input/virtualButtons';
@@ -77,9 +80,11 @@ export class MobileControlsScene extends Phaser.Scene {
       this.scene.stop();
       return;
     }
-    this.layout = createTouchLayout(this.scale.width, this.scale.height);
+    this.layout = this.makeLayout();
     this.tracker = new TouchTracker(this.layout);
     this.buildViews();
+    this.game.events.on(VIEW_CHANGED, this.relayout, this);
+    this.game.events.on('settings-changed', this.relayout, this);
 
     this.input.setPollAlways();
     this.input.on(Phaser.Input.Events.POINTER_DOWN, this.onDown, this);
@@ -92,6 +97,8 @@ export class MobileControlsScene extends Phaser.Scene {
     this.game.events.on(Phaser.Core.Events.BLUR, release);
     this.game.events.on(Phaser.Core.Events.HIDDEN, release);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.game.events.off(VIEW_CHANGED, this.relayout, this);
+      this.game.events.off('settings-changed', this.relayout, this);
       this.game.events.off(Phaser.Core.Events.BLUR, release);
       this.game.events.off(Phaser.Core.Events.HIDDEN, release);
       this.input.off(Phaser.Input.Events.POINTER_DOWN, this.onDown, this);
@@ -104,11 +111,32 @@ export class MobileControlsScene extends Phaser.Scene {
     });
   }
 
+  private makeLayout(): TouchLayout {
+    return createTouchLayout(view.width, view.height, view.margin, getSettings().controlScale);
+  }
+
+  /** Window / orientation / settings changed: rebuild the geometry and views, releasing any held finger first. */
+  private relayout(): void {
+    if (!this.tracker) return;
+    this.releaseAll();
+    for (const o of this.all) o.destroy();
+    this.all = [];
+    this.buttons = [];
+    this.dpadGfx = null;
+    this.pauseGfx = null;
+    this.layout = this.makeLayout();
+    this.tracker.setLayout(this.layout);
+    this.buildViews();
+    this.setShown(this.live());
+  }
+
   // ------------------------------------------------------------------ views
 
   private buildViews(): void {
     const l = this.layout;
+    const opacity = getSettings().controlOpacity;
     const dpad = this.add.graphics().setDepth(1000).setScrollFactor(0).setVisible(false);
+    dpad.setAlpha(opacity);
     this.dpadGfx = dpad;
     this.all.push(dpad);
     this.drawDpad();
@@ -127,12 +155,15 @@ export class MobileControlsScene extends Phaser.Scene {
         .setScrollFactor(0)
         .setAlpha(0.9);
       this.all.push(gfx, txt);
-      const view: BtnView = { def, gfx, held: false };
-      this.buttons.push(view);
-      this.drawButton(view);
+      gfx.setAlpha(opacity);
+      txt.setAlpha(Math.min(1, opacity + 0.05));
+      const bv: BtnView = { def, gfx, held: false };
+      this.buttons.push(bv);
+      this.drawButton(bv);
     }
 
     const pg = this.add.graphics().setDepth(1000).setScrollFactor(0);
+    pg.setAlpha(opacity);
     this.pauseGfx = pg;
     this.all.push(pg);
     this.drawPause(false);

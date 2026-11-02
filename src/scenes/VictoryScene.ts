@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { VIEW } from '../config/tuning';
+import { view } from '../config/view';
+import { VIEW_CHANGED } from '../render/viewportDom';
 import { InputManager } from '../input/InputManager';
 import { createTapTarget } from '../input/tapTarget';
 import { css, PALETTE, UI_FONT, UI_MONO } from '../render/palette';
@@ -29,7 +30,12 @@ export class VictoryScene extends Phaser.Scene {
   }
 
   create(): void {
-    const { width: W, height: H } = VIEW;
+    const { width: W, height: H } = view;
+    const onView = () => {
+      if (!this.leaving) this.scene.restart(this.victory);
+    };
+    this.game.events.on(VIEW_CHANGED, onView);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.game.events.off(VIEW_CHANGED, onView));
     this.cameras.main.setBackgroundColor(PALETTE.void);
     this.cameras.main.fadeIn(900, 200, 240, 255);
     this.add.image(W / 2, H / 2 - 20, TEX.glowSoft).setTint(PALETTE.cyan).setBlendMode(Phaser.BlendModes.ADD).setScale(3).setAlpha(0.3);

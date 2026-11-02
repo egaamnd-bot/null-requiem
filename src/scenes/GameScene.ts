@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
-import { SIM, VIEW } from '../config/tuning';
+import { SIM } from '../config/tuning';
+import { view } from '../config/view';
+import { VIEW_CHANGED } from '../render/viewportDom';
 import type { Body } from '../core/body';
 import { CameraFollow } from '../core/camera';
 import { FixedStepper } from '../core/fixedStep';
@@ -30,6 +32,7 @@ export class GameScene extends Phaser.Scene {
   private readonly latch = new InputLatch();
   private readonly stepper = new FixedStepper(1 / SIM.stepHz, SIM.maxFrameDelta);
   private camFollow!: CameraFollow;
+  private vignette!: Phaser.GameObjects.Image;
   private roomView: RoomView | null = null;
   private playerView!: PlayerView;
   private echoView!: EchoView;
@@ -71,14 +74,15 @@ export class GameScene extends Phaser.Scene {
     this.controls.swallow();
     this.latch.reset(this.controls.held());
     this.bus = new Phaser.Events.EventEmitter();
-    this.camFollow = new CameraFollow(VIEW.width, VIEW.height, { width: VIEW.width, height: VIEW.height });
+    this.camFollow = new CameraFollow(view.width, view.height, { width: view.width, height: view.height });
 
     this.playerView = new PlayerView(this);
     this.echoView = new EchoView(this);
     this.enemyViews = new EnemyViewRegistry(this);
     this.projectileViews = new ProjectileViews(this);
     this.fx = new Fx(this);
-    this.add.image(0, 0, TEX.vignette).setOrigin(0).setDisplaySize(VIEW.width, VIEW.height).setScrollFactor(0).setDepth(DEPTH.vignette);
+    this.vignette = this.add.image(0, 0, TEX.vignette).setOrigin(0).setDisplaySize(view.width, view.height).setScrollFactor(0).setDepth(DEPTH.vignette);
+    this.game.events.on(VIEW_CHANGED, this.onViewChanged, this);
 
     this.world.start();
     this.syncRoom();
@@ -102,6 +106,7 @@ export class GameScene extends Phaser.Scene {
     this.game.events.on(Phaser.Core.Events.BLUR, onBlur);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.game.events.off(Phaser.Core.Events.BLUR, onBlur);
+      this.game.events.off(VIEW_CHANGED, this.onViewChanged, this);
       this.scene.stop(MOBILE_SCENE);
       this.controls.destroy();
       this.roomView?.destroy();
@@ -122,6 +127,16 @@ export class GameScene extends Phaser.Scene {
 
     this.cameras.main.fadeIn(500, 5, 6, 12);
     this.exposeDebugHandle();
+  }
+
+  /** Window / orientation / immersive-mode change: refit camera, parallax layers and vignette. */
+  private onViewChanged(): void {
+    this.camFollow.setView(view.width, view.height);
+    this.vignette.setDisplaySize(view.width, view.height);
+    this.roomView?.resize(view.width, view.height);
+    const r = this.world.room;
+    this.cameras.main.setBounds(0, 0, r.grid.widthPx, r.grid.heightPx);
+    this.camFollow.snap(this.world.player.centerX, this.world.player.centerY, this.world.player.facing);
   }
 
   // ------------------------------------------------------------------ flow actions

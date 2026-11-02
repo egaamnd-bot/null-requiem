@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { Sfx } from './audio/Sfx';
-import { VIEW } from './config/tuning';
+import { applyWindowView, installViewportWatcher } from './render/viewportDom';
 import { BootScene } from './scenes/BootScene';
 import { GameScene } from './scenes/GameScene';
 import type { Services } from './scenes/session';
@@ -9,6 +9,10 @@ import { MobileControlsScene } from './scenes/MobileControlsScene';
 import { UIScene } from './scenes/UIScene';
 import { VictoryScene } from './scenes/VictoryScene';
 import { LocalSaveStore } from './state/LocalSaveStore';
+import { loadSettings } from './state/settings';
+
+loadSettings();
+const initialView = applyWindowView();
 
 const services: Services = {
   sfx: new Sfx(),
@@ -18,8 +22,8 @@ const services: Services = {
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'game',
-  width: VIEW.width,
-  height: VIEW.height,
+  width: initialView.width,
+  height: initialView.height,
   backgroundColor: '#05060c',
   // Keep the logical world stable while allowing smooth antialiased scaling on high-density screens.
   pixelArt: false,
@@ -37,6 +41,8 @@ const game = new Phaser.Game({
   disableContextMenu: true,
   scene: [new BootScene(services), TitleScene, GameScene, UIScene, VictoryScene, MobileControlsScene],
 });
+
+installViewportWatcher(game);
 
 // Unlock audio on the first user gesture anywhere on the page.
 const unlock = () => services.sfx.unlock();

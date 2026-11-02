@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { VIEW } from '../config/tuning';
+import { view } from '../config/view';
+import { VIEW_CHANGED } from '../render/viewportDom';
 import type { GameEvent } from '../core/events';
 import { InputManager } from '../input/InputManager';
 import { createTapTarget, type TapTarget } from '../input/tapTarget';
@@ -7,8 +8,8 @@ import { css, PALETTE, UI_FONT, UI_MONO } from '../render/palette';
 import { TEX } from '../render/textures';
 import { SCENES, type Session } from './session';
 
-const W = VIEW.width;
-const H = VIEW.height;
+let W = view.width;
+let H = view.height;
 
 interface Menu {
   container: Phaser.GameObjects.Container;
@@ -50,13 +51,20 @@ export class UIScene extends Phaser.Scene {
   private wasOver = false;
   private overlayFrames = 0;
   private readonly onEvent = (e: GameEvent) => this.handleEvent(e);
+  private restartPending = false;
+  private readonly onViewChanged = () => {
+    this.restartPending = true;
+  };
 
   constructor() {
     super(SCENES.ui);
   }
 
   init(data: { session: Session }): void {
+    W = view.width;
+    H = view.height;
     this.session = data.session;
+    this.restartPending = false;
     this.cells = [];
     this.toastTimer = 0;
     this.bannerTimer = 0;
@@ -116,7 +124,9 @@ export class UIScene extends Phaser.Scene {
     this.gameOver = this.buildGameOver();
 
     this.session.bus.on('event', this.onEvent);
+    this.game.events.on(VIEW_CHANGED, this.onViewChanged);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.game.events.off(VIEW_CHANGED, this.onViewChanged);
       this.session.bus.off('event', this.onEvent);
       this.controls.destroy();
     });
@@ -293,7 +303,7 @@ export class UIScene extends Phaser.Scene {
     const hud = this.session.world.hud();
     // Integrity cells (health) — top left.
     while (this.cells.length < hud.maxHealth) {
-      this.cells.push(this.add.image(12 + this.cells.length * 10, 14, TEX.hudCellFull).setOrigin(0, 0.5));
+      this.cells.push(this.add.image(view.margin.left + 2 + this.cells.length * 10, view.margin.top + 8, TEX.hudCellFull).setOrigin(0, 0.5));
     }
     this.cells.forEach((img, i) => {
       const visible = i < hud.maxHealth;
@@ -305,10 +315,11 @@ export class UIScene extends Phaser.Scene {
     this.hurtFlash = Math.max(0, this.hurtFlash - dt);
 
     // Backtrace indicator: icon dims and fills from the bottom while cooling down.
-    const bx = 14 + hud.maxHealth * 10 + 8;
-    this.btIcon.setVisible(hud.hasBacktrace).setPosition(bx, 14).setAlpha(hud.backtraceReady ? 1 : 0.45);
-    this.btFill.setVisible(hud.hasBacktrace && hud.backtraceCooldown > 0).setPosition(bx, 22).setSize(16, 16 * hud.backtraceCooldown);
-    this.btLabel.setVisible(hud.hasBacktrace).setPosition(bx + 19, 14).setAlpha(hud.backtraceReady ? 0.9 : 0.35);
+    const hy = view.margin.top + 8;
+    const bx = view.margin.left + 4 + hud.maxHealth * 10 + 8;
+    this.btIcon.setVisible(hud.hasBacktrace).setPosition(bx, hy).setAlpha(hud.backtraceReady ? 1 : 0.45);
+    this.btFill.setVisible(hud.hasBacktrace && hud.backtraceCooldown > 0).setPosition(bx, hy + 8).setSize(16, 16 * hud.backtraceCooldown);
+    this.btLabel.setVisible(hud.hasBacktrace).setPosition(bx + 19, hy).setAlpha(hud.backtraceReady ? 0.9 : 0.35);
 
     // Boss bar.
     const boss = hud.boss;
@@ -363,6 +374,11 @@ export class UIScene extends Phaser.Scene {
   }
 
   override update(_time: number, deltaMs: number): void {
+    if (this.restartPending) {
+      this.restartPending = false;
+      this.scene.restart({ session: this.session });
+      return;
+    }
     const dt = Math.min(deltaMs / 1000, 0.25);
     this.controls.update();
     this.updateHud(dt);

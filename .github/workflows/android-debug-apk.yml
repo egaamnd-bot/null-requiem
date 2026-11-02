@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - chore/android-debug-apk-pipeline
+      - 'milestone/**'
   pull_request:
     branches:
       - main

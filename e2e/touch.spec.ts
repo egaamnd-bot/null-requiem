@@ -1,22 +1,36 @@
 import { expect, test, type CDPSession, type Page } from '@playwright/test';
 import { createTouchLayout } from '../src/input/touchLayout';
 
-const VIEW_W = 480;
-const VIEW_H = 270;
-const layout = createTouchLayout(VIEW_W, VIEW_H);
+// The logical view follows the device aspect ratio (Pixel 7 landscape is 20:9 => 600x270), so the layout
+// is rebuilt from the live game size once the page has loaded (see syncView).
+let VIEW_W = 480;
+let VIEW_H = 270;
+let layout = createTouchLayout(VIEW_W, VIEW_H);
 const btn = (key: string) => layout.buttons.find((b) => b.key === key)!;
 
 type Pt = { x: number; y: number };
 
 interface Probe {
-  nullRequiemGame?: { scene: { isActive(key: string): boolean } };
+  nullRequiemGame?: { scene: { isActive(key: string): boolean }; scale: { gameSize: { width: number; height: number } } };
   nullRequiem?: {
     world: { flow: { state: string }; player: { body: { x: number; y: number } } };
     virtualButtons: Record<string, boolean>;
   };
 }
 
-/** Game-space (480x270) point -> page CSS pixels, through the letterboxed canvas. */
+async function syncView(page: Page) {
+  const size = await page.evaluate(() => {
+    const g = (window as unknown as Probe).nullRequiemGame;
+    return g ? { w: g.scale.gameSize.width, h: g.scale.gameSize.height } : null;
+  });
+  if (size) {
+    VIEW_W = size.w;
+    VIEW_H = size.h;
+    layout = createTouchLayout(VIEW_W, VIEW_H);
+  }
+}
+
+/** Game-space point -> page CSS pixels, through the letterboxed canvas. */
 async function toPage(page: Page, g: Pt): Promise<Pt> {
   const r = await page.evaluate(() => {
     const c = document.querySelector('canvas')!;
@@ -69,6 +83,7 @@ const playerX = (page: Page) => page.evaluate(() => (window as unknown as Probe)
 async function startGame(page: Page) {
   await page.goto('/');
   await expect.poll(() => sceneActive(page, 'title'), { timeout: 15_000 }).toBe(true);
+  await syncView(page);
   await tapGame(page, { x: VIEW_W / 2, y: 176 }); // "Start"
   await expect.poll(() => sceneActive(page, 'game'), { timeout: 10_000 }).toBe(true);
   await expect.poll(() => flowState(page), { timeout: 10_000 }).toBe('playing');
@@ -83,8 +98,9 @@ test('title: tapping Start enters the game', async ({ page }) => {
 test('title: tapping empty background does not start the game', async ({ page }) => {
   await page.goto('/');
   await expect.poll(() => sceneActive(page, 'title'), { timeout: 15_000 }).toBe(true);
+  await syncView(page);
   await tapGame(page, { x: 30, y: 30 });
-  await tapGame(page, { x: 450, y: 90 });
+  await tapGame(page, { x: VIEW_W - 30, y: 90 });
   await page.waitForTimeout(1200);
   expect(await sceneActive(page, 'game')).toBe(false);
   expect(await sceneActive(page, 'title')).toBe(true);
@@ -93,6 +109,7 @@ test('title: tapping empty background does not start the game', async ({ page })
 test('title: rapid double tap on Start starts exactly one game', async ({ page }) => {
   await page.goto('/');
   await expect.poll(() => sceneActive(page, 'title'), { timeout: 15_000 }).toBe(true);
+  await syncView(page);
   const p = await toPage(page, { x: VIEW_W / 2, y: 176 });
   await page.touchscreen.tap(p.x, p.y);
   await page.touchscreen.tap(p.x, p.y);
@@ -191,5 +208,52 @@ test('in game: controls survive quitting to the title and starting again', async
   const f = new Fingers(page, cdp);
   await f.down(1, { x: btn('jump').x, y: btn('jump').y });
   await expect.poll(async () => (await virt(page)).jump).toBe(true);
+  await f.up(1);
+});
+
+test('viewport: the canvas fills the phone screen with no letterbox and undistorted pixels', async ({ page }) => {
+  await page.goto('/');
+  await expect.poll(() => sceneActive(page, 'title'), { timeout: 15_000 }).toBe(true);
+  await syncView(page);
+  const r = await page.evaluate(() => {
+    const c = document.querySelector('canvas')!.getBoundingClientRect();
+    return { w: c.width, h: c.height, l: c.left, t: c.top, iw: window.innerWidth, ih: window.innerHeight };
+  });
+  // Edge to edge (within a pixel of rounding) on a 20:9 phone.
+  expect(r.w).toBeGreaterThan(r.iw - 2);
+  expect(r.h).toBeGreaterThan(r.ih - 2);
+  expect(Math.abs(r.l)).toBeLessThan(2);
+  // Uniform scale: logical aspect equals displayed aspect (no stretching).
+  expect(Math.abs(r.w / r.h - VIEW_W / VIEW_H)).toBeLessThan(0.02);
+  expect(VIEW_W).toBeGreaterThan(480);
+});
+
+test('in game: joystick keeps steering after the thumb leaves its start zone and crosses the buttons', async ({ page }) => {
+  await startGame(page);
+  const cdp = await page.context().newCDPSession(page);
+  const f = new Fingers(page, cdp);
+  await f.down(1, { x: 150, y: 150 });
+  await f.move(1, { x: 150 + 40, y: 150 });
+  await expect.poll(async () => (await virt(page)).right).toBe(true);
+  // Slide all the way over the jump button: must not press it, must keep moving right.
+  await f.move(1, { x: btn('jump').x, y: btn('jump').y });
+  await page.waitForTimeout(120);
+  const v = await virt(page);
+  expect(v.right).toBe(true);
+  expect(v.jump).toBe(false);
+  // Reverse quickly: floating anchor follows so left registers right away.
+  await f.move(1, { x: btn('jump').x - 110, y: btn('jump').y });
+  await expect.poll(async () => (await virt(page)).left).toBe(true);
+  await f.up(1);
+  await expect.poll(async () => Object.values(await virt(page)).some(Boolean)).toBe(false);
+});
+
+test('in game: a joystick can be started high on the left half, not only in the bottom corner', async ({ page }) => {
+  await startGame(page);
+  const cdp = await page.context().newCDPSession(page);
+  const f = new Fingers(page, cdp);
+  await f.down(1, { x: 200, y: 90 });
+  await f.move(1, { x: 200 - 40, y: 90 });
+  await expect.poll(async () => (await virt(page)).left).toBe(true);
   await f.up(1);
 });

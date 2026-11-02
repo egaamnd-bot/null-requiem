@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { VIEW } from '../config/tuning';
+import { view } from '../config/view';
+import { VIEW_CHANGED } from '../render/viewportDom';
 import { loadProgression, Progression } from '../core/progression';
 import { InputManager } from '../input/InputManager';
 import { createTapTarget, type TapTarget } from '../input/tapTarget';
@@ -38,7 +39,12 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create(): void {
-    const { width: W, height: H } = VIEW;
+    const { width: W, height: H } = view;
+    const onView = () => {
+      if (!this.starting) this.scene.restart({ services: this.services });
+    };
+    this.game.events.on(VIEW_CHANGED, onView);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.game.events.off(VIEW_CHANGED, onView));
     this.cameras.main.setBackgroundColor(PALETTE.void);
     this.add.image(W / 2, H / 2, TEX.glowSoft).setTint(PALETTE.violet).setBlendMode(Phaser.BlendModes.ADD).setScale(4, 2.4).setAlpha(0.3);
     this.emblem = this.add.image(W / 2, 70, TEX.title).setBlendMode(Phaser.BlendModes.ADD);

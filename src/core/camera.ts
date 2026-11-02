@@ -35,10 +35,17 @@ export class CameraFollow {
   private lookAhead = 0;
 
   constructor(
-    readonly viewW: number,
-    readonly viewH: number,
+    public viewW: number,
+    public viewH: number,
     private bounds: CameraBounds,
   ) {}
+
+  /** The visible area changed (window resize / rotation). */
+  setView(viewW: number, viewH: number): void {
+    this.viewW = viewW;
+    this.viewH = viewH;
+    this.setBounds(this.bounds);
+  }
 
   setBounds(bounds: CameraBounds): void {
     this.bounds = bounds;

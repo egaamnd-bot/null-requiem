@@ -5,6 +5,8 @@ const SIZES: Array<[number, number]> = [
   [480, 270],
   [960, 540],
   [400, 270],
+  [600, 270],
+  [648, 270],
 ];
 
 describe('touch layout', () => {
@@ -43,7 +45,8 @@ describe('touch layout', () => {
   it('uses a flexible lower-left touch zone instead of requiring the thumb to find a fixed pad', () => {
     const l = createTouchLayout(480, 270);
     expect(isJoystickZone(l, 92, 160)).toBe(true);
-    expect(isJoystickZone(l, 230, 160)).toBe(false);
+    expect(isJoystickZone(l, 230, 160)).toBe(true); // whole left half
+    expect(isJoystickZone(l, 300, 160)).toBe(false);
     expect(isJoystickZone(l, 92, 40)).toBe(false);
     expect(joystickKeysAt(l, { x: 92, y: 160 }, 45, 160)).toEqual(['left']);
     expect(joystickKeysAt(l, { x: 92, y: 160 }, 92, 160)).toEqual([]);
@@ -90,5 +93,45 @@ describe('touch layout', () => {
     expect(isOnPause(l, l.pause.x, l.pause.y)).toBe(true);
     expect(isOnPause(l, 240, 135)).toBe(false);
     expect(holdKeysAt(l, l.pause.x, l.pause.y)).toEqual([]);
+  });
+});
+
+describe('touch layout across device aspect ratios and margins', () => {
+  const MARGIN = { left: 40, right: 40, top: 20, bottom: 14 };
+  it.each([[480, 270], [540, 270], [600, 270], [648, 270]])('keeps controls inside the safe margins at %ix%i', (w, h) => {
+    const l = createTouchLayout(w, h, MARGIN);
+    for (const c of [l.pause, ...l.buttons]) {
+      expect(c.x + c.r).toBeLessThanOrEqual(w - MARGIN.right + 10 + 0.001);
+      expect(c.y + c.r).toBeLessThanOrEqual(h - MARGIN.bottom + 6 + 0.001);
+    }
+    expect(l.pause.y - l.pause.r).toBeGreaterThanOrEqual(0);
+  });
+
+  it.each([0.8, 1, 1.2, 5, -3])('never overlaps or leaves the screen at control scale %f', (scale) => {
+    const l = createTouchLayout(560, 270, undefined, scale);
+    const circles = [l.pause, ...l.buttons];
+    for (const c of circles) {
+      expect(c.x - c.r).toBeGreaterThanOrEqual(0);
+      expect(c.x + c.r).toBeLessThanOrEqual(560);
+      expect(c.y + c.r).toBeLessThanOrEqual(270);
+    }
+    for (let i = 0; i < circles.length; i++)
+      for (let j = i + 1; j < circles.length; j++) {
+        const a = circles[i]!, b = circles[j]!;
+        expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThanOrEqual((a.r + b.r) * 0.9);
+      }
+  });
+
+  it('keeps the joystick zone clear of every action button', () => {
+    for (const [w, h] of [[480, 270], [560, 270], [648, 270]] as Array<[number, number]>) {
+      const l = createTouchLayout(w, h);
+      for (const b of l.buttons) expect(b.x - b.hitR).toBeGreaterThanOrEqual(l.joystickZone.right - 1);
+    }
+  });
+
+  it('control size depends on the logical height only, not on the width', () => {
+    const a = createTouchLayout(480, 270).buttons[0]!;
+    const b = createTouchLayout(648, 270).buttons[0]!;
+    expect(b.r).toBe(a.r);
   });
 });
