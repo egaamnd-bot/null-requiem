@@ -16,6 +16,14 @@ export interface EnemyContext {
   spawnProjectile: (spec: ProjectileSpec) => void;
   emit: Emit;
   rng: () => number;
+  /** Set for exactly one step when the player has just used Backtrace (arrival point, centre). */
+  backtraceArrival?: { x: number; y: number } | null;
+  /** Where the Courier was `secondsAgo` seconds ago (feet-centre), or null if there is no history yet. */
+  trail?: (secondsAgo: number) => { x: number; y: number } | null;
+  /** How long the player has been (nearly) stationary, in seconds. */
+  playerStillTime?: number;
+  /** Ask the world to spawn another enemy (bosses summon adds). */
+  spawnEnemy?: (type: string, x: number, y: number, elite?: boolean) => void;
 }
 
 /**
@@ -26,9 +34,11 @@ export abstract class Enemy<S extends string = string> implements Damageable {
   abstract readonly kind: string;
   readonly targetKind: 'enemy' | 'boss' = 'enemy';
   readonly requiresLineOfSight = true;
-  readonly pogoable = true;
+  readonly pogoable: boolean = true;
   readonly health: Health;
   facing: 1 | -1 = -1;
+  /** Elite variants use extra attack patterns, not only more health. */
+  elite = false;
   state: S;
   stateTime = 0;
   /** Seconds of white hit-flash remaining (presentation hint). */
@@ -56,6 +66,11 @@ export abstract class Enemy<S extends string = string> implements Damageable {
     return !this.health.isDead;
   }
 
+  /** True while the enemy cannot be struck at all (e.g. phased out). The world skips it when resolving attacks. */
+  get untargetable(): boolean {
+    return false;
+  }
+
   hurtbox(): Rect {
     return bodyRect(this.body);
   }
@@ -77,7 +92,11 @@ export abstract class Enemy<S extends string = string> implements Damageable {
 
   protected abstract think(ctx: EnemyContext): void;
 
+  /** Set by armoured / shielded enemies when the most recent hit was deflected (presentation + audio hint). */
+  blocked = false;
+
   takeHit(damage: number, dirX: number, dirY: number): { killed: boolean } {
+    this.blocked = false;
     const res = this.health.tryDamage(damage, 0);
     if (!res.applied) return { killed: false };
     this.flash = 0.09;

@@ -17,8 +17,11 @@ const T = ENEMIES.scrapHound;
 export class ScrapHound extends Enemy<HoundState> {
   readonly kind = 'scrapHound';
 
-  constructor(id: string, feetX: number, feetY: number) {
-    super(id, createBody(feetX - T.width / 2, feetY - T.height, T.width, T.height), T.health, 'patrol');
+  private chained = false;
+
+  constructor(id: string, feetX: number, feetY: number, elite = false) {
+    super(id, createBody(feetX - T.width / 2, feetY - T.height, T.width, T.height), elite ? T.health + 2 : T.health, 'patrol');
+    this.elite = elite;
   }
 
   protected think(ctx: EnemyContext): void {
@@ -40,12 +43,22 @@ export class ScrapHound extends Enemy<HoundState> {
       }
       case 'windup':
         b.vx = approach(b.vx, 0, T.decel * dt);
-        if (this.stateTime >= T.windup) this.setState('lunge');
+        if (this.stateTime >= (this.chained ? T.windup * 0.45 : T.windup)) this.setState('lunge');
         break;
       case 'lunge': {
         const blocked = b.onGround && (wallAhead(b, ctx.grid, this.facing) || !groundAhead(b, ctx.grid, this.facing));
         b.vx = blocked ? 0 : this.facing * T.lungeSpeed;
-        if (blocked || this.stateTime >= T.lungeTime) this.setState('recover');
+        if (blocked || this.stateTime >= T.lungeTime) {
+          // Elite hounds chain a second, quicker lunge before they tire.
+          if (this.elite && !this.chained && !blocked) {
+            this.chained = true;
+            this.facing = (sign(ctx.playerX - this.centerX) || this.facing) as 1 | -1;
+            this.setState('windup');
+          } else {
+            this.chained = false;
+            this.setState('recover');
+          }
+        }
         break;
       }
       case 'recover':

@@ -19,8 +19,9 @@ export class WatcherDrone extends Enemy<DroneState> {
   private readonly homeX: number;
   private readonly homeY: number;
 
-  constructor(id: string, centerX: number, centerY: number, phase = 0) {
-    super(id, createBody(centerX - T.width / 2, centerY - T.height / 2, T.width, T.height), T.health, 'drift');
+  constructor(id: string, centerX: number, centerY: number, phase = 0, elite = false) {
+    super(id, createBody(centerX - T.width / 2, centerY - T.height / 2, T.width, T.height), elite ? T.health + 2 : T.health, 'drift');
+    this.elite = elite;
     this.homeX = centerX;
     this.homeY = centerY;
     this.clock = phase;
@@ -101,18 +102,25 @@ export class WatcherDrone extends Enemy<DroneState> {
     const dy = ctx.playerY - this.centerY;
     const len = Math.hypot(dx, dy) || 1;
     const s = T.bolt.size;
-    ctx.spawnProjectile({
-      kind: 'laserBolt',
-      x: this.centerX - s / 2,
-      y: this.centerY - s / 2,
-      w: s,
-      h: s,
-      vx: (dx / len) * T.bolt.speed,
-      vy: (dy / len) * T.bolt.speed,
-      damage: T.bolt.damage,
-      life: T.bolt.life,
-      slashable: true,
-    });
+    // Elite drones fire a three-bolt fan instead of a single bolt.
+    const spreads = this.elite ? [-0.28, 0, 0.28] : [0];
+    const base = Math.atan2(dy, dx);
+    for (const spread of spreads) {
+      const a = base + spread;
+      ctx.spawnProjectile({
+        kind: 'laserBolt',
+        x: this.centerX - s / 2,
+        y: this.centerY - s / 2,
+        w: s,
+        h: s,
+        vx: Math.cos(a) * T.bolt.speed,
+        vy: Math.sin(a) * T.bolt.speed,
+        damage: T.bolt.damage,
+        life: T.bolt.life,
+        slashable: true,
+      });
+    }
+    void len;
     ctx.emit({ type: 'enemyShoot', x: this.centerX, y: this.centerY });
   }
 
