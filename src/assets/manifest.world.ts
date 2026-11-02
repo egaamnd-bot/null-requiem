@@ -17,32 +17,32 @@ const ENV: AssetDef[] = REGIONS.flatMap((r) => {
       ...common, id: `env_${r.id}_tiles`, name: `${r.name} — Tileset`, category: 'tileset', purpose: 'Terrain tiles: solid with top/left/right/bottom edges and inner corners, one-way catwalk, hazard, background wall fill.',
       w: 16, h: 16, anchor: { x: 0, y: 0 }, anims: { solid: anim(16, 1, false, '4x4 auto-tile set (edges + corners + fill)'), catwalk: anim(3, 1, false, 'left cap, middle, right cap'), hazard: anim(4, 6, true, 'animated live-current surface'), details: anim(8, 1, false, 'wall panels, rivets, stains') },
       description: `${r.mood} Tiles are 16x16 logical px and must tile seamlessly. Strong top lip highlight, darker underside, readable platform edges.`, variations: ['Day-variant not required'],
-      integration: 'needs-engine-work', note: 'Terrain is drawn by code today (RoomView.drawTerrain). The tileset hook (auto-tiling from this sheet) is specified in ASSET_INTEGRATION_GUIDE.md and not implemented yet.',
+      integration: 'swap-ready', note: 'RoomView auto-tiles solids from this sheet when ALL 31 cells are delivered (index = N·1 + E·2 + S·4 + W·8; see src/assets/autotile.ts). Until then the generated terrain is drawn.',
     }),
     def({
       ...common, id: `env_${r.id}_bg_far`, name: `${r.name} — Far Background`, purpose: 'Slowest parallax layer (0.12x camera). Tiles horizontally.',
       w: 480, h: 270, anchor: { x: 0, y: 0 }, anims: { far: anim(1, 1, false) },
       description: `Far skyline/ceiling layer. ${r.mood} Low contrast, atmospheric perspective, no gameplay-readable detail, seamless left-right tile. Landscape 16:9 at 480x270 logical (deliver 1920x1080).`,
-      integration: 'needs-engine-work', note: 'AUDIT: RoomView builds per-room textures `far-<roomId>` and never reads this key, so delivering the file does not replace the backdrop yet. See docs/GEMINI_PACK_01_BRIEF.md §7 (patch R2).',
+      integration: 'swap-ready', note: 'RoomView uses this layer for every room of the region when delivered (tile scale fits the 270 px view height; painted layers are drawn at full opacity).',
       keys: [`env-${r.id}-bg-far`],
     }),
     def({
       ...common, id: `env_${r.id}_bg_mid`, name: `${r.name} — Mid Background`, purpose: 'Mid parallax layer (0.3x). Tiles horizontally. Larger structures.',
       w: 480, h: 270, anchor: { x: 0, y: 0 }, anims: { mid: anim(1, 1, false) },
       description: `Mid layer: larger structures and architecture with more contrast than the far layer. ${r.props}. Seamless left-right tile, transparent where the far layer should show through.`,
-      integration: 'needs-engine-work', note: 'AUDIT: not read by RoomView yet (patch R2 in the Pack 01 brief).', keys: [`env-${r.id}-bg-mid`],
+      integration: 'swap-ready', note: 'Used for every room of the region when delivered; opacity is the art\'s own.', keys: [`env-${r.id}-bg-mid`],
     }),
     def({
       ...common, id: `env_${r.id}_fg_silhouette`, name: `${r.name} — Foreground Silhouettes`, purpose: 'Strong dark foreground shapes drawn in front of the playfield (pipes, cables, railings) at the screen edges.',
       w: 480, h: 270, anchor: { x: 0, y: 0 }, anims: { fg: anim(4, 1, false, '4 interchangeable strips') },
       description: `Near-black foreground silhouettes with a subtle coloured rim light. Never cover the player: keep to the top/bottom 25% of the screen. ${r.props}.`,
-      integration: 'needs-engine-work', placeholder: 'spec-only', note: 'No foreground layer exists yet; the renderer slot is specified in the guide.',
+      integration: 'swap-ready', placeholder: 'spec-only', note: 'One of the 4 strips (chosen per room) is drawn in front of the playfield with 1.15x parallax; there is no placeholder.',
     }),
     def({
       ...common, id: `env_${r.id}_props`, name: `${r.name} — Props`, category: 'object', purpose: 'Decorative set dressing placed by room data (non-colliding).',
       w: 48, h: 48, anims: { props: anim(8, 1, false, '8 props; see description') },
       description: `Eight standalone props on a transparent background, each within 48x48 logical px: ${r.props}. Each must read at small size and share the region palette.`,
-      integration: 'needs-engine-work', placeholder: 'spec-only', note: 'Rooms do not place props yet; slots are reserved.',
+      integration: r.id === 'rainline' ? 'swap-ready' : 'needs-engine-work', placeholder: r.id === 'rainline' ? 'code-drawn' : 'spec-only', note: r.id === 'rainline' ? 'Placed by src/world/props.ts in the three Rainline rooms (code-drawn stand-ins today).' : 'No placements for this region yet; slots are reserved.',
     }),
   ];
 });

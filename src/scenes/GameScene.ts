@@ -341,6 +341,10 @@ export class GameScene extends Phaser.Scene {
       this.services.sfx.handle(e);
       if (e.type === 'playerLand') this.playerView.onLand(e.heavy);
       if (e.type === 'playerJump') this.playerView.onJump();
+      if (e.type === 'backtrace') this.playerView.trigger('backtrace');
+      if (e.type === 'playerJump' && e.air) this.playerView.trigger('airjump');
+      if (e.type === 'dialogueOpened') this.playerView.trigger('interact');
+      if (e.type === 'playerDied') this.playerView.trigger('death');
       if (e.type === 'vendorOpened') this.openMenu('vendor', e.vendorId);
       this.bus.emit('event', e);
     }

@@ -11,7 +11,7 @@ export const NPC_ASSET: Readonly<Record<string, string>> = {
 };
 
 /** Constant scale a view applies to texture keys whose placeholder pixels are not world pixels (R1). Everything else is 1. */
-export const MANIFEST_VIEW_SCALE: Readonly<Record<string, number>> = {
+const scales: Record<string, number> = {
   'player-idle0': 0.65,
   'player-idle1': 0.65,
   'player-run0': 0.65,
@@ -24,3 +24,10 @@ export const MANIFEST_VIEW_SCALE: Readonly<Record<string, number>> = {
   'player-attack': 0.65,
   'player-hurt': 0.65,
 };
+
+// R6: the extra Courier animations are drawn by PlayerView at the same 0.65 constant as the legacy poses.
+for (const [anim, n] of [['backtrace', 6], ['airjump', 3], ['interact', 3], ['death', 6]] as const) {
+  for (let i = 0; i < n; i++) scales[`player_courier_${anim}__${anim}_${i}`] = 0.65;
+}
+
+export const MANIFEST_VIEW_SCALE: Readonly<Record<string, number>> = scales;

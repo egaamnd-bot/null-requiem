@@ -26,7 +26,8 @@ const courier = (id: string, name: string, purpose: string, anims: Record<string
     locations: COURIER_LOC,
     priority: 'P0',
     placeholder: 'procedural-legacy',
-    keys,
+    // An empty list means "derive dedicated keys from the animation names" (extra animations have no legacy textures).
+    keys: keys.length ? keys : undefined,
     ...extra,
   });
 
@@ -39,10 +40,10 @@ const PLAYER: AssetDef[] = [
   courier('player_courier_dash', 'Courier — Dash', 'Horizontal dash (0.2 s). Stretched, afterimage friendly.', { dash: anim(1, 1, false) }, ['player-dash']),
   courier('player_courier_attack', 'Courier — Attack', 'Rail-blade swing; the slash arc is a separate effect. Final art may use up to 4 frames.', { attack: anim(1, 16, false) }, ['player-attack'], { note: 'The view shows this frame for the whole active window; extra frames are driven once the final sheet arrives.' }),
   courier('player_courier_hurt', 'Courier — Hurt', 'Knocked back and stunned (0.25 s).', { hurt: anim(1, 1, false) }, ['player-hurt']),
-  courier('player_courier_backtrace', 'Courier — Backtrace Arrival', 'The Courier materialising at the echo point after a rewind.', { backtrace: anim(6, 16, false, 'Dissolve in from cyan glitch shards') }, [], { placeholder: 'spec-only', integration: 'needs-engine-work', note: 'Not yet played by the player view (the arrival uses fx_backtrace_arrival).' }),
-  courier('player_courier_airjump', 'Courier — Kinetic Coil Air Jump', 'Second jump in mid-air: coil flares at the boots.', { airjump: anim(3, 14, false) }, [], { placeholder: 'spec-only', integration: 'needs-engine-work' }),
-  courier('player_courier_interact', 'Courier — Interact', 'Reaching out to a terminal or NPC.', { interact: anim(3, 8, false) }, [], { placeholder: 'spec-only', integration: 'needs-engine-work' }),
-  courier('player_courier_death', 'Courier — Death', 'Signal loss: the Courier flickers and falls.', { death: anim(6, 10, false) }, [], { placeholder: 'spec-only', integration: 'needs-engine-work' }),
+  courier('player_courier_backtrace', 'Courier — Backtrace Arrival', 'The Courier materialising at the echo point after a rewind.', { backtrace: anim(6, 16, false, 'Dissolve in from cyan glitch shards') }, [], { placeholder: 'code-drawn', note: 'Plays over the Courier for 6 frames after a Backtrace (R6). Without art the normal pose continues.' }),
+  courier('player_courier_airjump', 'Courier — Kinetic Coil Air Jump', 'Second jump in mid-air: coil flares at the boots.', { airjump: anim(3, 14, false) }, [], { placeholder: 'code-drawn' }),
+  courier('player_courier_interact', 'Courier — Interact', 'Reaching out to a terminal or NPC.', { interact: anim(3, 8, false) }, [], { placeholder: 'code-drawn' }),
+  courier('player_courier_death', 'Courier — Death', 'Signal loss: the Courier flickers and falls.', { death: anim(6, 10, false) }, [], { placeholder: 'code-drawn' }),
 ];
 
 // ───────────────────────────────────────────────────────────────────────────────────────── PACK 02 — ENEMIES

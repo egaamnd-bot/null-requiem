@@ -149,8 +149,11 @@ export function applyFinalAssets(scene: Phaser.Scene, done: (r: FinalLoadReport)
         if (!c) continue;
         c.getContext().drawImage(src, f.x, f.y, f.w, f.h, 0, 0, f.w, f.h);
         c.refresh();
-        const w = planWorldSize(def, viewScaleOf(f.key), f);
-        applyWorldSize(c, w.resolution, w.frameW, w.frameH);
+        // Tiling layers (parallax backgrounds, foreground strips) are sized by their tile scale, not by frame size.
+        if (def.category !== 'background') {
+          const w = planWorldSize(def, viewScaleOf(f.key), f);
+          applyWorldSize(c, w.resolution, w.frameW, w.frameH);
+        }
       }
       report.loaded.push(id);
     }

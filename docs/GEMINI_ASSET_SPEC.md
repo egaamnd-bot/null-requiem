@@ -122,7 +122,7 @@ Complete player sprite sheets, movement and combat animations, Backtrace animati
 - **Hitbox (gameplay, for reference):** 10×22 at offset 10.5, 14
 - **Palette:** #0b0b16 #2a2a46 #3cf2ff #ff3ea5 #e8dcc8
 - **Appears in:** All rooms
-- **Delivery:** `player_courier_backtrace.png` — Not yet played by the player view (the arrival uses fx_backtrace_arrival).
+- **Delivery:** `player_courier_backtrace.png` — Plays over the Courier for 6 frames after a Backtrace (R6). Without art the normal pose continues.
 
 #### `player_courier_airjump` — Courier — Kinetic Coil Air Jump  [P0]
 
@@ -407,7 +407,7 @@ Rainline Alley, Transit Stacks, Precinct Vault: tilesets, backgrounds, props and
 - **Palette:** #05060c #272c3e #8f9bbd #3cf2ff #1a0d26
 - **Variations:** Day-variant not required
 - **Appears in:** Rainline Alley, Rainline Depot, The Undercroft
-- **Delivery:** `env_rainline_tiles.png` — Terrain is drawn by code today (RoomView.drawTerrain). The tileset hook (auto-tiling from this sheet) is specified in ASSET_INTEGRATION_GUIDE.md and not implemented yet.
+- **Delivery:** `env_rainline_tiles.png` — RoomView auto-tiles solids from this sheet when ALL 31 cells are delivered (index = N·1 + E·2 + S·4 + W·8; see src/assets/autotile.ts). Until then the generated terrain is drawn.
 
 #### `env_rainline_bg_far` — Rainline Alley — Far Background  [P1]
 
@@ -418,7 +418,7 @@ Rainline Alley, Transit Stacks, Precinct Vault: tilesets, backgrounds, props and
 - **Anchor:** 0, 0
 - **Palette:** #05060c #272c3e #8f9bbd #3cf2ff #1a0d26
 - **Appears in:** Rainline Alley, Rainline Depot, The Undercroft
-- **Delivery:** `env_rainline_bg_far.png` — AUDIT: RoomView builds per-room textures `far-<roomId>` and never reads this key, so delivering the file does not replace the backdrop yet. See docs/GEMINI_PACK_01_BRIEF.md §7 (patch R2).
+- **Delivery:** `env_rainline_bg_far.png` — RoomView uses this layer for every room of the region when delivered (tile scale fits the 270 px view height; painted layers are drawn at full opacity).
 
 #### `env_rainline_bg_mid` — Rainline Alley — Mid Background  [P1]
 
@@ -429,7 +429,7 @@ Rainline Alley, Transit Stacks, Precinct Vault: tilesets, backgrounds, props and
 - **Anchor:** 0, 0
 - **Palette:** #05060c #272c3e #8f9bbd #3cf2ff #1a0d26
 - **Appears in:** Rainline Alley, Rainline Depot, The Undercroft
-- **Delivery:** `env_rainline_bg_mid.png` — AUDIT: not read by RoomView yet (patch R2 in the Pack 01 brief).
+- **Delivery:** `env_rainline_bg_mid.png` — Used for every room of the region when delivered; opacity is the art's own.
 
 #### `env_rainline_fg_silhouette` — Rainline Alley — Foreground Silhouettes  [P1]
 
@@ -440,7 +440,7 @@ Rainline Alley, Transit Stacks, Precinct Vault: tilesets, backgrounds, props and
 - **Anchor:** 0, 0
 - **Palette:** #05060c #272c3e #8f9bbd #3cf2ff #1a0d26
 - **Appears in:** Rainline Alley, Rainline Depot, The Undercroft
-- **Delivery:** `env_rainline_fg_silhouette.png` — No foreground layer exists yet; the renderer slot is specified in the guide.
+- **Delivery:** `env_rainline_fg_silhouette.png` — One of the 4 strips (chosen per room) is drawn in front of the playfield with 1.15x parallax; there is no placeholder.
 
 #### `env_rainline_props` — Rainline Alley — Props  [P1]
 
@@ -451,7 +451,7 @@ Rainline Alley, Transit Stacks, Precinct Vault: tilesets, backgrounds, props and
 - **Anchor:** 0.5, 1
 - **Palette:** #05060c #272c3e #8f9bbd #3cf2ff #1a0d26
 - **Appears in:** Rainline Alley, Rainline Depot, The Undercroft
-- **Delivery:** `env_rainline_props.png` — Rooms do not place props yet; slots are reserved.
+- **Delivery:** `env_rainline_props.png` — Placed by src/world/props.ts in the three Rainline rooms (code-drawn stand-ins today).
 
 #### `env_transit_tiles` — Transit Stacks — Tileset  [P1]
 
@@ -463,7 +463,7 @@ Rainline Alley, Transit Stacks, Precinct Vault: tilesets, backgrounds, props and
 - **Palette:** #04060e #252a3a #9aa6c4 #ff3ea5 #0d1830
 - **Variations:** Day-variant not required
 - **Appears in:** Transit Stacks, Stacks Yard, The Stacks Shaft
-- **Delivery:** `env_transit_tiles.png` — Terrain is drawn by code today (RoomView.drawTerrain). The tileset hook (auto-tiling from this sheet) is specified in ASSET_INTEGRATION_GUIDE.md and not implemented yet.
+- **Delivery:** `env_transit_tiles.png` — RoomView auto-tiles solids from this sheet when ALL 31 cells are delivered (index = N·1 + E·2 + S·4 + W·8; see src/assets/autotile.ts). Until then the generated terrain is drawn.
 
 #### `env_transit_bg_far` — Transit Stacks — Far Background  [P1]
 
@@ -474,7 +474,7 @@ Rainline Alley, Transit Stacks, Precinct Vault: tilesets, backgrounds, props and
 - **Anchor:** 0, 0
 - **Palette:** #04060e #252a3a #9aa6c4 #ff3ea5 #0d1830
 - **Appears in:** Transit Stacks, Stacks Yard, The Stacks Shaft
-- **Delivery:** `env_transit_bg_far.png` — AUDIT: RoomView builds per-room textures `far-<roomId>` and never reads this key, so delivering the file does not replace the backdrop yet. See docs/GEMINI_PACK_01_BRIEF.md §7 (patch R2).
+- **Delivery:** `env_transit_bg_far.png` — RoomView uses this layer for every room of the region when delivered (tile scale fits the 270 px view height; painted layers are drawn at full opacity).
 
 #### `env_transit_bg_mid` — Transit Stacks — Mid Background  [P1]
 
@@ -485,7 +485,7 @@ Rainline Alley, Transit Stacks, Precinct Vault: tilesets, backgrounds, props and
 - **Anchor:** 0, 0
 - **Palette:** #04060e #252a3a #9aa6c4 #ff3ea5 #0d1830
 - **Appears in:** Transit Stacks, Stacks Yard, The Stacks Shaft
-- **Delivery:** `env_transit_bg_mid.png` — AUDIT: not read by RoomView yet (patch R2 in the Pack 01 brief).
+- **Delivery:** `env_transit_bg_mid.png` — Used for every room of the region when delivered; opacity is the art's own.
 
 #### `env_transit_fg_silhouette` — Transit Stacks — Foreground Silhouettes  [P1]
 
@@ -496,7 +496,7 @@ Rainline Alley, Transit Stacks, Precinct Vault: tilesets, backgrounds, props and
 - **Anchor:** 0, 0
 - **Palette:** #04060e #252a3a #9aa6c4 #ff3ea5 #0d1830
 - **Appears in:** Transit Stacks, Stacks Yard, The Stacks Shaft
-- **Delivery:** `env_transit_fg_silhouette.png` — No foreground layer exists yet; the renderer slot is specified in the guide.
+- **Delivery:** `env_transit_fg_silhouette.png` — One of the 4 strips (chosen per room) is drawn in front of the playfield with 1.15x parallax; there is no placeholder.
 
 #### `env_transit_props` — Transit Stacks — Props  [P1]
 
@@ -507,7 +507,7 @@ Rainline Alley, Transit Stacks, Precinct Vault: tilesets, backgrounds, props and
 - **Anchor:** 0.5, 1
 - **Palette:** #04060e #252a3a #9aa6c4 #ff3ea5 #0d1830
 - **Appears in:** Transit Stacks, Stacks Yard, The Stacks Shaft
-- **Delivery:** `env_transit_props.png` — Rooms do not place props yet; slots are reserved.
+- **Delivery:** `env_transit_props.png` — No placements for this region yet; slots are reserved.
 
 #### `env_precinct_tiles` — Precinct Vault — Tileset  [P1]
 
@@ -519,7 +519,7 @@ Rainline Alley, Transit Stacks, Precinct Vault: tilesets, backgrounds, props and
 - **Palette:** #08050a #2c2a36 #a69e92 #ff3b4e #2a0a14
 - **Variations:** Day-variant not required
 - **Appears in:** Precinct Checkpoint, Holding Cells, Precinct Vault
-- **Delivery:** `env_precinct_tiles.png` — Terrain is drawn by code today (RoomView.drawTerrain). The tileset hook (auto-tiling from this sheet) is specified in ASSET_INTEGRATION_GUIDE.md and not implemented yet.
+- **Delivery:** `env_precinct_tiles.png` — RoomView auto-tiles solids from this sheet when ALL 31 cells are delivered (index = N·1 + E·2 + S·4 + W·8; see src/assets/autotile.ts). Until then the generated terrain is drawn.
 
 #### `env_precinct_bg_far` — Precinct Vault — Far Background  [P1]
 
@@ -530,7 +530,7 @@ Rainline Alley, Transit Stacks, Precinct Vault: tilesets, backgrounds, props and
 - **Anchor:** 0, 0
 - **Palette:** #08050a #2c2a36 #a69e92 #ff3b4e #2a0a14
 - **Appears in:** Precinct Checkpoint, Holding Cells, Precinct Vault
-- **Delivery:** `env_precinct_bg_far.png` — AUDIT: RoomView builds per-room textures `far-<roomId>` and never reads this key, so delivering the file does not replace the backdrop yet. See docs/GEMINI_PACK_01_BRIEF.md §7 (patch R2).
+- **Delivery:** `env_precinct_bg_far.png` — RoomView uses this layer for every room of the region when delivered (tile scale fits the 270 px view height; painted layers are drawn at full opacity).
 
 #### `env_precinct_bg_mid` — Precinct Vault — Mid Background  [P1]
 
@@ -541,7 +541,7 @@ Rainline Alley, Transit Stacks, Precinct Vault: tilesets, backgrounds, props and
 - **Anchor:** 0, 0
 - **Palette:** #08050a #2c2a36 #a69e92 #ff3b4e #2a0a14
 - **Appears in:** Precinct Checkpoint, Holding Cells, Precinct Vault
-- **Delivery:** `env_precinct_bg_mid.png` — AUDIT: not read by RoomView yet (patch R2 in the Pack 01 brief).
+- **Delivery:** `env_precinct_bg_mid.png` — Used for every room of the region when delivered; opacity is the art's own.
 
 #### `env_precinct_fg_silhouette` — Precinct Vault — Foreground Silhouettes  [P1]
 
@@ -552,7 +552,7 @@ Rainline Alley, Transit Stacks, Precinct Vault: tilesets, backgrounds, props and
 - **Anchor:** 0, 0
 - **Palette:** #08050a #2c2a36 #a69e92 #ff3b4e #2a0a14
 - **Appears in:** Precinct Checkpoint, Holding Cells, Precinct Vault
-- **Delivery:** `env_precinct_fg_silhouette.png` — No foreground layer exists yet; the renderer slot is specified in the guide.
+- **Delivery:** `env_precinct_fg_silhouette.png` — One of the 4 strips (chosen per room) is drawn in front of the playfield with 1.15x parallax; there is no placeholder.
 
 #### `env_precinct_props` — Precinct Vault — Props  [P1]
 
@@ -563,7 +563,7 @@ Rainline Alley, Transit Stacks, Precinct Vault: tilesets, backgrounds, props and
 - **Anchor:** 0.5, 1
 - **Palette:** #08050a #2c2a36 #a69e92 #ff3b4e #2a0a14
 - **Appears in:** Precinct Checkpoint, Holding Cells, Precinct Vault
-- **Delivery:** `env_precinct_props.png` — Rooms do not place props yet; slots are reserved.
+- **Delivery:** `env_precinct_props.png` — No placements for this region yet; slots are reserved.
 
 #### `obj_sync_relay` — Sync Relay  [P0]
 
@@ -723,7 +723,7 @@ Neon Undercity, Industrial Core, Null Cathedral: tilesets, backgrounds, props.
 - **Palette:** #0c0516 #2a2236 #b8a0d8 #ff3ea5 #4a1450
 - **Variations:** Day-variant not required
 - **Appears in:** Undercity Plaza, Derelict Arcade, The Leaning Towers
-- **Delivery:** `env_undercity_tiles.png` — Terrain is drawn by code today (RoomView.drawTerrain). The tileset hook (auto-tiling from this sheet) is specified in ASSET_INTEGRATION_GUIDE.md and not implemented yet.
+- **Delivery:** `env_undercity_tiles.png` — RoomView auto-tiles solids from this sheet when ALL 31 cells are delivered (index = N·1 + E·2 + S·4 + W·8; see src/assets/autotile.ts). Until then the generated terrain is drawn.
 
 #### `env_undercity_bg_far` — Neon Undercity — Far Background  [P1]
 
@@ -734,7 +734,7 @@ Neon Undercity, Industrial Core, Null Cathedral: tilesets, backgrounds, props.
 - **Anchor:** 0, 0
 - **Palette:** #0c0516 #2a2236 #b8a0d8 #ff3ea5 #4a1450
 - **Appears in:** Undercity Plaza, Derelict Arcade, The Leaning Towers
-- **Delivery:** `env_undercity_bg_far.png` — AUDIT: RoomView builds per-room textures `far-<roomId>` and never reads this key, so delivering the file does not replace the backdrop yet. See docs/GEMINI_PACK_01_BRIEF.md §7 (patch R2).
+- **Delivery:** `env_undercity_bg_far.png` — RoomView uses this layer for every room of the region when delivered (tile scale fits the 270 px view height; painted layers are drawn at full opacity).
 
 #### `env_undercity_bg_mid` — Neon Undercity — Mid Background  [P1]
 
@@ -745,7 +745,7 @@ Neon Undercity, Industrial Core, Null Cathedral: tilesets, backgrounds, props.
 - **Anchor:** 0, 0
 - **Palette:** #0c0516 #2a2236 #b8a0d8 #ff3ea5 #4a1450
 - **Appears in:** Undercity Plaza, Derelict Arcade, The Leaning Towers
-- **Delivery:** `env_undercity_bg_mid.png` — AUDIT: not read by RoomView yet (patch R2 in the Pack 01 brief).
+- **Delivery:** `env_undercity_bg_mid.png` — Used for every room of the region when delivered; opacity is the art's own.
 
 #### `env_undercity_fg_silhouette` — Neon Undercity — Foreground Silhouettes  [P1]
 
@@ -756,7 +756,7 @@ Neon Undercity, Industrial Core, Null Cathedral: tilesets, backgrounds, props.
 - **Anchor:** 0, 0
 - **Palette:** #0c0516 #2a2236 #b8a0d8 #ff3ea5 #4a1450
 - **Appears in:** Undercity Plaza, Derelict Arcade, The Leaning Towers
-- **Delivery:** `env_undercity_fg_silhouette.png` — No foreground layer exists yet; the renderer slot is specified in the guide.
+- **Delivery:** `env_undercity_fg_silhouette.png` — One of the 4 strips (chosen per room) is drawn in front of the playfield with 1.15x parallax; there is no placeholder.
 
 #### `env_undercity_props` — Neon Undercity — Props  [P1]
 
@@ -767,7 +767,7 @@ Neon Undercity, Industrial Core, Null Cathedral: tilesets, backgrounds, props.
 - **Anchor:** 0.5, 1
 - **Palette:** #0c0516 #2a2236 #b8a0d8 #ff3ea5 #4a1450
 - **Appears in:** Undercity Plaza, Derelict Arcade, The Leaning Towers
-- **Delivery:** `env_undercity_props.png` — Rooms do not place props yet; slots are reserved.
+- **Delivery:** `env_undercity_props.png` — No placements for this region yet; slots are reserved.
 
 #### `env_industrial_tiles` — Industrial Core — Tileset  [P1]
 
@@ -779,7 +779,7 @@ Neon Undercity, Industrial Core, Null Cathedral: tilesets, backgrounds, props.
 - **Palette:** #100804 #2e2a2a #c99a6a #ff9f3e #4a1a0a
 - **Variations:** Day-variant not required
 - **Appears in:** The Pipeworks, The Foundry, Reactor Hall, The Kiln
-- **Delivery:** `env_industrial_tiles.png` — Terrain is drawn by code today (RoomView.drawTerrain). The tileset hook (auto-tiling from this sheet) is specified in ASSET_INTEGRATION_GUIDE.md and not implemented yet.
+- **Delivery:** `env_industrial_tiles.png` — RoomView auto-tiles solids from this sheet when ALL 31 cells are delivered (index = N·1 + E·2 + S·4 + W·8; see src/assets/autotile.ts). Until then the generated terrain is drawn.
 
 #### `env_industrial_bg_far` — Industrial Core — Far Background  [P1]
 
@@ -790,7 +790,7 @@ Neon Undercity, Industrial Core, Null Cathedral: tilesets, backgrounds, props.
 - **Anchor:** 0, 0
 - **Palette:** #100804 #2e2a2a #c99a6a #ff9f3e #4a1a0a
 - **Appears in:** The Pipeworks, The Foundry, Reactor Hall, The Kiln
-- **Delivery:** `env_industrial_bg_far.png` — AUDIT: RoomView builds per-room textures `far-<roomId>` and never reads this key, so delivering the file does not replace the backdrop yet. See docs/GEMINI_PACK_01_BRIEF.md §7 (patch R2).
+- **Delivery:** `env_industrial_bg_far.png` — RoomView uses this layer for every room of the region when delivered (tile scale fits the 270 px view height; painted layers are drawn at full opacity).
 
 #### `env_industrial_bg_mid` — Industrial Core — Mid Background  [P1]
 
@@ -801,7 +801,7 @@ Neon Undercity, Industrial Core, Null Cathedral: tilesets, backgrounds, props.
 - **Anchor:** 0, 0
 - **Palette:** #100804 #2e2a2a #c99a6a #ff9f3e #4a1a0a
 - **Appears in:** The Pipeworks, The Foundry, Reactor Hall, The Kiln
-- **Delivery:** `env_industrial_bg_mid.png` — AUDIT: not read by RoomView yet (patch R2 in the Pack 01 brief).
+- **Delivery:** `env_industrial_bg_mid.png` — Used for every room of the region when delivered; opacity is the art's own.
 
 #### `env_industrial_fg_silhouette` — Industrial Core — Foreground Silhouettes  [P1]
 
@@ -812,7 +812,7 @@ Neon Undercity, Industrial Core, Null Cathedral: tilesets, backgrounds, props.
 - **Anchor:** 0, 0
 - **Palette:** #100804 #2e2a2a #c99a6a #ff9f3e #4a1a0a
 - **Appears in:** The Pipeworks, The Foundry, Reactor Hall, The Kiln
-- **Delivery:** `env_industrial_fg_silhouette.png` — No foreground layer exists yet; the renderer slot is specified in the guide.
+- **Delivery:** `env_industrial_fg_silhouette.png` — One of the 4 strips (chosen per room) is drawn in front of the playfield with 1.15x parallax; there is no placeholder.
 
 #### `env_industrial_props` — Industrial Core — Props  [P1]
 
@@ -823,7 +823,7 @@ Neon Undercity, Industrial Core, Null Cathedral: tilesets, backgrounds, props.
 - **Anchor:** 0.5, 1
 - **Palette:** #100804 #2e2a2a #c99a6a #ff9f3e #4a1a0a
 - **Appears in:** The Pipeworks, The Foundry, Reactor Hall, The Kiln
-- **Delivery:** `env_industrial_props.png` — Rooms do not place props yet; slots are reserved.
+- **Delivery:** `env_industrial_props.png` — No placements for this region yet; slots are reserved.
 
 #### `env_cathedral_tiles` — Null Cathedral — Tileset  [P1]
 
@@ -835,7 +835,7 @@ Neon Undercity, Industrial Core, Null Cathedral: tilesets, backgrounds, props.
 - **Palette:** #06020e #1c1030 #b070ff #cc44ff #2a0a4a
 - **Variations:** Day-variant not required
 - **Appears in:** The Null Archive, The Nave, The Sanctum
-- **Delivery:** `env_cathedral_tiles.png` — Terrain is drawn by code today (RoomView.drawTerrain). The tileset hook (auto-tiling from this sheet) is specified in ASSET_INTEGRATION_GUIDE.md and not implemented yet.
+- **Delivery:** `env_cathedral_tiles.png` — RoomView auto-tiles solids from this sheet when ALL 31 cells are delivered (index = N·1 + E·2 + S·4 + W·8; see src/assets/autotile.ts). Until then the generated terrain is drawn.
 
 #### `env_cathedral_bg_far` — Null Cathedral — Far Background  [P1]
 
@@ -846,7 +846,7 @@ Neon Undercity, Industrial Core, Null Cathedral: tilesets, backgrounds, props.
 - **Anchor:** 0, 0
 - **Palette:** #06020e #1c1030 #b070ff #cc44ff #2a0a4a
 - **Appears in:** The Null Archive, The Nave, The Sanctum
-- **Delivery:** `env_cathedral_bg_far.png` — AUDIT: RoomView builds per-room textures `far-<roomId>` and never reads this key, so delivering the file does not replace the backdrop yet. See docs/GEMINI_PACK_01_BRIEF.md §7 (patch R2).
+- **Delivery:** `env_cathedral_bg_far.png` — RoomView uses this layer for every room of the region when delivered (tile scale fits the 270 px view height; painted layers are drawn at full opacity).
 
 #### `env_cathedral_bg_mid` — Null Cathedral — Mid Background  [P1]
 
@@ -857,7 +857,7 @@ Neon Undercity, Industrial Core, Null Cathedral: tilesets, backgrounds, props.
 - **Anchor:** 0, 0
 - **Palette:** #06020e #1c1030 #b070ff #cc44ff #2a0a4a
 - **Appears in:** The Null Archive, The Nave, The Sanctum
-- **Delivery:** `env_cathedral_bg_mid.png` — AUDIT: not read by RoomView yet (patch R2 in the Pack 01 brief).
+- **Delivery:** `env_cathedral_bg_mid.png` — Used for every room of the region when delivered; opacity is the art's own.
 
 #### `env_cathedral_fg_silhouette` — Null Cathedral — Foreground Silhouettes  [P1]
 
@@ -868,7 +868,7 @@ Neon Undercity, Industrial Core, Null Cathedral: tilesets, backgrounds, props.
 - **Anchor:** 0, 0
 - **Palette:** #06020e #1c1030 #b070ff #cc44ff #2a0a4a
 - **Appears in:** The Null Archive, The Nave, The Sanctum
-- **Delivery:** `env_cathedral_fg_silhouette.png` — No foreground layer exists yet; the renderer slot is specified in the guide.
+- **Delivery:** `env_cathedral_fg_silhouette.png` — One of the 4 strips (chosen per room) is drawn in front of the playfield with 1.15x parallax; there is no placeholder.
 
 #### `env_cathedral_props` — Null Cathedral — Props  [P1]
 
@@ -879,7 +879,7 @@ Neon Undercity, Industrial Core, Null Cathedral: tilesets, backgrounds, props.
 - **Anchor:** 0.5, 1
 - **Palette:** #06020e #1c1030 #b070ff #cc44ff #2a0a4a
 - **Appears in:** The Null Archive, The Nave, The Sanctum
-- **Delivery:** `env_cathedral_props.png` — Rooms do not place props yet; slots are reserved.
+- **Delivery:** `env_cathedral_props.png` — No placements for this region yet; slots are reserved.
 
 #### `pickup_kinetic_coil` — Kinetic Coil  [P0]
 
