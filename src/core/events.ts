@@ -44,6 +44,25 @@ export type GameEvent =
   | { type: 'fragmentCollected'; id: string; x: number; y: number; total: number; collected: number }
   | { type: 'signalChanged'; value: number; max: number }
   | { type: 'panoptixLaser'; fromX: number; fromY: number; angle: number; warmup: boolean }
-  | { type: 'panoptixDeathBeams'; angles: readonly number[]; active: boolean };
+  | { type: 'panoptixDeathBeams'; angles: readonly number[]; active: boolean }
+  | { type: 'plateChanged'; id: string; pressed: boolean; x: number; y: number }
+  | { type: 'doorChanged'; id: string; open: boolean; x: number; y: number }
+  | { type: 'doorLocked'; id: string; hint: string }
+  | { type: 'nodePowered'; id: string; x: number; y: number }
+  | { type: 'scrapGained'; amount: number; x: number; y: number; total: number }
+  | { type: 'itemGained'; item: string; name: string; x: number; y: number }
+  | { type: 'upgradeGained'; upgrade: string; level: number }
+  | { type: 'enemyBlocked'; x: number; y: number }
+  | { type: 'backtraceBlocked'; reason: string }
+  | { type: 'questUpdated'; questId: string; status: 'started' | 'progress' | 'complete' | 'turnedIn'; text: string }
+  | { type: 'flagSet'; flag: string }
+  | { type: 'bossStaggered'; x: number; y: number }
+  | { type: 'bossTelegraph'; x: number; y: number; attack: string }
+  | { type: 'echoRewind'; fromX: number; fromY: number; toX: number; toY: number }
+  | { type: 'dialogueOpened'; npcId: string }
+  | { type: 'dialogueClosed' }
+  | { type: 'vendorOpened'; vendorId: string }
+  | { type: 'gameCompleted' }
+  | { type: 'airJump'; x: number; y: number };
 
 export type Emit = (event: GameEvent) => void;

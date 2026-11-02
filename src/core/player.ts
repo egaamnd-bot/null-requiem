@@ -124,6 +124,31 @@ export class Player {
     this.stunTimer = 0;
   }
 
+  /** Move the player by a fixed offset without touching velocity (riding a moving platform). Collision-safe by the caller. */
+  carry(dx: number, dy: number): void {
+    this.body.x += dx;
+    this.body.y += dy;
+  }
+
+  /**
+   * Rest on top of a moving platform whose surface is at `topY`. Mirrors what landing on the tile grid does
+   * (grounded, jump/dash/air-jump refreshed, land event) so platform riding feels identical to solid ground.
+   */
+  landOnPlatform(topY: number, emit: Emit): void {
+    const b = this.body;
+    const wasAirborne = !b.wasOnGround && this.airTime >= PLAYER.landingMinAirTime;
+    const impact = b.vy;
+    b.y = topY - b.h;
+    b.vy = 0;
+    b.onGround = true;
+    this.coyote = PLAYER.coyoteTime;
+    this.dashAvailable = true;
+    this.airJumpUsed = false;
+    this.jumping = false;
+    if (wasAirborne) emit({ type: 'playerLand', x: this.feetX, y: this.feetY, heavy: impact >= PLAYER.heavyLandingSpeed });
+    this.airTime = 0;
+  }
+
   /** Full reset used when respawning at a checkpoint. */
   respawn(feetX: number, feetY: number): void {
     this.placeAt(feetX, feetY);
