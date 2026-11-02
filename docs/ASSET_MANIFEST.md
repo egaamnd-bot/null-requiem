@@ -119,7 +119,7 @@
 | `fx_slash_up` | Slash — Up | fx-combat | 4 | P1 | code-drawn | swap-ready |
 | `fx_slash_down` | Slash — Down | fx-combat | 4 | P1 | code-drawn | swap-ready |
 | `fx_hit_spark` | Hit Spark | fx-combat | 5 | P1 | code-drawn | swap-ready |
-| `fx_glitch_strike` | Glitch Strike | fx-combat | 6 | P1 | code-drawn | placeholder |
+| `fx_glitch_strike` | Glitch Strike | fx-combat | 6 | P1 | code-drawn | swap-ready |
 | `fx_enemy_telegraph` | Enemy Telegraph Glint | fx-combat | 4 | P1 | code-drawn | swap-ready |
 | `fx_boss_floor_telegraph` | Boss Floor Telegraph | fx-combat | 7 | P0 | code-drawn | placeholder |
 | `fx_laser_beam` | Laser / Steam Beam | fx-combat | 10 | P1 | code-drawn | placeholder |
@@ -128,7 +128,7 @@
 | `fx_backtrace_arrival` | Backtrace Arrival Burst | fx-backtrace | 8 | P0 | code-drawn | swap-ready |
 | `fx_backtrace_echo` | Backtrace Echo (Afterimage) | fx-backtrace | 5 | P0 | code-drawn | swap-ready |
 | `fx_backtrace_streak` | Backtrace Streak | fx-backtrace | 4 | P1 | code-drawn | swap-ready |
-| `fx_temporal_plate_pulse` | Temporal Plate Pulse | fx-backtrace | 6 | P1 | code-drawn | placeholder |
+| `fx_temporal_plate_pulse` | Temporal Plate Pulse | fx-backtrace | 6 | P1 | code-drawn | swap-ready |
 | `fx_null_void` | Null Void Cracks | fx-backtrace | 18 | P0 | code-drawn | placeholder |
 
 ## Pack 07 — UI and Audio

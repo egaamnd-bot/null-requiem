@@ -14,7 +14,7 @@ import type { PanoptixUnit } from '../core/enemies/panoptixUnit';
 import { ASSET_BY_ID } from '../assets/manifest';
 import { AssetSprite, frameKey } from './assetRuntime';
 import { OneShotTrack, type CourierShot, type ShotDef } from './courierAnim';
-import { fxFrameKeys } from './fxSprites';
+import { fxFrameKeys, playFxSprite } from './fxSprites';
 import { ENEMY_ASSET, ManifestEnemyView } from './CampaignViews';
 import { houndKey, playerKey, TEX, bulwarkKey, droneKey, npcKey, panoptixKey, type PlayerFrame, type PanoptixFrame } from './textures';
 
@@ -121,6 +121,8 @@ export class PlayerView {
     // Slash arc appears for the active window plus a short fade.
     if (p.attackPhase === 'active' && p.attackId !== this.lastAttackId) {
       this.lastAttackId = p.attackId;
+      // R8: a delivered Glitch Strike effect plays in front of the Courier on top of the normal arc.
+      if (p.isGlitchStrike) playFxSprite(this.sprite.scene, 'fx_glitch_strike', 'strike', feetX + p.facing * 24, feetY - 18, { depth: DEPTH.player + 2, flipX: p.facing < 0, additive: true });
       this.slashTimer = COMBAT.attack.active + 0.06;
       const key = p.attackDir === 'up' ? TEX.slashUp : p.attackDir === 'down' ? TEX.slashDown : TEX.slashSide;
       this.slash.setTexture(key);

@@ -246,6 +246,8 @@ export class Fx {
         this.ring(e.x, e.y, e.open ? PALETTE.cyan : PALETTE.magenta, 0.7, 240);
         break;
       case 'plateChanged':
+        // R8: painted clock-ring pulse when a plate is pressed (the plate itself sits at its feet).
+        if (e.pressed) playFxSprite(this.scene, 'fx_temporal_plate_pulse', 'pulse', e.x, e.y + 2, { depth: DEPTH.fx, additive: true });
         break;
       case 'scrapGained':
         this.data.explode(4, e.x, e.y);
