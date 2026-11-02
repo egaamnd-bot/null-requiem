@@ -207,7 +207,7 @@ describe('quest log', () => {
     p.setFlag('unlock-gated');
     expect(log.start('gated')).toBe(true);
     expect(log.start('gated')).toBe(false);
-    expect(events.filter((e) => e.type === 'questUpdated' && e.status === 'started')).toHaveLength(1);
+    expect(events.filter((e) => e.type === 'questUpdated' && e.status === 'started' && e.questId === 'gated')).toHaveLength(1);
     const env = questEnv();
     env.log.startAutoQuests();
     expect(env.log.status('main-1')).toBe('active');

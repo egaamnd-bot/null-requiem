@@ -176,6 +176,8 @@ export class QuestLog {
         if (def.autoTurnIn) this.turnIn(def.id);
       }
     }
+    // Giver-less quests unlock as their requirements come true.
+    this.startAutoQuests();
   }
 
   /** Hand in a completed quest and receive its rewards (once). */

@@ -26,7 +26,7 @@ import { Player } from './player';
 import { Progression } from './progression';
 import { Projectile, type ProjectileSpec } from './projectile';
 import { Tile, TileGrid, type TileMarker } from './tiles';
-import { NPC_DEFS, FRAGMENT_LORE } from '../world/dialogues';
+import { FRAGMENT_LORE } from '../world/dialogues';
 import { DEFAULT_CONTENT, type WorldContent } from '../world/content';
 import { itemName } from '../world/items';
 import type { PickupSpawnDef } from '../world/types';
@@ -468,8 +468,7 @@ export class GameWorld {
     if (!def || !parsed) throw new Error(`Unknown room ${roomId}`);
     const grid = parsed.grid.clone();
 
-    // Count N and F markers per room for keying into dialogue defs
-    const npcCounters: Record<string, number> = {};
+    // Count F markers per room for keying into fragment lore
     const fragCounters: Record<string, number> = {};
 
     const room: RoomState = {
@@ -564,24 +563,9 @@ export class GameWorld {
           });
           break;
         }
-        case 'N': {
-          // Key: 'roomId:N:index' where index is the Nth N marker in this room
-          const nIdx = npcCounters[roomId] ?? 0;
-          npcCounters[roomId] = nIdx + 1;
-          const dialogueKey = `${roomId}:N:${nIdx}`;
-          const dialogueDef = NPC_DEFS[dialogueKey];
-          if (dialogueDef) {
-            room.npcs.push(new NpcEntity({
-              id: dialogueDef.id,
-              name: dialogueDef.name,
-              lines: dialogueDef.lines,
-              feetX: tileCenterX(m.col),
-              feetY: tileFeetY(m.row),
-              kind: dialogueDef.kind,
-            }));
-          }
+        case 'N':
+          // Legacy NPC marker: NPCs are now placed by `spawns` (see world/npcs.ts); ignore stray markers.
           break;
-        }
         case 'F': {
           // Key: 'roomId:F:index'
           const fIdx = fragCounters[roomId] ?? 0;

@@ -206,8 +206,9 @@ describe('Ability-gated route (Transit Stacks timed gate)', () => {
     expect(world.room.grid.isSolid(74, 24)).toBe(false);
   });
 
-  it('the Backtrace module unlocks the ability, which survives death and retry', () => {
-    const world = worldAt('transit', 31, 7);
+  it('the Backtrace module (Rainline Depot) unlocks the ability, which survives death and retry', () => {
+    const world = worldAt('alley_depot', 30, 17);
+    world.room.enemies = [];
     expect(world.progression.has('backtrace')).toBe(false);
     const events = stepWorld(world, 2);
     expect(events.some((e) => e.type === 'abilityUnlocked')).toBe(true);
@@ -217,7 +218,7 @@ describe('Ability-gated route (Transit Stacks timed gate)', () => {
     expect(world.flow.state).toBe('gameover');
     expect(world.retry()).toBe(true);
     expect(world.progression.has('backtrace')).toBe(true);
-    expect(world.room.pickups.find((p) => p.kind === 'backtrace')?.taken).toBe(true);
+    expect(world.room.pickups.find((p) => p.def?.ability === 'backtrace')?.taken).toBe(true);
   });
 });
 
@@ -231,7 +232,8 @@ describe('Checkpoints, death and retry', () => {
     const events = stepWorld(world, 60, () => input({ moveX: 1 }));
     const cp = events.find((e) => e.type === 'checkpoint');
     expect(cp).toBeDefined();
-    expect(saved).toBe(1);
+    // The relay saves, and so does the lore record the Courier walks over on the way.
+    expect(saved).toBeGreaterThanOrEqual(1);
     expect(world.player.health.current).toBe(PLAYER.maxHealth);
     expect(world.progression.checkpoint).toEqual({ roomId: 'alley', x: tileX(13), y: tileFeet(19) });
 
@@ -250,7 +252,7 @@ describe('Checkpoints, death and retry', () => {
     expect(world.player.feetX).toBeCloseTo(tileX(13), 5);
     expect(world.player.feetY).toBeCloseTo(tileFeet(19), 5);
     // Enemies are restored on respawn.
-    expect(world.room.enemies.length).toBe(2);
+    expect(world.room.enemies.length).toBe(3);
   });
 
   it('death while attacking leaves a clean, controllable player after retry', () => {
@@ -381,18 +383,18 @@ describe('Secret: cracked wall and Integrity Cell', () => {
 });
 
 describe('Room transitions', () => {
-  it('walking through the east door of Rainline Alley leads to Transit Stacks', () => {
+  it('walking through the east door of Rainline Alley leads to the Rainline Depot', () => {
     const world = worldAt('alley', 60, 19);
     world.room.enemies = [];
     for (let i = 0; i < 120 && !world.pendingTransition; i++) world.step(input({ moveX: 1 }), DT);
-    expect(world.pendingTransition).toEqual({ room: 'transit', entry: 'west' });
+    expect(world.pendingTransition).toEqual({ room: 'alley_depot', entry: 'west' });
     // The simulation holds still while the screen fades.
     const x = world.player.body.x;
     world.step(input({ moveX: 1 }), DT);
     expect(world.player.body.x).toBe(x);
     world.completeTransition();
-    expect(world.room.def.id).toBe('transit');
-    expect(world.player.feetX).toBeCloseTo(tileX(3), 5);
+    expect(world.room.def.id).toBe('alley_depot');
+    expect(world.player.feetX).toBeCloseTo(tileX(4), 5);
     expect(world.drainEvents().some((e) => e.type === 'roomEntered')).toBe(true);
   });
 });
