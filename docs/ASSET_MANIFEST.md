@@ -170,23 +170,23 @@
 | `icon_quest_main` | Main Quest Marker | icon | 1 | P1 | code-drawn | placeholder |
 | `icon_quest_side` | Side Quest Marker | icon | 1 | P1 | code-drawn | placeholder |
 | `icon_map_relay` | Relay Pin | icon | 1 | P1 | code-drawn | placeholder |
-| `audio_music_title` | Title Theme | audio | audio | P1 | code-drawn | swap-ready |
-| `audio_music_rainline` | Rainline Alley | audio | audio | P1 | code-drawn | swap-ready |
-| `audio_music_transit` | Transit Stacks | audio | audio | P1 | code-drawn | swap-ready |
-| `audio_music_precinct` | Precinct Vault | audio | audio | P1 | code-drawn | swap-ready |
-| `audio_music_undercity` | Neon Undercity | audio | audio | P1 | code-drawn | swap-ready |
-| `audio_music_industrial` | Industrial Core | audio | audio | P1 | code-drawn | swap-ready |
-| `audio_music_cathedral` | Null Cathedral | audio | audio | P1 | code-drawn | swap-ready |
-| `audio_music_boss` | Boss Battle | audio | audio | P1 | code-drawn | swap-ready |
-| `audio_music_final_boss` | THE NULL | audio | audio | P1 | code-drawn | swap-ready |
-| `audio_music_ending` | Ending | audio | audio | P1 | code-drawn | swap-ready |
-| `audio_sfx_player` | Courier SFX set | audio | audio | P1 | code-drawn | swap-ready |
-| `audio_sfx_combat` | Combat SFX set | audio | audio | P1 | code-drawn | swap-ready |
-| `audio_sfx_enemies` | Enemy SFX set | audio | audio | P1 | code-drawn | swap-ready |
-| `audio_sfx_backtrace` | Backtrace SFX set | audio | audio | P1 | code-drawn | swap-ready |
-| `audio_sfx_world` | World SFX set | audio | audio | P1 | code-drawn | swap-ready |
-| `audio_sfx_ui` | UI SFX set | audio | audio | P1 | code-drawn | swap-ready |
-| `audio_sfx_dialogue_blips` | Dialogue Blips | audio | audio | P1 | code-drawn | swap-ready |
-| `audio_amb_rain` | Ambience — Rain | audio | audio | P1 | code-drawn | swap-ready |
-| `audio_amb_industrial` | Ambience — Industrial | audio | audio | P1 | code-drawn | swap-ready |
-| `audio_amb_cathedral` | Ambience — Cathedral | audio | audio | P1 | code-drawn | swap-ready |
+| `audio_music_title` | Title Theme | audio | audio | P1 | code-drawn | needs-engine-work |
+| `audio_music_rainline` | Rainline Alley | audio | audio | P1 | code-drawn | needs-engine-work |
+| `audio_music_transit` | Transit Stacks | audio | audio | P1 | code-drawn | needs-engine-work |
+| `audio_music_precinct` | Precinct Vault | audio | audio | P1 | code-drawn | needs-engine-work |
+| `audio_music_undercity` | Neon Undercity | audio | audio | P1 | code-drawn | needs-engine-work |
+| `audio_music_industrial` | Industrial Core | audio | audio | P1 | code-drawn | needs-engine-work |
+| `audio_music_cathedral` | Null Cathedral | audio | audio | P1 | code-drawn | needs-engine-work |
+| `audio_music_boss` | Boss Battle | audio | audio | P1 | code-drawn | needs-engine-work |
+| `audio_music_final_boss` | THE NULL | audio | audio | P1 | code-drawn | needs-engine-work |
+| `audio_music_ending` | Ending | audio | audio | P1 | code-drawn | needs-engine-work |
+| `audio_sfx_player` | Courier SFX set | audio | audio | P1 | code-drawn | needs-engine-work |
+| `audio_sfx_combat` | Combat SFX set | audio | audio | P1 | code-drawn | needs-engine-work |
+| `audio_sfx_enemies` | Enemy SFX set | audio | audio | P1 | code-drawn | needs-engine-work |
+| `audio_sfx_backtrace` | Backtrace SFX set | audio | audio | P1 | code-drawn | needs-engine-work |
+| `audio_sfx_world` | World SFX set | audio | audio | P1 | code-drawn | needs-engine-work |
+| `audio_sfx_ui` | UI SFX set | audio | audio | P1 | code-drawn | needs-engine-work |
+| `audio_sfx_dialogue_blips` | Dialogue Blips | audio | audio | P1 | code-drawn | needs-engine-work |
+| `audio_amb_rain` | Ambience — Rain | audio | audio | P1 | code-drawn | needs-engine-work |
+| `audio_amb_industrial` | Ambience — Industrial | audio | audio | P1 | code-drawn | needs-engine-work |
+| `audio_amb_cathedral` | Ambience — Cathedral | audio | audio | P1 | code-drawn | needs-engine-work |

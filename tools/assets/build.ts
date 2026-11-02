@@ -13,13 +13,14 @@
  *   <out>/report.json|.md    every issue found. Nothing is ever accepted silently.
  * Exit code 1 when any asset has an error (unless --allow-errors).
  *
- * Options: --report <dir>, --chroma RRGGBB (key loose frames), --tolerance N (default 60), --only id,id,
+ * Options: --pack pack-01 (report which of the pack's files are still missing), --report <dir>, --chroma RRGGBB (key loose frames), --tolerance N (default 60), --only id,id,
  *          --validate-only (write nothing but the report), --no-merge, --allow-errors, --strict (warnings fail too)
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { PNG } from 'pngjs';
 import { ASSET_BY_ID, ASSETS } from '../../src/assets/manifest';
+import { PACK_01_IDS } from '../../src/assets/pack01';
 import { assembleSheet, atlasFrames, keyOutChroma, validateSheet, type Issue, type Rgba } from '../../src/assets/validate';
 
 interface Args {
@@ -33,10 +34,11 @@ interface Args {
   allowErrors: boolean;
   strict: boolean;
   report: string | null;
+  pack: string | null;
 }
 
 function parseArgs(argv: string[]): Args {
-  const a: Args = { in: 'art/incoming', out: 'public/assets/final', chroma: null, tolerance: 60, only: null, validateOnly: false, merge: true, allowErrors: false, strict: false, report: null };
+  const a: Args = { in: 'art/incoming', out: 'public/assets/final', chroma: null, tolerance: 60, only: null, validateOnly: false, merge: true, allowErrors: false, strict: false, report: null, pack: null };
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i]!;
     const next = () => argv[++i] ?? '';
@@ -53,6 +55,10 @@ function parseArgs(argv: string[]): Args {
     else if (k === '--allow-errors') a.allowErrors = true;
     else if (k === '--strict') a.strict = true;
     else if (k === '--report') a.report = next();
+    else if (k === '--pack') {
+      a.pack = next();
+      if (a.pack !== 'pack-01') throw new Error('--pack supports: pack-01');
+    }
     else throw new Error(`Unknown option ${k}`);
   }
   return a;
@@ -94,6 +100,7 @@ export function run(args: Args): { outcomes: AssetOutcome[]; unknown: Issue[]; e
 
   const ids = new Set<string>();
   for (const e of entries) {
+    if (e.startsWith('.') || /^report\.(md|json)$/.test(e) || /^readme/i.test(e)) continue; // housekeeping files
     const full = join(inDir, e);
     const isDir = statSync(full).isDirectory();
     const id = isDir ? e : e.replace(/\.png$/i, '');
@@ -246,6 +253,12 @@ function renderReport(outcomes: AssetOutcome[], unknown: Issue[], errors: number
     L.push('### Unrecognised input', '');
     for (const i of unknown) L.push(`- **${i.level.toUpperCase()}** \`${i.code}\`: ${i.message}`);
     L.push('');
+  }
+  if (args.pack === 'pack-01') {
+    const have = new Set(outcomes.filter((o) => o.status !== 'rejected').map((o) => o.id));
+    const missing = PACK_01_IDS.filter((id) => !have.has(id));
+    L.push(`## Pack 01 completeness`, '', `${PACK_01_IDS.length - missing.length} of ${PACK_01_IDS.length} files accepted in this delivery.`, '');
+    if (missing.length) L.push(`Missing or rejected: ${missing.map((m) => `\`${m}\``).join(', ')}`, '');
   }
   const missingP0 = ASSETS.filter((a) => a.priority === 'P0' && !outcomes.some((o) => o.id === a.id)).length;
   L.push(`_${missingP0} P0 asset(s) of the whole manifest were not part of this delivery._`, '');
