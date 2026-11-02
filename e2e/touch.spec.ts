@@ -84,7 +84,7 @@ async function startGame(page: Page) {
   await page.goto('/');
   await expect.poll(() => sceneActive(page, 'title'), { timeout: 15_000 }).toBe(true);
   await syncView(page);
-  await tapGame(page, { x: VIEW_W / 2, y: 176 }); // "Start"
+  await tapGame(page, { x: VIEW_W / 2, y: 162 }); // "Start"
   await expect.poll(() => sceneActive(page, 'game'), { timeout: 10_000 }).toBe(true);
   await expect.poll(() => flowState(page), { timeout: 10_000 }).toBe('playing');
   // Touch controls overlay must be running.
@@ -110,7 +110,7 @@ test('title: rapid double tap on Start starts exactly one game', async ({ page }
   await page.goto('/');
   await expect.poll(() => sceneActive(page, 'title'), { timeout: 15_000 }).toBe(true);
   await syncView(page);
-  const p = await toPage(page, { x: VIEW_W / 2, y: 176 });
+  const p = await toPage(page, { x: VIEW_W / 2, y: 162 });
   await page.touchscreen.tap(p.x, p.y);
   await page.touchscreen.tap(p.x, p.y);
   await expect.poll(() => sceneActive(page, 'game'), { timeout: 10_000 }).toBe(true);
@@ -179,13 +179,13 @@ test('in game: pause button opens the pause menu; Resume and Quit to title are t
   await f.up(1);
 
   await page.waitForTimeout(250); // overlay arms after a couple of frames
-  await tapGame(page, { x: VIEW_W / 2, y: 112 }); // Resume
+  await tapGame(page, { x: VIEW_W / 2, y: 66 }); // Resume
   await expect.poll(() => flowState(page)).toBe('playing');
 
   await tapGame(page, { x: layout.pause.x, y: layout.pause.y });
   await expect.poll(() => flowState(page)).toBe('paused');
   await page.waitForTimeout(250);
-  await tapGame(page, { x: VIEW_W / 2, y: 176 }); // Quit to title
+  await tapGame(page, { x: VIEW_W / 2, y: 222 }); // Quit to title
   await expect.poll(() => sceneActive(page, 'title'), { timeout: 10_000 }).toBe(true);
   await expect.poll(() => sceneActive(page, 'mobile-controls')).toBe(false);
 });
@@ -195,12 +195,12 @@ test('in game: controls survive quitting to the title and starting again', async
   await tapGame(page, { x: layout.pause.x, y: layout.pause.y });
   await expect.poll(() => flowState(page)).toBe('paused');
   await page.waitForTimeout(250);
-  await tapGame(page, { x: VIEW_W / 2, y: 176 }); // Quit to title
+  await tapGame(page, { x: VIEW_W / 2, y: 222 }); // Quit to title
   await expect.poll(() => sceneActive(page, 'title'), { timeout: 10_000 }).toBe(true);
 
   // A run that reached a checkpoint shows Continue first; otherwise Start. Either way the first item starts a game.
   await page.waitForTimeout(500);
-  await tapGame(page, { x: VIEW_W / 2, y: 176 });
+  await tapGame(page, { x: VIEW_W / 2, y: 162 });
   await expect.poll(() => sceneActive(page, 'game'), { timeout: 10_000 }).toBe(true);
   await expect.poll(() => flowState(page)).toBe('playing');
 
