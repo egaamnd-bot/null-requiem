@@ -7,16 +7,17 @@ Per-sound table (generated): `docs/audio/CATALOG.md`. Source of truth in code: `
 - `src/audio/Sfx.ts`: Web Audio context created on the first user gesture; **36 procedural cues** (oscillators/noise) mapped from game events in `Sfx.handle`; master gain = 0.35 × SFX volume; mute.
 - `src/audio/Music.ts`: **procedural music**, one theme at a time (drone + arpeggio), cross-fade on theme change; theme chosen by `themeFor(region, boss…)` → `title`, the six regions, `boss`, `finalBoss`, `ending`, `silence`.
 - Settings: music volume, effects volume (persisted).
-- **No file loading of any kind**, no ambience, no layered music, no sample playback, no variations, no voice limiting. `public/audio/` is empty.
+- **Recorded audio runtime (this branch, `feature/audio-runtime`):** `AudioBank` (manifest + decode, optional), file playback in `Sfx` (variations, pitch variation, voice limits, retrigger policy, gain trims), recorded music with loop regions in `Music`, region `Ambience` bed. Everything falls back to the procedural sound when a file is missing or undecodable. `public/audio/` is empty (no audio delivered).
 
 ## What the creative handoff needs that does not exist yet
 
 | Need | Status |
 | --- | --- |
-| Play delivered files in place of the procedural cue/theme, falling back when a file is missing or undecodable | engineering — branch `feature/audio-runtime` (loader, bank, mixer) |
-| Variations, pitch variation, max voices, retrigger policy per sound | same change (catalog fields already defined) |
-| Seamless loops with loop points | same change |
-| Ambience channel (region beds, random one-shots) | same change |
+| Play delivered files in place of the procedural cue/theme, falling back when a file is missing or undecodable | **implemented** on `feature/audio-runtime` (browser-tested with synthetic WAV) |
+| Variations, pitch variation, max voices, retrigger policy per sound | **implemented** |
+| Seamless loops with loop points | **implemented** (sidecar `loopStart`/`loopEnd`) |
+| Ambience channel — region beds | **implemented** (rainline, transit, precinct) |
+| Ambience one-shots / atmosphere layers (thunder, drips, buzz…) | still needs a scheduler |
 | Combat music layer (needs an "in combat" world signal) | **new gameplay-adjacent signal — needs your approval** |
 | Per-boss music (BULWARK-9 vs the shared `boss` theme) | small change in theme selection |
 | Safe-room music | **needs a definition** (candidate: at a sync relay) |
@@ -47,6 +48,15 @@ The handoff's proposed ids were kept except **UI sounds → `sfx_ui_*`** (bare `
 
 `secret`, `slam`, `gate`, `clang`, `switch`, `burst`, `item`, `upgrade`, `rewindSelf`, `talk`, `blink`, `telegraph`, `victory` (until `music_victory`), dialogue blips. Add entries when the Producer wants them recorded.
 
-## Validation (planned with the loader)
+## Validation and intake (implemented)
 
-`tools/audio/validate.ts`: sample rate, channels, duration vs catalog window, peak/clipping, loop-seam discontinuity, silence, header sanity for `.ogg`; `art/incoming/audio/` → report; nothing is written to `public/audio/` unless it passes. Until the loader lands, deliveries wait in `art/incoming/audio/` and are listed in the ledger as `In validation`.
+```
+npm run audio:validate                    # report only (art/incoming/audio/report.md)
+npm run audio:build                       # validate + write public/audio/<dir>/ + public/audio/manifest.json
+npm run audio:build -- --encode           # also convert WAV music/ambience to Ogg Vorbis (needs ffmpeg)
+```
+
+Checks: catalog id, duration window, sample rate, channels, silence, clipping, peak and integrated loudness (ITU-R BS.1770 K-weighted, gated) vs the targets, loop-seam
+click detection (loops only), leading/trailing silence, DC offset, sidecar loop points, duplicate formats. Ogg files are decoded with ffmpeg when it is installed
+(otherwise only the header is checked and a warning says so). Rejected sounds are never written; the manifest is merged. The browser reads
+`public/audio/manifest.json`; `tests/creativeLedger.test.ts` requires every file in `public/audio/` to be listed in `docs/CREATIVE_DELIVERY_LOG.md`.

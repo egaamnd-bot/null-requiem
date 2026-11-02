@@ -116,3 +116,15 @@ Branch `feature/render-foundation` (from `milestone/full-production`). Producer 
 - R2–R8 and the tool: see `docs/GEMINI_PACK_01_BRIEF.md` §7 and `docs/ASSET_INTEGRATION_GUIDE.md`.
 - Tests: 546 unit, 18 browser (touch, render scale, final-art world size, pixel measurement, painted layers, fallback).
 - CI note: the first run of a new branch needed `feature/**` in the APK workflow triggers (added).
+
+---
+
+## Session 2026-11-03 — Creative handoff review, readiness and audio runtime (Claude, Sonnet 5.5)
+
+PR #6 (`CREATIVE_PRODUCTION_HANDOFF.md`, docs only, draft) was reviewed, **not merged**. Branches (stacked): `feature/creative-readiness` (PR #7) → `feature/audio-runtime`.
+
+- Review/gap analysis: `docs/CREATIVE_HANDOFF_REVIEW.md`. Notable findings: audio `ui_*` ids clash with visual `ui_*` ids (renamed `sfx_ui_*`); the manifest wrongly called audio `swap-ready` (no loader existed); no footstep/in-combat/safe-room/per-boss triggers exist.
+- Readiness: `src/audio/catalog.ts` (contract, one entry per sound + engine status), generated `docs/audio/CATALOG.md`, `docs/CREATIVE_DELIVERY_LOG.md` + ledger tests, `docs/UI_ASSET_SPEC.md`, `art/incoming/pack-01/`, `--pack pack-01` completeness report.
+- Audio runtime: `AudioBank` (optional manifest, lazy decode, release), recorded SFX in `Sfx` (variations, pitch, voices, retrigger, trims), recorded music with loop regions in `Music`, region `Ambience`; procedural audio is always the fallback. Bug found by the browser tests: music/ambience decided "nothing to play" before the manifest arrived (fixed with `manifestLoaded`/`onManifest`).
+- Audio tool: `npm run audio:build` — WAV/Ogg analysis (peak, clipping, BS.1770 loudness, loop seam, silence, DC), catalog windows, sidecar loop points, optional ffmpeg encode.
+- Nothing was delivered: ledger rows are all `Not delivered`; `public/assets/final/manifest.json` and `public/audio/` are empty.

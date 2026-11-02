@@ -43,6 +43,7 @@ export class TitleScene extends Phaser.Scene {
   create(): void {
     applyRenderScale(this);
     this.services.music.setTheme('title');
+    this.services.ambience.setRegion(null);
     const { width: W, height: H } = view;
     const onView = () => {
       if (!this.starting) this.scene.restart({ services: this.services });

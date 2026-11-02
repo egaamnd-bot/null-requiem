@@ -1,5 +1,8 @@
 import type { GameEvent } from '../core/events';
 import { getSettings } from '../state/settings';
+import type { AudioBank } from './AudioBank';
+import { ENTRY_FOR_CUE, type AudioEntry } from './catalog';
+import { dbToGain, pitchRate } from './files';
 
 /**
  * Tiny procedural sound effects synthesised with the Web Audio API — original placeholder
@@ -50,6 +53,11 @@ export class Sfx {
   private drone: { stop: () => void } | null = null;
   private noiseBuffer: AudioBuffer | null = null;
   muted = false;
+  /** Recorded sounds (optional). When a cue has a decoded file it plays instead of the procedural sound. */
+  bank: AudioBank | null = null;
+  private readonly running = new Map<string, AudioBufferSourceNode[]>();
+  /** Called once, right after the AudioContext exists (the audio bank starts loading then). */
+  onContext: ((ctx: AudioContext) => void) | null = null;
 
   /** Must be called from a user gesture (key press / click) to satisfy autoplay policies. */
   unlock(): void {
@@ -67,6 +75,7 @@ export class Sfx {
       this.master = this.ctx.createGain();
       this.master.gain.value = this.level();
       this.master.connect(this.ctx.destination);
+      this.onContext?.(this.ctx);
       const len = this.ctx.sampleRate * 0.5;
       this.noiseBuffer = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
       const data = this.noiseBuffer.getChannelData(0);
@@ -135,8 +144,47 @@ export class Sfx {
     src.stop(t + dur + 0.02);
   }
 
+  /** Play a recorded version of an entry. Returns true when a file exists for it (even if a voice limit skipped it), so the procedural fallback never doubles it. */
+  private playFile(entry: AudioEntry): boolean {
+    const ctx = this.ctx;
+    const bank = this.bank;
+    if (!ctx || !bank || !this.master) return false;
+    const s = bank.pick(entry);
+    if (!s) return false;
+    const rate = pitchRate(entry.pitchVar, Math.random());
+    const verdict = bank.limiter.request(entry.id, ctx.currentTime, entry.maxVoices, entry.retrigger, s.buffer.duration / rate);
+    if (verdict === 'skip') return true;
+    if (verdict === 'restart') {
+      for (const old of this.running.get(entry.id) ?? []) {
+        try {
+          old.stop();
+        } catch {
+          /* already stopped */
+        }
+      }
+      this.running.set(entry.id, []);
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = s.buffer;
+    src.playbackRate.value = rate;
+    const g = ctx.createGain();
+    g.gain.value = dbToGain(entry.gainDb + (s.file.gainDb ?? 0));
+    src.connect(g).connect(this.master);
+    const list = this.running.get(entry.id) ?? [];
+    list.push(src);
+    this.running.set(entry.id, list);
+    src.onended = () => {
+      const l = this.running.get(entry.id);
+      if (l) this.running.set(entry.id, l.filter((x) => x !== src));
+    };
+    src.start();
+    return true;
+  }
+
   play(cue: Cue): void {
     if (!this.ctx || this.muted) return;
+    const entry = ENTRY_FOR_CUE.get(cue);
+    if (entry && this.playFile(entry)) return;
     switch (cue) {
       case 'jump':
         this.tone('square', 180, 360, 0.09, 0.05);
