@@ -19,7 +19,7 @@ docs, not executed; **[unverified]** = not checked.
 ## Current state (2026-11-02) — branch `milestone/full-production`
 
 - Work branch: `milestone/full-production` (PR into `main`, **not merged**; Producer decides). `main` is untouched.
-- Content: 19 rooms in 6 regions, 8 enemy types (+elites), 4 bosses (BULWARK-9, KILN-7, PANOPTIX-0, THE NULL) on a reusable
+- Content: 19 rooms in 6 regions, 7 enemy types (+elites), 4 bosses (BULWARK-9, KILN-7, PANOPTIX-0, THE NULL) on a reusable
   `PatternBoss` framework, 16 quests, dialogue graph engine, vendors/upgrades, collectibles, progression save v2 (v1 migrates),
   environmental interaction (plates, echo plates, doors, platforms, emitters, power nodes), tabbed menu (map/journal/gear/
   settings/vendor), settings, procedural music + SFX, slide ending. Playable start to finish by design; the full path is
