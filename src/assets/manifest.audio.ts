@@ -1,13 +1,13 @@
 import { def } from './builders';
 import type { AssetDef } from './types';
 
-const base = { category: 'audio' as const, pack: 'pack-07' as const, w: 1, h: 1, anims: {}, palette: [], variations: [] as string[], priority: 'P1' as const, placeholder: 'code-drawn' as const, integration: 'swap-ready' as const, keys: [] as string[] };
+const base = { category: 'audio' as const, pack: 'pack-07' as const, w: 1, h: 1, anims: {}, palette: [], variations: [] as string[], priority: 'P1' as const, placeholder: 'code-drawn' as const, integration: 'needs-engine-work' as const, keys: [] as string[] };
 
 const music = (id: string, name: string, where: string, mood: string, seconds: number, extra = '') =>
-  def({ ...base, id, name, purpose: `Background music: ${where}.`, description: `${mood} ${extra}`.trim(), locations: [where], audio: { kind: 'music', durationSeconds: seconds, loop: true, format: 'ogg', notes: 'Seamless loop; stereo; around -16 LUFS; no vocals.' }, note: 'Procedural ambient music plays today (audio/Music.ts); a file at public/assets/final/audio/<id>.ogg replaces it.' });
+  def({ ...base, id, name, purpose: `Background music: ${where}.`, description: `${mood} ${extra}`.trim(), locations: [where], audio: { kind: 'music', durationSeconds: seconds, loop: true, format: 'ogg', notes: 'Seamless loop; stereo; around -16 LUFS; no vocals.' }, note: 'SUPERSEDED by src/audio/catalog.ts (one entry per sound, canonical ids, docs/audio/CATALOG.md). Procedural music plays today; file playback is not built yet.' });
 
 const sfx = (id: string, name: string, purpose: string, desc: string, seconds: number, kind: 'sfx' | 'ambience' = 'sfx', loop = false) =>
-  def({ ...base, id, name, purpose, description: desc, locations: ['Gameplay'], audio: { kind, durationSeconds: seconds, loop, format: 'ogg', notes: kind === 'sfx' ? 'Mono, short tail, normalised to -10 dBFS peak.' : 'Seamless loop, stereo.' }, note: 'Synthesised in code today (audio/Sfx.ts).' });
+  def({ ...base, id, name, purpose, description: desc, locations: ['Gameplay'], audio: { kind, durationSeconds: seconds, loop, format: 'ogg', notes: kind === 'sfx' ? 'Mono, short tail, normalised to -10 dBFS peak.' : 'Seamless loop, stereo.' }, note: 'SUPERSEDED by src/audio/catalog.ts (one entry per sound, docs/audio/CATALOG.md). Synthesised in code today; file playback is not built yet.' });
 
 export const AUDIO_ASSETS: AssetDef[] = [
   music('audio_music_title', 'Title Theme', 'Title screen', 'Sparse, melancholic synth pad over distant rain; a slow rewinding arpeggio.', 90),

@@ -4,11 +4,13 @@ import { renderAssetManifest, renderGeminiSpec } from '../src/assets/docs';
 import { ASSETS } from '../src/assets/manifest';
 import { PACKS, type PackId } from '../src/assets/types';
 import { renderWorldMap } from '../src/world/docs';
+import { renderAudioCatalog } from '../src/audio/docs';
 
 const DOCS: [string, () => string][] = [
   ['docs/GEMINI_ASSET_SPEC.md', renderGeminiSpec],
   ['docs/ASSET_MANIFEST.md', renderAssetManifest],
   ['docs/WORLD_MAP.md', renderWorldMap],
+  ['docs/audio/CATALOG.md', renderAudioCatalog],
 ];
 
 describe('generated docs', () => {

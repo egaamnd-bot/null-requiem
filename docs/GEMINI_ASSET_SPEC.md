@@ -1561,7 +1561,7 @@ UI artwork, icons, dialogue portraits, music and sound effects.
 - **Audio:** music, ~90s, seamless loop, ogg. Seamless loop; stereo; around -16 LUFS; no vocals.
 - **Palette:** 
 - **Appears in:** Title screen
-- **Delivery:** `audio_music_title.ogg` — Procedural ambient music plays today (audio/Music.ts); a file at public/assets/final/audio/<id>.ogg replaces it.
+- **Delivery:** `audio_music_title.ogg` — SUPERSEDED by src/audio/catalog.ts (one entry per sound, canonical ids, docs/audio/CATALOG.md). Procedural music plays today; file playback is not built yet.
 
 #### `audio_music_rainline` — Rainline Alley  [P1]
 
@@ -1570,7 +1570,7 @@ UI artwork, icons, dialogue portraits, music and sound effects.
 - **Audio:** music, ~120s, seamless loop, ogg. Seamless loop; stereo; around -16 LUFS; no vocals.
 - **Palette:** 
 - **Appears in:** Rainline Alley / Depot
-- **Delivery:** `audio_music_rainline.ogg` — Procedural ambient music plays today (audio/Music.ts); a file at public/assets/final/audio/<id>.ogg replaces it.
+- **Delivery:** `audio_music_rainline.ogg` — SUPERSEDED by src/audio/catalog.ts (one entry per sound, canonical ids, docs/audio/CATALOG.md). Procedural music plays today; file playback is not built yet.
 
 #### `audio_music_transit` — Transit Stacks  [P1]
 
@@ -1579,7 +1579,7 @@ UI artwork, icons, dialogue portraits, music and sound effects.
 - **Audio:** music, ~120s, seamless loop, ogg. Seamless loop; stereo; around -16 LUFS; no vocals.
 - **Palette:** 
 - **Appears in:** Transit Stacks
-- **Delivery:** `audio_music_transit.ogg` — Procedural ambient music plays today (audio/Music.ts); a file at public/assets/final/audio/<id>.ogg replaces it.
+- **Delivery:** `audio_music_transit.ogg` — SUPERSEDED by src/audio/catalog.ts (one entry per sound, canonical ids, docs/audio/CATALOG.md). Procedural music plays today; file playback is not built yet.
 
 #### `audio_music_precinct` — Precinct Vault  [P1]
 
@@ -1588,7 +1588,7 @@ UI artwork, icons, dialogue portraits, music and sound effects.
 - **Audio:** music, ~120s, seamless loop, ogg. Seamless loop; stereo; around -16 LUFS; no vocals.
 - **Palette:** 
 - **Appears in:** Precinct Vault
-- **Delivery:** `audio_music_precinct.ogg` — Procedural ambient music plays today (audio/Music.ts); a file at public/assets/final/audio/<id>.ogg replaces it.
+- **Delivery:** `audio_music_precinct.ogg` — SUPERSEDED by src/audio/catalog.ts (one entry per sound, canonical ids, docs/audio/CATALOG.md). Procedural music plays today; file playback is not built yet.
 
 #### `audio_music_undercity` — Neon Undercity  [P1]
 
@@ -1597,7 +1597,7 @@ UI artwork, icons, dialogue portraits, music and sound effects.
 - **Audio:** music, ~150s, seamless loop, ogg. Seamless loop; stereo; around -16 LUFS; no vocals.
 - **Palette:** 
 - **Appears in:** Neon Undercity
-- **Delivery:** `audio_music_undercity.ogg` — Procedural ambient music plays today (audio/Music.ts); a file at public/assets/final/audio/<id>.ogg replaces it.
+- **Delivery:** `audio_music_undercity.ogg` — SUPERSEDED by src/audio/catalog.ts (one entry per sound, canonical ids, docs/audio/CATALOG.md). Procedural music plays today; file playback is not built yet.
 
 #### `audio_music_industrial` — Industrial Core  [P1]
 
@@ -1606,7 +1606,7 @@ UI artwork, icons, dialogue portraits, music and sound effects.
 - **Audio:** music, ~150s, seamless loop, ogg. Seamless loop; stereo; around -16 LUFS; no vocals.
 - **Palette:** 
 - **Appears in:** Industrial Core
-- **Delivery:** `audio_music_industrial.ogg` — Procedural ambient music plays today (audio/Music.ts); a file at public/assets/final/audio/<id>.ogg replaces it.
+- **Delivery:** `audio_music_industrial.ogg` — SUPERSEDED by src/audio/catalog.ts (one entry per sound, canonical ids, docs/audio/CATALOG.md). Procedural music plays today; file playback is not built yet.
 
 #### `audio_music_cathedral` — Null Cathedral  [P1]
 
@@ -1615,7 +1615,7 @@ UI artwork, icons, dialogue portraits, music and sound effects.
 - **Audio:** music, ~150s, seamless loop, ogg. Seamless loop; stereo; around -16 LUFS; no vocals.
 - **Palette:** 
 - **Appears in:** Null Cathedral
-- **Delivery:** `audio_music_cathedral.ogg` — Procedural ambient music plays today (audio/Music.ts); a file at public/assets/final/audio/<id>.ogg replaces it.
+- **Delivery:** `audio_music_cathedral.ogg` — SUPERSEDED by src/audio/catalog.ts (one entry per sound, canonical ids, docs/audio/CATALOG.md). Procedural music plays today; file playback is not built yet.
 
 #### `audio_music_boss` — Boss Battle  [P1]
 
@@ -1624,7 +1624,7 @@ UI artwork, icons, dialogue portraits, music and sound effects.
 - **Audio:** music, ~100s, seamless loop, ogg. Seamless loop; stereo; around -16 LUFS; no vocals.
 - **Palette:** 
 - **Appears in:** Boss arenas
-- **Delivery:** `audio_music_boss.ogg` — Procedural ambient music plays today (audio/Music.ts); a file at public/assets/final/audio/<id>.ogg replaces it.
+- **Delivery:** `audio_music_boss.ogg` — SUPERSEDED by src/audio/catalog.ts (one entry per sound, canonical ids, docs/audio/CATALOG.md). Procedural music plays today; file playback is not built yet.
 
 #### `audio_music_final_boss` — THE NULL  [P1]
 
@@ -1633,7 +1633,7 @@ UI artwork, icons, dialogue portraits, music and sound effects.
 - **Audio:** music, ~140s, seamless loop, ogg. Seamless loop; stereo; around -16 LUFS; no vocals.
 - **Palette:** 
 - **Appears in:** The Sanctum
-- **Delivery:** `audio_music_final_boss.ogg` — Procedural ambient music plays today (audio/Music.ts); a file at public/assets/final/audio/<id>.ogg replaces it.
+- **Delivery:** `audio_music_final_boss.ogg` — SUPERSEDED by src/audio/catalog.ts (one entry per sound, canonical ids, docs/audio/CATALOG.md). Procedural music plays today; file playback is not built yet.
 
 #### `audio_music_ending` — Ending  [P1]
 
@@ -1642,7 +1642,7 @@ UI artwork, icons, dialogue portraits, music and sound effects.
 - **Audio:** music, ~80s, seamless loop, ogg. Seamless loop; stereo; around -16 LUFS; no vocals.
 - **Palette:** 
 - **Appears in:** Ending sequence
-- **Delivery:** `audio_music_ending.ogg` — Procedural ambient music plays today (audio/Music.ts); a file at public/assets/final/audio/<id>.ogg replaces it.
+- **Delivery:** `audio_music_ending.ogg` — SUPERSEDED by src/audio/catalog.ts (one entry per sound, canonical ids, docs/audio/CATALOG.md). Procedural music plays today; file playback is not built yet.
 
 #### `audio_sfx_player` — Courier SFX set  [P1]
 
@@ -1651,7 +1651,7 @@ UI artwork, icons, dialogue portraits, music and sound effects.
 - **Audio:** sfx, ~0.4s, one-shot, ogg. Mono, short tail, normalised to -10 dBFS peak.
 - **Palette:** 
 - **Appears in:** Gameplay
-- **Delivery:** `audio_sfx_player.ogg` — Synthesised in code today (audio/Sfx.ts).
+- **Delivery:** `audio_sfx_player.ogg` — SUPERSEDED by src/audio/catalog.ts (one entry per sound, docs/audio/CATALOG.md). Synthesised in code today; file playback is not built yet.
 
 #### `audio_sfx_combat` — Combat SFX set  [P1]
 
@@ -1660,7 +1660,7 @@ UI artwork, icons, dialogue portraits, music and sound effects.
 - **Audio:** sfx, ~0.5s, one-shot, ogg. Mono, short tail, normalised to -10 dBFS peak.
 - **Palette:** 
 - **Appears in:** Gameplay
-- **Delivery:** `audio_sfx_combat.ogg` — Synthesised in code today (audio/Sfx.ts).
+- **Delivery:** `audio_sfx_combat.ogg` — SUPERSEDED by src/audio/catalog.ts (one entry per sound, docs/audio/CATALOG.md). Synthesised in code today; file playback is not built yet.
 
 #### `audio_sfx_enemies` — Enemy SFX set  [P1]
 
@@ -1669,7 +1669,7 @@ UI artwork, icons, dialogue portraits, music and sound effects.
 - **Audio:** sfx, ~1.2s, one-shot, ogg. Mono, short tail, normalised to -10 dBFS peak.
 - **Palette:** 
 - **Appears in:** Gameplay
-- **Delivery:** `audio_sfx_enemies.ogg` — Synthesised in code today (audio/Sfx.ts).
+- **Delivery:** `audio_sfx_enemies.ogg` — SUPERSEDED by src/audio/catalog.ts (one entry per sound, docs/audio/CATALOG.md). Synthesised in code today; file playback is not built yet.
 
 #### `audio_sfx_backtrace` — Backtrace SFX set  [P1]
 
@@ -1678,7 +1678,7 @@ UI artwork, icons, dialogue portraits, music and sound effects.
 - **Audio:** sfx, ~1s, one-shot, ogg. Mono, short tail, normalised to -10 dBFS peak.
 - **Palette:** 
 - **Appears in:** Gameplay
-- **Delivery:** `audio_sfx_backtrace.ogg` — Synthesised in code today (audio/Sfx.ts).
+- **Delivery:** `audio_sfx_backtrace.ogg` — SUPERSEDED by src/audio/catalog.ts (one entry per sound, docs/audio/CATALOG.md). Synthesised in code today; file playback is not built yet.
 
 #### `audio_sfx_world` — World SFX set  [P1]
 
@@ -1687,7 +1687,7 @@ UI artwork, icons, dialogue portraits, music and sound effects.
 - **Audio:** sfx, ~1s, one-shot, ogg. Mono, short tail, normalised to -10 dBFS peak.
 - **Palette:** 
 - **Appears in:** Gameplay
-- **Delivery:** `audio_sfx_world.ogg` — Synthesised in code today (audio/Sfx.ts).
+- **Delivery:** `audio_sfx_world.ogg` — SUPERSEDED by src/audio/catalog.ts (one entry per sound, docs/audio/CATALOG.md). Synthesised in code today; file playback is not built yet.
 
 #### `audio_sfx_ui` — UI SFX set  [P1]
 
@@ -1696,7 +1696,7 @@ UI artwork, icons, dialogue portraits, music and sound effects.
 - **Audio:** sfx, ~0.6s, one-shot, ogg. Mono, short tail, normalised to -10 dBFS peak.
 - **Palette:** 
 - **Appears in:** Gameplay
-- **Delivery:** `audio_sfx_ui.ogg` — Synthesised in code today (audio/Sfx.ts).
+- **Delivery:** `audio_sfx_ui.ogg` — SUPERSEDED by src/audio/catalog.ts (one entry per sound, docs/audio/CATALOG.md). Synthesised in code today; file playback is not built yet.
 
 #### `audio_sfx_dialogue_blips` — Dialogue Blips  [P1]
 
@@ -1705,7 +1705,7 @@ UI artwork, icons, dialogue portraits, music and sound effects.
 - **Audio:** sfx, ~0.15s, one-shot, ogg. Mono, short tail, normalised to -10 dBFS peak.
 - **Palette:** 
 - **Appears in:** Gameplay
-- **Delivery:** `audio_sfx_dialogue_blips.ogg` — Synthesised in code today (audio/Sfx.ts).
+- **Delivery:** `audio_sfx_dialogue_blips.ogg` — SUPERSEDED by src/audio/catalog.ts (one entry per sound, docs/audio/CATALOG.md). Synthesised in code today; file playback is not built yet.
 
 #### `audio_amb_rain` — Ambience — Rain  [P1]
 
@@ -1714,7 +1714,7 @@ UI artwork, icons, dialogue portraits, music and sound effects.
 - **Audio:** ambience, ~30s, seamless loop, ogg. Seamless loop, stereo.
 - **Palette:** 
 - **Appears in:** Gameplay
-- **Delivery:** `audio_amb_rain.ogg` — Synthesised in code today (audio/Sfx.ts).
+- **Delivery:** `audio_amb_rain.ogg` — SUPERSEDED by src/audio/catalog.ts (one entry per sound, docs/audio/CATALOG.md). Synthesised in code today; file playback is not built yet.
 
 #### `audio_amb_industrial` — Ambience — Industrial  [P1]
 
@@ -1723,7 +1723,7 @@ UI artwork, icons, dialogue portraits, music and sound effects.
 - **Audio:** ambience, ~30s, seamless loop, ogg. Seamless loop, stereo.
 - **Palette:** 
 - **Appears in:** Gameplay
-- **Delivery:** `audio_amb_industrial.ogg` — Synthesised in code today (audio/Sfx.ts).
+- **Delivery:** `audio_amb_industrial.ogg` — SUPERSEDED by src/audio/catalog.ts (one entry per sound, docs/audio/CATALOG.md). Synthesised in code today; file playback is not built yet.
 
 #### `audio_amb_cathedral` — Ambience — Cathedral  [P1]
 
@@ -1732,4 +1732,4 @@ UI artwork, icons, dialogue portraits, music and sound effects.
 - **Audio:** ambience, ~30s, seamless loop, ogg. Seamless loop, stereo.
 - **Palette:** 
 - **Appears in:** Gameplay
-- **Delivery:** `audio_amb_cathedral.ogg` — Synthesised in code today (audio/Sfx.ts).
+- **Delivery:** `audio_amb_cathedral.ogg` — SUPERSEDED by src/audio/catalog.ts (one entry per sound, docs/audio/CATALOG.md). Synthesised in code today; file playback is not built yet.

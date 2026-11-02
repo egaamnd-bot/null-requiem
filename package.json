@@ -16,6 +16,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "assets:build": "tsx tools/assets/build.ts",
+    "assets:validate:pack01": "tsx tools/assets/build.ts --validate-only --in art/incoming/pack-01 --pack pack-01",
+    "assets:build:pack01": "tsx tools/assets/build.ts --in art/incoming/pack-01 --out public/assets/final --chroma 00ff00 --pack pack-01",
     "assets:validate": "tsx tools/assets/build.ts --validate-only",
     "docs:assets": "UPDATE_ASSET_DOCS=1 vitest run tests/docs.test.ts"
   },
