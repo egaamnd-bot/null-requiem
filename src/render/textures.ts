@@ -1,5 +1,8 @@
 import Phaser from 'phaser';
 import { createRng } from '../core/math';
+import { noteBaseSize } from './assetRuntime';
+import { makePlaceholderActors } from './placeholders';
+import { makeWorldTextures } from './worldTextures';
 import { css, mix, PALETTE } from './palette';
 
 /**
@@ -70,6 +73,7 @@ export type PanoptixFrame = (typeof PANOPTIX_FRAMES)[number];
 export const panoptixKey = (f: PanoptixFrame): string => `panoptix-${f}`;
 
 function canvasTexture(scene: Phaser.Scene, key: string, w: number, h: number, draw: (ctx: Ctx) => void): void {
+  noteBaseSize(key, w, h);
   if (scene.textures.exists(key)) scene.textures.remove(key);
   const tex = scene.textures.createCanvas(key, w, h);
   if (!tex) throw new Error(`Could not create texture ${key}`);
@@ -992,6 +996,8 @@ export function makeAllTextures(scene: Phaser.Scene): void {
   makePanoptix(scene);
   makeObjects(scene);
   makeHud(scene);
+  makeWorldTextures(scene);
+  makePlaceholderActors(scene);
 }
 
 export { canvasTexture, px, poly, radial };

@@ -23,6 +23,8 @@ export interface TapTarget {
   guard: TapGuard;
   /** Re-arm the target (call when its menu opens again). */
   reset(): void;
+  /** Remove the zone and its scene-level listener (for menus that rebuild their content). */
+  destroy(): void;
 }
 
 /**
@@ -71,11 +73,17 @@ export function createTapTarget(scene: Phaser.Scene, o: TapTargetOptions): TapTa
     }
   };
   scene.input.on(Phaser.Input.Events.POINTER_UP, onSceneUp);
-  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => scene.input.off(Phaser.Input.Events.POINTER_UP, onSceneUp));
+  const detach = () => scene.input.off(Phaser.Input.Events.POINTER_UP, onSceneUp);
+  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, detach);
 
   return {
     zone,
     guard,
     reset: release,
+    destroy: () => {
+      detach();
+      scene.events.off(Phaser.Scenes.Events.SHUTDOWN, detach);
+      zone.destroy();
+    },
   };
 }

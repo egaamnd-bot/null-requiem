@@ -1,10 +1,12 @@
 import Phaser from 'phaser';
+import { Music } from './audio/Music';
 import { Sfx } from './audio/Sfx';
 import { applyWindowView, installViewportWatcher } from './render/viewportDom';
 import { BootScene } from './scenes/BootScene';
 import { GameScene } from './scenes/GameScene';
 import type { Services } from './scenes/session';
 import { TitleScene } from './scenes/TitleScene';
+import { MenuScene } from './scenes/MenuScene';
 import { MobileControlsScene } from './scenes/MobileControlsScene';
 import { UIScene } from './scenes/UIScene';
 import { VictoryScene } from './scenes/VictoryScene';
@@ -14,8 +16,10 @@ import { loadSettings } from './state/settings';
 loadSettings();
 const initialView = applyWindowView();
 
+const sfx = new Sfx();
 const services: Services = {
-  sfx: new Sfx(),
+  sfx,
+  music: new Music(sfx),
   store: new LocalSaveStore(),
 };
 
@@ -39,10 +43,12 @@ const game = new Phaser.Game({
     activePointers: 4,
   },
   disableContextMenu: true,
-  scene: [new BootScene(services), TitleScene, GameScene, UIScene, VictoryScene, MobileControlsScene],
+  scene: [new BootScene(services), TitleScene, GameScene, UIScene, VictoryScene, MobileControlsScene, MenuScene],
 });
 
 installViewportWatcher(game);
+// One global hook keeps the score scheduled regardless of which scene is active.
+game.events.on(Phaser.Core.Events.POST_STEP, () => services.music.update());
 
 // Unlock audio on the first user gesture anywhere on the page.
 const unlock = () => services.sfx.unlock();

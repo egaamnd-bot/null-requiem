@@ -1123,6 +1123,12 @@ export class GameWorld {
     this.quests.refresh();
   }
 
+  /** Index (in `room.npcs`) of the NPC the interact button would talk to, or -1. */
+  promptNpcIndex(): number {
+    if (this.dialogueNpc || !this.room || this.flow.state !== 'playing') return -1;
+    return this.nearestNpc()?.index ?? -1;
+  }
+
   get inDialogue(): boolean {
     return this.dialogueNpc !== null;
   }

@@ -10,6 +10,10 @@ import { saveProgression } from '../core/progression';
 import { GameWorld } from '../core/world';
 import { InputManager } from '../input/InputManager';
 import { BossView, EchoView, EnemyViewRegistry, NpcView, PanoptixView, PlayerView, ProjectileViews, type RenderPos } from '../render/ActorViews';
+import { InteractViews, PatternBossView } from '../render/CampaignViews';
+import { themeFor } from '../audio/musicTheory';
+import { collectedRecords } from '../ui/menuModel';
+import { MENU_SCENE, type MenuTab } from './MenuScene';
 import { Fx } from '../render/Fx';
 import { DEPTH, RoomView } from '../render/RoomView';
 import { TEX } from '../render/textures';
@@ -40,6 +44,8 @@ export class GameScene extends Phaser.Scene {
   private projectileViews!: ProjectileViews;
   private bossView: BossView | null = null;
   private panoptixView: PanoptixView | null = null;
+  private pbossView: PatternBossView | null = null;
+  private interactViews: InteractViews | null = null;
   private npcViews: NpcView[] = [];
   private fx!: Fx;
   private bus!: Phaser.Events.EventEmitter;
@@ -47,6 +53,7 @@ export class GameScene extends Phaser.Scene {
   private transitioning = false;
   private hitstop = 0;
   private ended = false;
+  private sessionRef!: Session;
   private readonly prevPos = new Map<Body, RenderPos>();
 
   constructor() {
@@ -87,7 +94,7 @@ export class GameScene extends Phaser.Scene {
     this.world.start();
     this.syncRoom();
 
-    const session: Session = {
+    const session: Session = this.sessionRef = {
       world: this.world,
       services: this.services,
       bus: this.bus,
@@ -95,6 +102,8 @@ export class GameScene extends Phaser.Scene {
       resume: () => this.resume(),
       retry: () => this.retry(),
       quit: () => this.quit(),
+      openMenu: (tab, vendorId) => this.openMenu(tab, vendorId),
+      menuOpen: () => this.scene.isActive(MENU_SCENE),
     };
     this.scene.launch(SCENES.ui, { session });
     this.scene.launch(MOBILE_SCENE, {
@@ -117,6 +126,11 @@ export class GameScene extends Phaser.Scene {
       this.bossView = null;
       this.panoptixView?.destroy();
       this.panoptixView = null;
+      this.pbossView?.destroy();
+      this.pbossView = null;
+      this.interactViews?.destroy();
+      this.interactViews = null;
+      this.scene.stop(MENU_SCENE);
       for (const v of this.npcViews) v.destroy();
       this.npcViews = [];
       this.playerView.destroy();
@@ -140,6 +154,24 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ------------------------------------------------------------------ flow actions
+
+  /** Open the tabbed menu over the (paused) game. Vendors pause the world themselves. */
+  private openMenu(tab: MenuTab, vendorId?: string): void {
+    if (this.scene.isActive(MENU_SCENE)) return;
+    const fromPause = this.world.flow.state === 'paused';
+    if (!fromPause && !this.world.pause()) return;
+    this.fx.setPaused(true);
+    this.scene.launch(MENU_SCENE, {
+      services: this.services,
+      session: this.sessionRef,
+      tab,
+      ...(vendorId ? { vendorId } : {}),
+      onClose: () => {
+        // Closing a menu opened from the pause screen returns to it; a vendor resumes play.
+        if (!fromPause) this.resume();
+      },
+    });
+  }
 
   private pause(): void {
     if (this.world.pause()) {
@@ -199,12 +231,21 @@ export class GameScene extends Phaser.Scene {
   private finish(): void {
     this.ended = true;
     const p = this.world.progression;
+    const rec = collectedRecords(ROOMS, p);
+    const journal = this.world.quests.journal();
     const data: VictoryData = {
       services: this.services,
       playTime: p.playTime,
       deaths: p.deaths,
       secretsFound: p.secrets.size,
-      secretsTotal: 1,
+      secretsTotal: 2,
+      rooms: p.visitedRooms.size,
+      roomsTotal: ROOMS.length,
+      records: rec.entries.length,
+      recordsTotal: rec.total,
+      questsDone: journal.filter((q) => q.status === 'turnedIn').length,
+      questsTotal: this.world.content.quests.length,
+      scrap: p.scrap,
     };
     // The slice is complete: clear the save so the title offers a fresh journey.
     this.services.store.clear();
@@ -228,6 +269,9 @@ export class GameScene extends Phaser.Scene {
     this.bossView = null;
     this.panoptixView?.destroy();
     this.panoptixView = null;
+    this.pbossView?.destroy();
+    this.pbossView = null;
+    this.interactViews?.destroy();
     for (const v of this.npcViews) v.destroy();
     this.npcViews = [];
     this.prevPos.clear();
@@ -236,6 +280,8 @@ export class GameScene extends Phaser.Scene {
     this.roomView = new RoomView(this, this.world);
     if (room.boss) this.bossView = new BossView(this);
     if (room.panoptix) this.panoptixView = new PanoptixView(this);
+    if (room.pboss) this.pbossView = new PatternBossView(this, room.pboss);
+    this.interactViews = new InteractViews(this, room.interact);
     this.npcViews = room.npcs.map((npc) => new NpcView(this, npc));
     const w = room.grid.widthPx;
     const h = room.grid.heightPx;
@@ -296,8 +342,16 @@ export class GameScene extends Phaser.Scene {
       this.services.sfx.handle(e);
       if (e.type === 'playerLand') this.playerView.onLand(e.heavy);
       if (e.type === 'playerJump') this.playerView.onJump();
+      if (e.type === 'vendorOpened') this.openMenu('vendor', e.vendorId);
       this.bus.emit('event', e);
     }
+    this.services.music.setTheme(
+      themeFor(world.room.def.region, {
+        inGame: true,
+        bossActive: !!((world.room.boss && world.room.boss.isActive) || (world.room.pboss && world.room.pboss.isActive) || (world.room.panoptix && world.room.panoptix.state !== 'intro' && !world.room.panoptix.defeated)),
+        finalBoss: world.room.pbossFinal,
+      }),
+    );
     this.hitstop = Math.max(this.hitstop, this.fx.takeHitstop());
 
     this.syncRoom();
@@ -314,7 +368,10 @@ export class GameScene extends Phaser.Scene {
     this.enemyViews.sync(room.enemies, (en) => this.renderPos(en.body, alpha), time);
     if (room.boss && this.bossView) this.bossView.update(room.boss, this.renderPos(room.boss.body, alpha), time);
     if (room.panoptix && this.panoptixView) this.panoptixView.update(room.panoptix, time);
-    this.npcViews.forEach((v, i) => v.update(room.activeNpcIndex === i, time));
+    const promptIdx = world.promptNpcIndex();
+    this.npcViews.forEach((v, i) => v.update(room.activeNpcIndex === i, time, promptIdx === i ? room.npcs[i]?.verb ?? null : null));
+    if (room.pboss && this.pbossView) this.pbossView.update(room.pboss, time);
+    this.interactViews?.update(time);
     this.projectileViews.sync(room.projectiles, time);
 
     if (world.flow.simulating && !this.transitioning) {

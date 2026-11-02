@@ -5,7 +5,9 @@ import { createRng } from '../core/math';
 import { Tile, type TileGrid } from '../core/tiles';
 import type { GameWorld, RoomState } from '../core/world';
 import { css, mix, PALETTE } from './palette';
+import { ITEMS } from '../world/items';
 import { canvasTexture, makeBackdrop, px, TEX } from './textures';
+import { WTEX } from './worldTextures';
 
 export const DEPTH = {
   sky: -100,
@@ -219,6 +221,31 @@ export class RoomView {
           s.add.image(cx, p.rect.y + 13, TEX.glowSoft).setTint(PALETTE.cyan).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.objects - 1),
         );
         this.pickups.push({ id: p.id, img, glow, baseY: img.y });
+      } else if (p.kind === 'scrap' || p.kind === 'upgrade' || p.kind === 'item' || p.kind === 'record' || p.kind === 'ability') {
+        const d = p.def;
+        const big = p.kind === 'ability';
+        const isModule = p.kind === 'ability' && d?.ability === 'backtrace';
+        const key = isModule
+          ? TEX.module
+          : p.kind === 'ability'
+            ? WTEX.pickupCoil
+            : p.kind === 'scrap'
+              ? WTEX.pickupScrap
+              : p.kind === 'upgrade'
+                ? WTEX.pickupUpgrade
+                : p.kind === 'record'
+                  ? WTEX.pickupRecord
+                  : WTEX.pickupItem;
+        const cy = p.rect.y + p.rect.h / 2;
+        const img = this.add(s.add.image(cx, big ? p.rect.y + p.rect.h : cy, key).setOrigin(0.5, big ? 1 : 0.5).setDepth(DEPTH.objects));
+        if (p.kind === 'item' && d?.item) img.setTint(ITEMS[d.item]?.color ?? 0xc9c9d8);
+        // World textures are drawn at 2x for crispness; the legacy module sprite is 1x.
+        img.setScale(isModule ? 1 : 0.5);
+        const tint = p.kind === 'scrap' ? PALETTE.sodium : p.kind === 'upgrade' ? PALETTE.violet : p.kind === 'record' ? PALETTE.mist : p.kind === 'ability' ? PALETTE.cyan : (d?.item ? ITEMS[d.item]?.color ?? PALETTE.cyan : PALETTE.cyan);
+        const glow = this.add(
+          s.add.image(cx, big ? p.rect.y + 13 : cy, TEX.glowSoft).setTint(tint).setBlendMode(Phaser.BlendModes.ADD).setScale(big ? 1 : 0.5).setDepth(DEPTH.objects - 1),
+        );
+        this.pickups.push({ id: p.id, img, glow, baseY: img.y });
       } else if (p.kind === 'fragment') {
         const cy = p.rect.y + p.rect.h / 2;
         const img = this.add(s.add.image(cx, cy, TEX.fragment).setDepth(DEPTH.objects));
@@ -316,7 +343,7 @@ export class RoomView {
     for (const p of this.pickups) {
       const state = room.pickups.find((x) => x.id === p.id);
       const taken = state?.taken ?? true;
-      if (state?.kind === 'backtrace') {
+      if (state?.kind === 'backtrace' || (state?.kind === 'ability' && state.def?.ability === 'backtrace')) {
         p.img.setTexture(taken ? TEX.moduleSpent : TEX.module);
         p.glow.setVisible(!taken).setAlpha(0.5 + Math.sin(t * 2) * 0.15);
       } else {
