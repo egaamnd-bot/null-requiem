@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { ASSETS } from './assets/manifest';
+import { viewScaleOf } from './render/assetRuntime';
 import { Music } from './audio/Music';
 import { Sfx } from './audio/Sfx';
 import { canvasSize, FpsGuard } from './core/renderScale';
@@ -71,5 +73,8 @@ window.addEventListener('pointerdown', unlock, { once: true });
 
 // Read-only handle for browser smoke tests and console debugging; game code never reads it.
 (window as unknown as { nullRequiemGame?: Phaser.Game }).nullRequiemGame = game;
+
+// Read-only asset introspection for browser regression tests (never read by game code).
+(window as unknown as { nullRequiemAssets?: unknown }).nullRequiemAssets = { viewScaleOf, ASSETS };
 
 export default game;

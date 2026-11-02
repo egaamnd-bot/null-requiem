@@ -61,3 +61,26 @@ export function parseFinalManifest(raw: unknown): FinalManifest {
   }
   return out;
 }
+
+/**
+ * R1 — world-size independence. A delivered frame of ANY pixel size must occupy exactly the world size the manifest
+ * declares (`display`), regardless of the pixel size of the placeholder it replaces.
+ *
+ * Some views draw a texture with a constant scale chosen for the placeholder's pixel size (the Courier at 0.65, every
+ * 2x world texture at 0.5). `viewScale` is that constant: the Phaser frame must report `display / viewScale` so that
+ * `viewScale * frame size == display` and the view code does not change.
+ *
+ * Returns the texture-source resolution (final px per reported frame px) and the frame size Phaser must report.
+ */
+export function planWorldSize(
+  def: Pick<AssetDef, 'display'>,
+  viewScale: number,
+  frame: { w: number; h: number },
+): { resolution: number; frameW: number; frameH: number } {
+  const vs = viewScale > 0 ? viewScale : 1;
+  const frameW = def.display.w / vs;
+  const resolution = frame.w > 0 && frameW > 0 ? frame.w / frameW : 1;
+  // Height follows the same factor so artwork is never stretched; a within-tolerance aspect difference (planSheet allows
+  // 6%) changes the frame height slightly instead of distorting pixels.
+  return { resolution, frameW, frameH: frame.h / resolution };
+}

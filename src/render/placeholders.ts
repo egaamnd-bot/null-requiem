@@ -1,3 +1,4 @@
+import { applyWorldSize } from './assetRuntime';
 import Phaser from 'phaser';
 import { ASSETS } from '../assets/manifest';
 import type { AssetDef, PlaceholderShape } from '../assets/types';
@@ -467,6 +468,8 @@ export function makePlaceholderActors(scene: Phaser.Scene): number {
         ctx.scale(PLACEHOLDER_RES, PLACEHOLDER_RES);
         drawPlaceholderFrame(ctx, def, name, i, a.frames);
         tex.refresh();
+        // R1: the frame reports its WORLD size (2x pixels per world pixel), same mechanism as delivered final art.
+        applyWorldSize(tex, PLACEHOLDER_RES, def.display.w, def.display.h);
         made++;
       }
     }

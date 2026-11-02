@@ -265,10 +265,10 @@ All initial NPC characters with idle and interaction animations, and dialogue po
 
 - **Purpose:** Zero: dialogue NPC.
 - **Description:** A street informant in a hooded green rain-poncho, face half-covered by a scarf, one cybernetic eye ring glowing cyan.
-- **Frame size:** 24×32 logical px (deliver at 1×, 2× or 4×; integer multiples only)
-- **Sheet:** one row per animation, 1 columns × 1 rows = 24×32 px at 1×. Animations in row order: `idle` 1f @ 1fps loop
+- **Frame size:** 20×28 logical px (deliver at 1×, 2× or 4×; integer multiples only)
+- **Sheet:** one row per animation, 1 columns × 1 rows = 20×28 px at 1×. Animations in row order: `idle` 1f @ 1fps loop
 - **Anchor:** 0.5, 1
-- **Hitbox (gameplay, for reference):** 12×22 at offset 6, 10
+- **Hitbox (gameplay, for reference):** 12×22 at offset 4, 6
 - **Palette:** #0c1c18 #2a8a6a #3cf2ff
 - **Appears in:** Rainline Alley
 - **Delivery:** `npc_zero.png`
@@ -277,10 +277,10 @@ All initial NPC characters with idle and interaction animations, and dialogue po
 
 - **Purpose:** Mira: dialogue NPC.
 - **Description:** A survivor archivist in a patchwork coat covered in tiny paper tags, round glasses, a satchel of memory shards.
-- **Frame size:** 24×32 logical px (deliver at 1×, 2× or 4×; integer multiples only)
-- **Sheet:** one row per animation, 1 columns × 1 rows = 24×32 px at 1×. Animations in row order: `idle` 1f @ 1fps loop
+- **Frame size:** 20×28 logical px (deliver at 1×, 2× or 4×; integer multiples only)
+- **Sheet:** one row per animation, 1 columns × 1 rows = 20×28 px at 1×. Animations in row order: `idle` 1f @ 1fps loop
 - **Anchor:** 0.5, 1
-- **Hitbox (gameplay, for reference):** 12×22 at offset 6, 10
+- **Hitbox (gameplay, for reference):** 12×22 at offset 4, 6
 - **Palette:** #1c1018 #a04a8a #ffb02e
 - **Appears in:** Transit Stacks
 - **Delivery:** `npc_mira.png`
@@ -289,8 +289,8 @@ All initial NPC characters with idle and interaction animations, and dialogue po
 
 - **Purpose:** Readable data terminal (lore logs, tutorial, power console).
 - **Description:** A waist-high wall-mounted CRT terminal with a green-violet screen, bundles of cable, a blinking cursor. Reads as "interact here".
-- **Frame size:** 24×32 logical px (deliver at 1×, 2× or 4×; integer multiples only)
-- **Sheet:** one row per animation, 1 columns × 1 rows = 24×32 px at 1×. Animations in row order: `idle` 1f @ 1fps loop
+- **Frame size:** 20×28 logical px (deliver at 1×, 2× or 4×; integer multiples only)
+- **Sheet:** one row per animation, 1 columns × 1 rows = 20×28 px at 1×. Animations in row order: `idle` 1f @ 1fps loop
 - **Anchor:** 0.5, 1
 - **Palette:** #14102a #7755cc #4dff9a
 - **Appears in:** Depot, Precinct, Cells, Reactor, Archive, Nave
@@ -569,8 +569,8 @@ Rainline Alley, Transit Stacks, Precinct Vault: tilesets, backgrounds, props and
 
 - **Purpose:** Checkpoint: heals and saves.
 - **Description:** A waist-high relay pylon with a cyan ring that lights up when linked; a vertical glass tube with a pulsing coil.
-- **Frame size:** 20×32 logical px (deliver at 1×, 2× or 4×; integer multiples only)
-- **Sheet:** one row per animation, 2 columns × 2 rows = 40×64 px at 1×. Animations in row order: `off` 1f @ 1fps loop; `on` 2f @ 3fps loop
+- **Frame size:** 16×32 logical px (deliver at 1×, 2× or 4×; integer multiples only)
+- **Sheet:** one row per animation, 2 columns × 2 rows = 32×64 px at 1×. Animations in row order: `off` 1f @ 1fps loop; `on` 2f @ 3fps loop
 - **Anchor:** 0.5, 1
 - **Palette:** #14102a #3a4a6a #3cf2ff
 - **Appears in:** Most rooms
@@ -657,8 +657,8 @@ Rainline Alley, Transit Stacks, Precinct Vault: tilesets, backgrounds, props and
 
 - **Purpose:** Strike to open the timed gate.
 - **Description:** A wall-mounted lever box with a big shock plate; red when idle, cyan when live.
-- **Frame size:** 12×32 logical px (deliver at 1×, 2× or 4×; integer multiples only)
-- **Sheet:** one row per animation, 1 columns × 2 rows = 12×64 px at 1×. Animations in row order: `idle` 1f @ 1fps loop; `live` 1f @ 1fps loop
+- **Frame size:** 16×32 logical px (deliver at 1×, 2× or 4×; integer multiples only)
+- **Sheet:** one row per animation, 1 columns × 2 rows = 16×64 px at 1×. Animations in row order: `idle` 1f @ 1fps loop; `live` 1f @ 1fps loop
 - **Anchor:** 0.5, 1
 - **Palette:** #2a2a38 #ff3b4e #3cf2ff
 - **Appears in:** Transit Stacks, Reactor Hall
@@ -945,10 +945,10 @@ Boss sprite sheets, combat effects, Backtrace effects, environmental effects.
 
 - **Purpose:** Riot-control mech miniboss (charge, leap, plasma rain).
 - **Description:** A squat decommissioned riot mech: slab-like torso, drop-down visor with a single red slit, hydraulic piston legs, shoulder-mounted plasma launchers. Peeling Precinct stencil, sparks from the neck when stunned.
-- **Frame size:** 56×48 logical px (deliver at 1×, 2× or 4×; integer multiples only)
-- **Sheet:** one row per animation, 1 columns × 6 rows = 56×288 px at 1×. Animations in row order: `idle` 1f @ 1fps loop; `windup` 1f @ 1fps loop; `charge` 1f @ 1fps loop; `leap` 1f @ 1fps loop; `stunned` 1f @ 1fps loop; `dead` 1f @ 1fps loop
+- **Frame size:** 48×40 logical px (deliver at 1×, 2× or 4×; integer multiples only)
+- **Sheet:** one row per animation, 1 columns × 6 rows = 48×240 px at 1×. Animations in row order: `idle` 1f @ 1fps loop; `windup` 1f @ 1fps loop; `charge` 1f @ 1fps loop; `leap` 1f @ 1fps loop; `stunned` 1f @ 1fps loop; `dead` 1f @ 1fps loop
 - **Anchor:** 0.5, 1
-- **Hitbox (gameplay, for reference):** 34×30 at offset 11, 18
+- **Hitbox (gameplay, for reference):** 34×30 at offset 7, 10
 - **Palette:** #1a1a22 #6a6a82 #ff3b4e #ffb02e
 - **Appears in:** Precinct Vault
 - **Delivery:** `boss_bulwark_9.png`
@@ -1003,8 +1003,8 @@ Boss sprite sheets, combat effects, Backtrace effects, environmental effects.
 
 - **Purpose:** Rail-blade arc for side attacks.
 - **Description:** A bright white-cyan crescent arc with a motion-blur tail, additive blend.
-- **Frame size:** 40×28 logical px (deliver at 1×, 2× or 4×; integer multiples only)
-- **Sheet:** one row per animation, 4 columns × 1 rows = 160×28 px at 1×. Animations in row order: `slash` 4f @ 20fps once
+- **Frame size:** 36×28 logical px (deliver at 1×, 2× or 4×; integer multiples only)
+- **Sheet:** one row per animation, 4 columns × 1 rows = 144×28 px at 1×. Animations in row order: `slash` 4f @ 20fps once
 - **Anchor:** 0.5, 0.5
 - **Palette:** #ffffff #3cf2ff
 - **Appears in:** Combat
@@ -1014,8 +1014,8 @@ Boss sprite sheets, combat effects, Backtrace effects, environmental effects.
 
 - **Purpose:** Upward arc.
 - **Description:** Vertical crescent for upward attacks.
-- **Frame size:** 28×40 logical px (deliver at 1×, 2× or 4×; integer multiples only)
-- **Sheet:** one row per animation, 4 columns × 1 rows = 112×40 px at 1×. Animations in row order: `slash` 4f @ 20fps once
+- **Frame size:** 28×36 logical px (deliver at 1×, 2× or 4×; integer multiples only)
+- **Sheet:** one row per animation, 4 columns × 1 rows = 112×36 px at 1×. Animations in row order: `slash` 4f @ 20fps once
 - **Anchor:** 0.5, 0.5
 - **Palette:** #ffffff #3cf2ff
 - **Appears in:** Combat
@@ -1025,8 +1025,8 @@ Boss sprite sheets, combat effects, Backtrace effects, environmental effects.
 
 - **Purpose:** Downward arc (pogo).
 - **Description:** Vertical crescent pointing down with a spark tip.
-- **Frame size:** 28×40 logical px (deliver at 1×, 2× or 4×; integer multiples only)
-- **Sheet:** one row per animation, 4 columns × 1 rows = 112×40 px at 1×. Animations in row order: `slash` 4f @ 20fps once
+- **Frame size:** 28×36 logical px (deliver at 1×, 2× or 4×; integer multiples only)
+- **Sheet:** one row per animation, 4 columns × 1 rows = 112×36 px at 1×. Animations in row order: `slash` 4f @ 20fps once
 - **Anchor:** 0.5, 0.5
 - **Palette:** #ffffff #ffb02e
 - **Appears in:** Combat
@@ -1272,8 +1272,8 @@ UI artwork, icons, dialogue portraits, music and sound effects.
 
 - **Purpose:** Health pips.
 - **Description:** A small hex-cell: bright cyan when full, dark outlined when empty.
-- **Frame size:** 10×12 logical px (deliver at 1×, 2× or 4×; integer multiples only)
-- **Sheet:** one row per animation, 1 columns × 2 rows = 10×24 px at 1×. Animations in row order: `full` 1f @ 1fps loop; `empty` 1f @ 1fps loop
+- **Frame size:** 8×12 logical px (deliver at 1×, 2× or 4×; integer multiples only)
+- **Sheet:** one row per animation, 1 columns × 2 rows = 8×24 px at 1×. Animations in row order: `full` 1f @ 1fps loop; `empty` 1f @ 1fps loop
 - **Anchor:** 0, 0.5
 - **Palette:** #3cf2ff #14102a
 - **Appears in:** UI

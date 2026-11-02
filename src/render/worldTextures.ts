@@ -1,5 +1,5 @@
 import type Phaser from 'phaser';
-import { noteBaseSize } from './assetRuntime';
+import { noteBaseSize, noteViewScale } from './assetRuntime';
 import { css, PALETTE } from './palette';
 
 /** Code-drawn textures for the campaign's interactive objects, pickups and extra HUD icons. */
@@ -35,6 +35,8 @@ export const WTEX = {
 
 function tex(scene: Phaser.Scene, key: string, w: number, h: number, draw: (ctx: Ctx) => void): void {
   noteBaseSize(key, w * 2, h * 2);
+  // World textures are drawn at 2x and every view displays them at 0.5.
+  noteViewScale(key, 0.5);
   if (scene.textures.exists(key)) scene.textures.remove(key);
   const t = scene.textures.createCanvas(key, w * 2, h * 2);
   if (!t) return;

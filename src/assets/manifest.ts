@@ -134,7 +134,7 @@ const boss = (s: Omit<Spec, 'category' | 'pack'>): AssetDef => def({ ...s, categ
 const BOSSES: AssetDef[] = [
   boss({
     id: 'boss_bulwark_9', name: 'BULWARK-9', purpose: 'Riot-control mech miniboss (charge, leap, plasma rain).',
-    w: 56, h: 48, hitbox: { w: 34, h: 30, offsetX: 11, offsetY: 18 },
+    w: 48, h: 40, hitbox: { w: 34, h: 30, offsetX: 7, offsetY: 10 },
     anims: { idle: anim(1, 1), windup: anim(1, 1), charge: anim(1, 1), leap: anim(1, 1), stunned: anim(1, 1), dead: anim(1, 1) },
     description: 'A squat decommissioned riot mech: slab-like torso, drop-down visor with a single red slit, hydraulic piston legs, shoulder-mounted plasma launchers. Peeling Precinct stencil, sparks from the neck when stunned.',
     palette: ['#1a1a22', '#6a6a82', '#ff3b4e', '#ffb02e'], locations: ['Precinct Vault'],
@@ -173,10 +173,10 @@ const npc = (id: string, name: string, desc: string, palette: string[], loc: str
     anims: { idle: anim(4, 3), talk: anim(2, 5) }, description: desc, palette, locations: loc, shape: 'npc', colors, ...extra,
   });
 const NPCS: AssetDef[] = [
-  npc('npc_zero', 'Zero', 'A street informant in a hooded green rain-poncho, face half-covered by a scarf, one cybernetic eye ring glowing cyan.', ['#0c1c18', '#2a8a6a', '#3cf2ff'], ['Rainline Alley'], [0x2a8a6a, 0x3cf2ff, 0x3cf2ff], { placeholder: 'procedural-legacy', anims: { idle: anim(1, 1) }, keys: ['npc-zero'], priority: 'P0' }),
-  npc('npc_mira', 'Mira', 'A survivor archivist in a patchwork coat covered in tiny paper tags, round glasses, a satchel of memory shards.', ['#1c1018', '#a04a8a', '#ffb02e'], ['Transit Stacks'], [0xa04a8a, 0xffb02e, 0xff3ea5], { placeholder: 'procedural-legacy', anims: { idle: anim(1, 1) }, keys: ['npc-mira'], priority: 'P0' }),
+  npc('npc_zero', 'Zero', 'A street informant in a hooded green rain-poncho, face half-covered by a scarf, one cybernetic eye ring glowing cyan.', ['#0c1c18', '#2a8a6a', '#3cf2ff'], ['Rainline Alley'], [0x2a8a6a, 0x3cf2ff, 0x3cf2ff], { w: 20, h: 28, hitbox: { w: 12, h: 22, offsetX: 4, offsetY: 6 }, placeholder: 'procedural-legacy', anims: { idle: anim(1, 1) }, keys: ['npc-zero'], priority: 'P0' }),
+  npc('npc_mira', 'Mira', 'A survivor archivist in a patchwork coat covered in tiny paper tags, round glasses, a satchel of memory shards.', ['#1c1018', '#a04a8a', '#ffb02e'], ['Transit Stacks'], [0xa04a8a, 0xffb02e, 0xff3ea5], { w: 20, h: 28, hitbox: { w: 12, h: 22, offsetX: 4, offsetY: 6 }, placeholder: 'procedural-legacy', anims: { idle: anim(1, 1) }, keys: ['npc-mira'], priority: 'P0' }),
   def({
-    id: 'npc_terminal', name: 'Terminal', category: 'npc', pack: 'pack-03', purpose: 'Readable data terminal (lore logs, tutorial, power console).', w: 24, h: 32, anims: { idle: anim(1, 1) },
+    id: 'npc_terminal', name: 'Terminal', category: 'npc', pack: 'pack-03', purpose: 'Readable data terminal (lore logs, tutorial, power console).', w: 20, h: 28, anims: { idle: anim(1, 1) },
     description: 'A waist-high wall-mounted CRT terminal with a green-violet screen, bundles of cable, a blinking cursor. Reads as "interact here".', palette: ['#14102a', '#7755cc', '#4dff9a'],
     locations: ['Depot', 'Precinct', 'Cells', 'Reactor', 'Archive', 'Nave'], placeholder: 'procedural-legacy', keys: ['npc-terminal'], priority: 'P0', shape: 'terminal',
   }),

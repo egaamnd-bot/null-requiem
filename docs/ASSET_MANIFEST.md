@@ -126,7 +126,7 @@
 | `fx_projectile_set` | Projectiles | fx-combat | 8 | P1 | code-drawn | swap-ready |
 | `fx_steam_vent` | Steam Plume | fx-combat | 6 | P1 | code-drawn | placeholder |
 | `fx_backtrace_arrival` | Backtrace Arrival Burst | fx-backtrace | 8 | P0 | code-drawn | swap-ready |
-| `fx_backtrace_echo` | Backtrace Echo (Afterimage) | fx-backtrace | 5 | P0 | procedural-legacy | swap-ready |
+| `fx_backtrace_echo` | Backtrace Echo (Afterimage) | fx-backtrace | 5 | P0 | code-drawn | swap-ready |
 | `fx_backtrace_streak` | Backtrace Streak | fx-backtrace | 4 | P1 | code-drawn | swap-ready |
 | `fx_temporal_plate_pulse` | Temporal Plate Pulse | fx-backtrace | 6 | P1 | code-drawn | placeholder |
 | `fx_null_void` | Null Void Cracks | fx-backtrace | 18 | P0 | code-drawn | placeholder |
