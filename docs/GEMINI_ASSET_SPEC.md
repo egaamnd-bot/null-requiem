@@ -378,7 +378,7 @@ All initial NPC characters with idle and interaction animations, and dialogue po
 - **Hitbox (gameplay, for reference):** 12×22 at offset 6, 10
 - **Palette:** #2a2014 #c9a46a #ffb02e #3cf2ff
 - **Appears in:** Rainline Alley
-- **Delivery:** `npc_desert_man.png` — NEW id (Production Pack 01). Not placed in any room and has no NPC-registry entry yet: delivering art is safe; showing him needs a content hook (registry + dialogue), which the Producer has not requested.
+- **Delivery:** `npc_desert_man.png` — NEW id (Production Pack 01). Independent NPC in Rainline Alley; speaking to him completes the first main-quest objective. Idle and talk rows are both played by NpcView.
 
 #### `npc_null_echo` — Null Echo (Erased Survivor)  [P2]
 

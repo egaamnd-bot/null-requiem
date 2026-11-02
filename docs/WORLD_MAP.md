@@ -15,7 +15,7 @@ _Where the Courier wakes._
 - **Entries:** `east`, `undercroft`
 - **Gates / puzzles:** —
 - **Encounters:** streetScavenger
-- **NPCs:** zero
+- **NPCs:** desert-man, zero
 - **Pickups:** `alley:cache` (scrap), `parcel:alley` (item), `rec:alley` (record)
 
 ### `alley_depot` — Rainline Depot

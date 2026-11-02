@@ -45,7 +45,7 @@
 | `npc_street_informant` | Wren (Street Informant) | npc | 6 | P1 | procedural | swap-ready |
 | `npc_black_market_trader` | Kestrel (Black-Market Trader) | npc | 6 | P0 | procedural | swap-ready |
 | `npc_temporal_researcher` | Dr. Vesper (Temporal Researcher) | npc | 6 | P1 | procedural | swap-ready |
-| `npc_desert_man` | Desert Man (Rainline Wanderer) | npc | 6 | P0 | spec-only | needs-engine-work |
+| `npc_desert_man` | Desert Man (Rainline Wanderer) | npc | 6 | P0 | procedural | swap-ready |
 | `npc_null_echo` | Null Echo (Erased Survivor) | npc | 6 | P2 | procedural | swap-ready |
 
 ## Pack 04 — Environment

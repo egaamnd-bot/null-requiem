@@ -430,16 +430,8 @@ export class ProjectileViews {
  * Renders a single NPC (zero / mira / terminal).
  * Gentle idle float; a pulsing talk-indicator dot appears when the NPC is active.
  */
-/** NPC sprite kinds that come from the asset manifest (the first three are legacy hand-drawn textures). */
-export const NPC_ASSET: Readonly<Record<string, string>> = {
-  mechanic: 'npc_station_mechanic',
-  medic: 'npc_underground_medic',
-  officer: 'npc_former_officer',
-  trader: 'npc_black_market_trader',
-  informant: 'npc_street_informant',
-  researcher: 'npc_temporal_researcher',
-  echo: 'npc_null_echo',
-};
+export { NPC_ASSET } from '../assets/assetMap';
+import { NPC_ASSET } from '../assets/assetMap';
 
 export class NpcView {
   private readonly asset: AssetSprite | null;

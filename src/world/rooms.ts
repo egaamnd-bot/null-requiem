@@ -256,6 +256,7 @@ const ALLEY: RoomDef = {
   ],
   entries: { east: { col: 60, row: 19 }, undercroft: { col: 3, row: 19 } },
   spawns: [
+    { kind: 'npc', npc: 'desert-man', col: 7, row: 19 },
     { kind: 'npc', npc: 'zero', col: 20, row: 19 },
     { kind: 'enemy', type: 'streetScavenger', col: 50, row: 19 },
     { kind: 'pickup', id: 'alley:cache', pickup: 'scrap', amount: 15, col: 58, row: 19 },
