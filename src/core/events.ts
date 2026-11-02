@@ -4,10 +4,10 @@
  */
 
 export type AttackDirection = 'side' | 'up' | 'down';
-export type Ability = 'backtrace' | 'glitch-strike';
+export type Ability = 'backtrace' | 'glitch-strike' | 'air-jump';
 
 export type GameEvent =
-  | { type: 'playerJump'; x: number; y: number }
+  | { type: 'playerJump'; x: number; y: number; air?: boolean }
   | { type: 'playerLand'; x: number; y: number; heavy: boolean }
   | { type: 'playerDash'; x: number; y: number; facing: number }
   | { type: 'playerAttack'; dir: AttackDirection }

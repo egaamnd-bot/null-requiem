@@ -178,6 +178,8 @@ export const BOSS = {
 export const BACKTRACE = {
   /** How far behind the player the echo trails, in seconds. */
   window: 4.0,
+  /** Largest window any upgrade can reach; sizes the history buffer. */
+  maxWindow: 6.0,
   cooldown: 6.0,
   /** Minimum recorded history before it can be used (avoids a useless zero-distance snap). */
   minHistory: 0.25,

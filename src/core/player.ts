@@ -12,6 +12,8 @@ export type AttackPhase = 'none' | 'startup' | 'active' | 'recovery';
 export interface PlayerAbilities {
   dash: boolean;
   glitchStrike: boolean;
+  /** Kinetic Coil: one extra jump while airborne. */
+  airJump?: boolean;
 }
 
 /**
@@ -28,6 +30,7 @@ export class Player {
   private jumpBuffer = 0;
   private jumping = false;
   private dropTimer = 0;
+  private airJumpUsed = false;
   airTime = 0;
 
   // Dash
@@ -111,6 +114,7 @@ export class Player {
     this.jumpBuffer = 0;
     this.jumping = false;
     this.dropTimer = 0;
+    this.airJumpUsed = false;
     this.airTime = 0;
     this.dashTimer = 0;
     this.dashCooldown = 0;
@@ -212,7 +216,7 @@ export class Player {
       if (this.dashTimer <= 0) this.endDash();
     } else {
       this.updateHorizontal(input, control, dt);
-      this.updateJump(input, control, grid, emit);
+      this.updateJump(input, control, grid, emit, abilities);
       const gravity = PLAYER_GRAVITY * (b.vy > 0 ? PLAYER.fallGravityMultiplier : 1);
       b.vy = Math.min(b.vy + gravity * dt, PLAYER.maxFallSpeed);
     }
@@ -228,6 +232,7 @@ export class Player {
       this.airTime = 0;
       this.coyote = PLAYER.coyoteTime;
       this.dashAvailable = true;
+      this.airJumpUsed = false;
       this.jumping = false;
     } else {
       this.airTime += dt;
@@ -260,7 +265,7 @@ export class Player {
     b.vx = approach(b.vx, target, rate * dt);
   }
 
-  private updateJump(input: InputFrame, control: boolean, grid: TileGrid, emit: Emit): void {
+  private updateJump(input: InputFrame, control: boolean, grid: TileGrid, emit: Emit, abilities: PlayerAbilities): void {
     const b = this.body;
     if (control && this.jumpBuffer > 0) {
       if (input.moveY === 1 && b.onGround && this.standingOnlyOnOneWay(grid)) {
@@ -274,6 +279,13 @@ export class Player {
         this.coyote = 0;
         this.jumpBuffer = 0;
         emit({ type: 'playerJump', x: this.feetX, y: this.feetY });
+      } else if (abilities.airJump && !this.airJumpUsed) {
+        // Kinetic Coil: a single mid-air re-jump, slightly weaker than the ground jump.
+        b.vy = -PLAYER_JUMP_VELOCITY * 0.92;
+        this.jumping = true;
+        this.airJumpUsed = true;
+        this.jumpBuffer = 0;
+        emit({ type: 'playerJump', x: this.feetX, y: this.feetY, air: true });
       }
     }
     if (this.jumping && !input.jumpHeld && b.vy < 0) {
@@ -371,6 +383,7 @@ export class Player {
       b.vy = -COMBAT.attack.pogoVelocity;
       this.jumping = false;
       this.dashAvailable = true;
+      this.airJumpUsed = false;
       emit({ type: 'playerPogo', x: this.centerX, y: this.feetY });
     } else if (this.attackDir === 'side') {
       b.vx = -this.facing * COMBAT.attack.recoil;
