@@ -2,27 +2,19 @@
 
 Principle: **don't add breadth until the current slice is stable and enjoyable.** Each milestone ends with a playtest and a go/no-go on feel.
 
-## Current milestone — 1.5: playable Android test build (in progress)
+## Current: Full-production milestone (M0–M12) — branch `milestone/full-production`, PR open, not merged
 
-Goal: the Producer installs the APK, taps Start, enters the game and controls the character with the touchscreen. No larger
-content milestone starts until this is accepted.
-
-Completed (automated evidence in `QA_STATUS.md`; device-unverified):
-- Android debug APK pipeline (PR #3), landscape lock, APK artifact with 14-day retention.
-- Tappable Title / Pause / Game-over / Victory menus (keyboard and gamepad preserved).
-- Rebuilt on-screen controls: d-pad, JMP / ATK / DSH / REW (Backtrace) / TLK, pause button; multi-touch; no stuck buttons.
-- NPC interact wired end to end (touch TLK and keyboard F/E).
-- Regression tests (layout, tracker, tap guard, Android config) and a Playwright touch smoke test.
-- Handover system: `AGENTS.md`, `docs/AI_HANDOVER.md`, `DEVLOG.md`, `QA_STATUS.md`.
+Done on the branch (automated evidence in `QA_STATUS.md`): viewport + floating joystick (M1), 19-room interconnected world (M2),
+movement/combat (M3), enemy roster (M4), boss framework + 4 bosses (M5), NPCs/dialogue/quests/story (M6), progression/upgrades/
+collectibles/save v2 (M7), environmental puzzles (M8), UI/audio/feel (M9), asset manifest + placeholders + docs (M10), campaign
+docs (M11), CI + APK (M12).
 
 Pending:
-- Implement producer feedback on branch `feature/floating-touch-and-visual-pass`: floating joystick, high-DPI rendering, and illustrated neon-city backdrop.
-- CI validation and fresh APK build for the new branch head.
-- Producer device test: joystick feel, text readability, background art and actual Android rendering.
-- A faithful match to the supplied reference still needs a dedicated hand-painted Courier/enemy/NPC sprite pack; current actors and terrain remain procedural placeholders.
-- Fix any device findings; then merge PR #3 (Producer decision).
+- Producer device playtest (feel, safe areas, performance, difficulty, length).
+- Final art (Gemini packs 01–07) and engine hooks for tilesets/backgrounds/extra Courier animations/audio files.
+- Balance pass from real play data.
 
-Blockers / risks: see `AI_HANDOVER.md`. Acceptance: all device-checklist rows pass on a real phone and CI is green on the merged commit.
+Next candidates (Producer to choose): content polish pass, accessibility options, localisation, controller testing, Steam/Play packaging.
 
 ## Milestone 1 — Vertical slice (done, merged in PR #2)
 - Player controller and Backtrace

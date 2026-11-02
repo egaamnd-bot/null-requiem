@@ -76,3 +76,29 @@ Changes implemented:
 - `tests/touchTracker.test.ts`, `tests/touchLayout.test.ts`: added floating joystick regression coverage. `e2e/touch.spec.ts` now begins movement touches at a chosen lower-left origin and drags to steer, matching the new control behaviour.
 
 Not yet verified at handover: CI for final head, Android visual rendering, actual joystick feel/readability on phone. The Courier, enemies, NPCs and terrain still use procedural placeholder art; a dedicated sprite pack is required for a faithful match to the reference. Do not overstate the art pass.
+
+---
+
+## Session 2026-11-02 — Full production milestone (M0–M12) (Claude, Sonnet 5.5)
+
+Branch `milestone/full-production` (from the visual/touch pass branch). Producer directive: execute milestones 0–12 in order with
+placeholder art and stable asset ids.
+
+What was built
+- M1: dynamic logical viewport (height 270, width 480–648), safe-area insets, VIEW_CHANGED; joystick over the whole left half with a
+  following anchor; settings (volume, control scale/opacity, shake, flash, FPS).
+- M2/M6/M8: 19 rooms in 6 regions from an ASCII RoomBuilder DSL + spawns + interactables; physics-based reachability validator
+  that runs the real Player; ability gating proven (towers need Kinetic Coil); NPC registry, dialogue graph, 16 quests.
+- M3/M4/M5: air jump, Glitch Strike charge, Backtrace upgrades; Street Scavenger, Heavy Enforcer, Phase Stalker, Sentry Turret,
+  Null Echo + elites; `PatternBoss` framework; KILN-7, THE NULL (telefrag) alongside BULWARK-9 and PANOPTIX-0.
+- M7: progression save v2 with v1 migration; scrap economy; four upgrade ladders; vendors; records and cells.
+- M9: tabbed MenuScene, dialogue panel, HUD extras, procedural music per region/boss/ending, SFX cues, slide ending.
+- M10: asset manifest (stable ids, texture keys, sheet planner), procedural placeholders at 2x, final-art loader
+  (`public/assets/final/manifest.json`), generated Gemini spec/manifest/world map docs.
+- M12: CI triggers for `milestone/**`.
+
+Notable fixes: manifest `def()` dropped the `audio` field (found by the new manifest test); legacy actor views now normalise
+scale for replaced textures; e2e menu coordinates updated for the new title/pause layouts (intentional, documented).
+
+Not done / limits: final-art hooks for tilesets/backgrounds, extra Courier animations and audio file loading are spec-only
+(`needs-engine-work`). No physical-device testing.

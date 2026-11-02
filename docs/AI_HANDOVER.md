@@ -16,27 +16,25 @@ docs, not executed; **[unverified]** = not checked.
 - Stack: Phaser 4.2.1, TypeScript 5.9, Vite 8, Vitest 5 (unit), Playwright 1.56.1 (browser smoke), Capacitor 7.4.3 (Android
   wrapper, installed only inside the Android workflow with `--no-save`). Node 22.12+.
 
-## Current verified state
+## Current state (2026-11-02) — branch `milestone/full-production`
 
-- Current milestone: **Milestone 1.5 — playable Android test build** (touch input fix). Milestone 1 (vertical slice) is merged.
-- `main`: `4cad5d6` (merge of PR #2, vertical slice) [verified via `git log` on the fresh clone].
-- Active branch: `chore/android-debug-apk-pipeline` = PR #3 "Add Android debug APK build pipeline" (open). Last code commit
-  built and verified in CI: `31f1ce477fa9450b7d2257b637dc3fbffb9d57c7` (green; APK artifact
-  `null-requiem-android-debug-31f1ce477fa9450b7d2257b637dc3fbffb9d57c7`, run https://github.com/egaamnd-bot/null-requiem/actions/runs/40583546432)
-  [verified via the Actions API]. A docs-only commit sits on top; run `git log` for the real HEAD and check its CI run.
-  Details: **QA_STATUS.md → "Latest CI evidence"**.
-- Note: the Task-27 commit `fe97104` is the parent of `1bb6878`; both are already in `main` [verified]. Older prompts list them in
-  the opposite order.
-- Working (automated evidence only, see QA_STATUS): simulation, three rooms, enemies, miniboss, Backtrace, save/continue; title,
-  pause, game-over and victory menus are now tappable; on-screen controls (d-pad, JMP/ATK/DSH/REW/TLK, pause button) with
-  multi-touch; NPC interact works from keyboard F/E and the touch TLK button.
-- Not verified on a physical phone: **everything touch-related** (the Producer has not yet tested the new APK) [unverified].
+- Work branch: `milestone/full-production` (PR into `main`, **not merged**; Producer decides). `main` is untouched.
+- Content: 19 rooms in 6 regions, 8 enemy types (+elites), 4 bosses (BULWARK-9, KILN-7, PANOPTIX-0, THE NULL) on a reusable
+  `PatternBoss` framework, 16 quests, dialogue graph engine, vendors/upgrades, collectibles, progression save v2 (v1 migrates),
+  environmental interaction (plates, echo plates, doors, platforms, emitters, power nodes), tabbed menu (map/journal/gear/
+  settings/vendor), settings, procedural music + SFX, slide ending. Playable start to finish by design; the full path is
+  exercised headlessly by `tests/campaignPlay.test.ts` and reachability by `tests/campaign.reach.test.ts`.
+- Viewport: dynamic logical width (480–648) at fixed height 270, safe-area aware; joystick zone is the whole left half.
+- Assets: every visual has a stable id in `src/assets/manifest*.ts` (placeholders now). Generated docs: `npm run docs:assets`.
+- **Not verified on a physical phone**: touch feel, safe areas on real notches, performance, audio, 60 fps on mid-range
+  Android [unverified]. See `docs/QA_STATUS.md` for CI evidence.
 
 ## Architecture map
 
 - `src/core/` engine-agnostic fixed-step (120 Hz) simulation, no Phaser imports (`world.ts`, `player.ts`, `backtrace.ts`,
   `input.ts` = `HeldInput` + `InputLatch`, `npc.ts`, `flow.ts`).
-- `src/scenes/` Boot, Title, Game, UI (HUD + pause menu + game-over), Victory, MobileControls (touch overlay), `session.ts`.
+- `src/scenes/` Boot, Title, Game, UI (HUD, dialogue panel, pause, game-over), Menu (tabbed overlay), Victory (slides), MobileControls, `session.ts`.
+- `src/world/` room data (`rooms/*.ts` via the `RoomBuilder` DSL), NPCs, dialogues, quests, items, regions, `reach.ts` (physics reachability validator). `src/assets/` manifest + sheet planner. `src/audio/` procedural music/SFX. `src/ui/menuModel.ts` pure menu view-models.
 - **Input** (`src/input/`):
   - `InputManager.ts` keyboard + gamepad (+ virtual buttons OR'd in `held()`; virtual `interact` feeds `justPressed('interact')`).
   - `virtualButtons.ts` shared mutable virtual state, `mergeHeld`, `clearVirtualButtons`.
@@ -83,17 +81,11 @@ docs, not executed; **[unverified]** = not checked.
 
 ## Next action
 
-Producer feedback arrived after the prior touch-fix APK:
-1. The fixed-position left movement pad feels awkward. It has now been changed on branch `feature/floating-touch-and-visual-pass` to a floating joystick: touch anywhere in the lower-left movement zone to anchor it under the thumb, then drag to steer. Automated regression tests cover touch-down anchoring, directions, release, and multi-touch.
-2. The game looks low-resolution. The renderer no longer forces pixel-art mode or nearest-neighbour canvas scaling; text retains high-resolution text textures and the new backdrop/Courier art uses 2x source textures.
-3. The producer's visual target is the supplied reference image: vivid purple/magenta atmospheric city, luminous cyan/green details, layered industrial bridges, painterly action-platformer presentation. Current actors/terrain are still procedural placeholder sprites; the illustrated multi-layer skyline/bridge backdrop and high-detail vector-rendered Courier sprite are implemented; CI and device review are still required. A complete hand-painted character/enemy/NPC sprite pack is still needed for a faithful match.
-
-Next:
-- Inspect CI on the feature branch and fix any typecheck/test/build failures.
-- Verify the backdrop texture scales to the full viewport and performs acceptably on Android.
-- Produce a fresh APK from the final head.
-- Producer must test joystick feel, readability, and visual direction on the actual phone. Do not claim device verification without feedback.
-- Do not merge or start new content until this pass is reviewed.
+1. Producer: install the APK from the latest green run of this branch and follow `docs/PLAYTEST_CHECKLIST.md` on the phone.
+2. Fix device findings; then Producer decides whether to merge the PR.
+3. Hand `docs/GEMINI_ASSET_SPEC.md` packs 01–07 to Gemini; integrate via `docs/ASSET_INTEGRATION_GUIDE.md`.
+4. Known engine gaps (documented, not done): final-art hooks for tilesets/backgrounds and extra Courier animations
+   (`integration: needs-engine-work` in the manifest); loading delivered audio files.
 
 ## Handover verification
 
@@ -103,11 +95,3 @@ Next:
   built-APK landscape check, artifact upload all success. See QA_STATUS for URLs.
 - Explicitly unverified: all physical-device behaviour (touch feel, gamepad, audio on Android, performance), the immersive-mode/cutout
   presentation on real hardware, and per-test Playwright counts (retries=1 in CI).
-
-
-## Successor addendum — visual and touch pass (2026-10-28)
-
-- Producer requested a floating movement joystick, clearer rendering, and a visual direction closer to the supplied colorful purple/cyan action-platformer reference.
-- Branch: `feature/floating-touch-and-visual-pass`, based on PR #3 head `983e4287786a23308c73aa930b88a9ffe1c2c443`.
-- Changes: floating joystick state/layout; smooth antialiased canvas scaling and higher-detail artwork; procedural illustrated purple neon-city skyline and curved industrial bridge layers; regression tests.
-- This is an implementation in progress until CI verifies the current head and the Producer tests the APK. The procedural character/enemy art is still not a replacement for a proper illustrated sprite pack.

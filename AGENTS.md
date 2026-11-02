@@ -22,4 +22,5 @@ inferred or unverified. Never claim something was pushed, tested or device-verif
 - Add a regression test with every bug fix when feasible.
 - Do not put credentials, tokens or `.env` contents in the repo or in docs.
 - Physical-device results exist only if the Producer reports them; automated checks are not device tests.
+- Generated docs (`GEMINI_ASSET_SPEC`, `ASSET_MANIFEST`, `WORLD_MAP`) come from code: run `npm run docs:assets` after changing the asset manifest or rooms; a test fails when they are stale.
 - Commands: `npm run typecheck`, `npm test`, `npm run build`, `npm run test:e2e` (needs `npx playwright install chromium`).
