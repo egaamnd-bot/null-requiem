@@ -2,6 +2,14 @@
 
 Principle: **don't add breadth until the current slice is stable and enjoyable.** Each milestone ends with a playtest and a go/no-go on feel.
 
+## Current: Art production foundation — branch `feature/render-foundation` (PR open, not merged)
+
+Done: render scale R0, world-size independence R1, painted backgrounds/tileset/foreground/props (R2–R5), Courier animations (R6), Desert Man (R7),
+multi-frame effects (R8), asset assembly/validation CLI, corrected manifest, Gemini Pack 01 brief (all 38 assets drop-in).
+
+Next (Producer-gated): Gemini Pack 01 production and intake; phone check of Render quality; then Packs 02–07 (other regions, bosses, UI, audio).
+Open engineering items: audio file loading, portraits slot, projectile frame animation, other regions' props, inner-corner tiles.
+
 ## Current: Full-production milestone (M0–M12) — branch `milestone/full-production`, PR open, not merged
 
 Done on the branch (automated evidence in `QA_STATUS.md`): viewport + floating joystick (M1), 19-room interconnected world (M2),

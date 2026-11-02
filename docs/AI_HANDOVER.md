@@ -16,23 +16,18 @@ docs, not executed; **[unverified]** = not checked.
 - Stack: Phaser 4.2.1, TypeScript 5.9, Vite 8, Vitest 5 (unit), Playwright 1.56.1 (browser smoke), Capacitor 7.4.3 (Android
   wrapper, installed only inside the Android workflow with `--no-save`). Node 22.12+.
 
-## Current state (2026-11-02) — branch `milestone/full-production`
+## Current state (2026-11-02, evening) — branch `feature/render-foundation`
 
-- Work branch: `milestone/full-production` (PR into `main`, **not merged**; Producer decides). `main` is untouched.
-- Content: 19 rooms in 6 regions, 7 enemy types (+elites), 4 bosses (BULWARK-9, KILN-7, PANOPTIX-0, THE NULL) on a reusable
-  `PatternBoss` framework, 16 quests, dialogue graph engine, vendors/upgrades, collectibles, progression save v2 (v1 migrates),
-  environmental interaction (plates, echo plates, doors, platforms, emitters, power nodes), tabbed menu (map/journal/gear/
-  settings/vendor), settings, procedural music + SFX, slide ending. Playable start to finish by design; the full path is
-  exercised headlessly by `tests/campaignPlay.test.ts` and reachability by `tests/campaign.reach.test.ts`.
-- Viewport: dynamic logical width (480–648) at fixed height 270, safe-area aware; joystick zone is the whole left half.
-- Assets: every visual has a stable id in `src/assets/manifest*.ts` (placeholders now). Generated docs: `npm run docs:assets`.
-- **Not verified on a physical phone**: touch feel, safe areas on real notches, performance, audio, 60 fps on mid-range
-  Android [unverified]. See `docs/QA_STATUS.md` for CI evidence.
+- Stack of work: `main` ← `milestone/full-production` (PR #4, device-playtested OK by the Producer) ← **`feature/render-foundation`** (this PR; art-production foundation). Not merged; the Producer decides.
+- Done on this branch: Desert Man NPC (independent, wired to main-1), **R0** render scale (canvas = logical × K; Settings → Render quality; FPS guard), **R1** world-size independence (`applyWorldSize`/`planWorldSize`), **R2–R8** painted backgrounds, chunked auto-tiled terrain, foreground strips, props, Courier one-shot animations, multi-frame FX, and the **asset assembly/validation CLI** (`npm run assets:build`). Manifest sizes/keys were corrected where they disagreed with the game.
+- The game is technically ready for Gemini Pack 01: read `docs/GEMINI_PACK_01_BRIEF.md`. All 38 pack assets are drop-in.
+- **Not verified on a phone:** sharpness and frame rate at K = 2/3/4 with painted art; the benchmark so far is a software renderer only.
 
 ## Architecture map
 
 - `src/core/` engine-agnostic fixed-step (120 Hz) simulation, no Phaser imports (`world.ts`, `player.ts`, `backtrace.ts`,
   `input.ts` = `HeldInput` + `InputLatch`, `npc.ts`, `flow.ts`).
+- `src/assets/` manifest + `sheet.ts` (planSheet/planWorldSize) + `validate.ts` (pure delivery validation) + `autotile.ts`; `tools/assets/build.ts` CLI. `src/core/renderScale.ts` + `src/render/renderScaleRuntime.ts` (R0). `src/render/{fxSprites,courierAnim,tileset}.ts`.
 - `src/scenes/` Boot, Title, Game, UI (HUD, dialogue panel, pause, game-over), Menu (tabbed overlay), Victory (slides), MobileControls, `session.ts`.
 - `src/world/` room data (`rooms/*.ts` via the `RoomBuilder` DSL), NPCs, dialogues, quests, items, regions, `reach.ts` (physics reachability validator). `src/assets/` manifest + sheet planner. `src/audio/` procedural music/SFX. `src/ui/menuModel.ts` pure menu view-models.
 - **Input** (`src/input/`):
@@ -81,11 +76,9 @@ docs, not executed; **[unverified]** = not checked.
 
 ## Next action
 
-1. Producer: install the APK from the latest green run of this branch and follow `docs/PLAYTEST_CHECKLIST.md` on the phone.
-2. Fix device findings; then Producer decides whether to merge the PR.
-3. Hand `docs/GEMINI_ASSET_SPEC.md` packs 01–07 to Gemini; integrate via `docs/ASSET_INTEGRATION_GUIDE.md`.
-4. Known engine gaps (documented, not done): final-art hooks for tilesets/backgrounds and extra Courier animations
-   (`integration: needs-engine-work` in the manifest); loading delivered audio files.
+1. Producer: install the APK of the latest green run of `feature/render-foundation`; compare Settings → Render quality (Low / Balanced / High / Max) for sharpness, FPS and heat; check the Desert Man conversation.
+2. Start Gemini Pack 01 with the style-anchor step in the brief; run `npm run assets:build` on every delivery and fix what `report.md` rejects.
+3. Later (not started): audio file loading, portraits, projectile frame animation, props/tilesets for the other regions, inner-corner tiles.
 
 ## Handover verification
 
