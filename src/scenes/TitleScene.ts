@@ -8,6 +8,7 @@ import { hasTouchScreen } from './MobileControlsScene';
 import { css, PALETTE, UI_FONT, UI_MONO } from '../render/palette';
 import { TEX } from '../render/textures';
 import { SCENES, type Services } from './session';
+import { MENU_SCENE } from './MenuScene';
 
 type MenuItem = { label: string; action: () => void };
 
@@ -39,6 +40,7 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.services.music.setTheme('title');
     const { width: W, height: H } = view;
     const onView = () => {
       if (!this.starting) this.scene.restart({ services: this.services });
@@ -68,7 +70,7 @@ export class TitleScene extends Phaser.Scene {
       .setLetterSpacing(7)
       .setShadow(2, 0, css(PALETTE.magenta), 0, false, true);
     this.add
-      .text(W / 2, 138, '// vertical slice', { fontFamily: UI_MONO, fontSize: '10px', color: css(PALETTE.cyan), resolution: 2 })
+      .text(W / 2, 138, '// the courier remembers', { fontFamily: UI_MONO, fontSize: '10px', color: css(PALETTE.cyan), resolution: 2 })
       .setOrigin(0.5);
 
     const save = loadProgression(this.services.store);
@@ -84,10 +86,16 @@ export class TitleScene extends Phaser.Scene {
     } else {
       this.items.push({ label: 'Start', action: () => this.begin(new Progression()) });
     }
+    this.items.push({
+      label: 'Settings',
+      action: () => {
+        this.scene.launch(MENU_SCENE, { services: this.services, tab: 'settings', onClose: () => this.scene.stop(MENU_SCENE) });
+      },
+    });
     const ITEM_W = 190;
-    const ITEM_H = 28;
-    const FIRST_Y = 176;
-    const STEP = 34;
+    const ITEM_H = 26;
+    const FIRST_Y = 162;
+    const STEP = 30;
     this.items.forEach((item, i) => {
       const y = FIRST_Y + i * STEP;
       this.frames.push(this.add.rectangle(W / 2, y, ITEM_W, ITEM_H, PALETTE.ink, 0.55).setStrokeStyle(1, PALETTE.steel, 0.6));
@@ -102,7 +110,7 @@ export class TitleScene extends Phaser.Scene {
           y,
           width: ITEM_W,
           height: ITEM_H + 4,
-          enabled: () => !this.starting,
+          enabled: () => !this.starting && !this.scene.isActive(MENU_SCENE),
           onFocus: () => {
             if (this.index !== i) {
               this.index = i;
@@ -125,7 +133,7 @@ export class TitleScene extends Phaser.Scene {
       ? 'Tap an option to begin\nOn-screen controls appear in game'
       : 'Move  A/D or Left/Right    Jump  Space/Z    Strike  J/X    Dash  K/C/Shift    Backtrace  L/V\nAim strikes with W/S or Up/Down    Talk  F/E    Pause  Esc/P    Mute  M    Gamepad supported';
     this.add
-      .text(W / 2, H - 22, hint, { fontFamily: UI_MONO, fontSize: '8px', color: css(PALETTE.steel), align: 'center', lineSpacing: 4, resolution: 2 })
+      .text(W / 2, H - 18, hint, { fontFamily: UI_MONO, fontSize: '8px', color: css(PALETTE.steel), align: 'center', lineSpacing: 4, resolution: 2 })
       .setOrigin(0.5);
 
     this.controls = new InputManager(this);
@@ -164,7 +172,7 @@ export class TitleScene extends Phaser.Scene {
     this.emblem.setScale(1 + Math.sin(time / 900) * 0.04).setAlpha(0.85 + Math.sin(time / 600) * 0.1);
     const inp = this.controls;
     inp.update();
-    if (this.starting) return;
+    if (this.starting || this.scene.isActive(MENU_SCENE)) return;
     if (inp.justPressed('mute')) {
       this.services.sfx.unlock();
       this.services.sfx.toggleMute();
