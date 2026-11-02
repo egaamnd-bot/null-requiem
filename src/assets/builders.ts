@@ -33,6 +33,7 @@ export interface Spec {
   shape?: PlaceholderShape;
   colors?: readonly [number, number, number];
   keys?: string[];
+  audio?: AssetDef['audio'];
   note?: string;
 }
 
@@ -60,6 +61,7 @@ export function def(s: Spec): AssetDef {
     ...(s.shape ? { shape: s.shape } : {}),
     ...(s.colors ? { colors: s.colors } : {}),
     textureKeys: keys,
+    ...(s.audio ? { audio: s.audio } : {}),
     ...(s.note ? { note: s.note } : {}),
   };
 }

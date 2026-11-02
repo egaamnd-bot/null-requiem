@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "docs:assets": "UPDATE_ASSET_DOCS=1 vitest run tests/docs.test.ts"
   },
   "dependencies": {
     "phaser": "4.2.1"

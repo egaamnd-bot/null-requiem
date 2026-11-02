@@ -11,7 +11,7 @@ import { PALETTE } from './palette';
 import { DEPTH } from './RoomView';
 import type { NpcEntity } from '../core/npc';
 import type { PanoptixUnit } from '../core/enemies/panoptixUnit';
-import { AssetSprite } from './assetRuntime';
+import { AssetSprite, texScale } from './assetRuntime';
 import { ENEMY_ASSET, ManifestEnemyView } from './CampaignViews';
 import { houndKey, playerKey, TEX, bulwarkKey, droneKey, npcKey, panoptixKey, type PlayerFrame, type PanoptixFrame } from './textures';
 
@@ -68,14 +68,16 @@ export class PlayerView {
       this.runClock += dt * (Math.abs(b.vx) / 150) * 10;
       frame = (['run0', 'run1', 'run2', 'run3'] as const)[Math.floor(this.runClock) % 4] ?? 'run0';
     } else frame = Math.floor(time / 450) % 2 === 0 ? 'idle0' : 'idle1';
-    this.sprite.setTexture(playerKey(frame));
+    const pkey = playerKey(frame);
+    this.sprite.setTexture(pkey);
+    const k = texScale(this.sprite.scene, pkey);
 
     // Squash and stretch (decays exponentially, so it's frame-rate independent).
     this.squash *= Math.exp(-12 * dt);
     const s = this.squash;
     const sx = 1 + s * 0.18;
     const sy = 1 - s * 0.18;
-    this.sprite.setScale(p.isDashing ? 0.84 : 0.65 * sx, p.isDashing ? 0.55 : 0.65 * sy);
+    this.sprite.setScale((p.isDashing ? 0.84 : 0.65 * sx) * k, (p.isDashing ? 0.55 : 0.65 * sy) * k);
 
     // Invulnerability blink, death fade.
     const inv = p.health.isInvulnerable && !p.dead;
@@ -195,7 +197,7 @@ class HoundView implements EnemyView {
       shake = Math.sin(time / 18) * 1;
     } else if (g.state === 'lunge') key = houndKey('lunge');
     else if (g.state === 'recover') key = houndKey('recover');
-    this.sprite.setTexture(key).setPosition(fx + shake, fy).setFlipX(g.facing < 0);
+    this.sprite.setTexture(key).setScale(texScale(this.sprite.scene, key)).setPosition(fx + shake, fy).setFlipX(g.facing < 0);
     flash(this.sprite, g.flash > 0);
     const glowA = g.state === 'windup' ? 0.75 : g.state === 'recover' ? 0.12 : 0.35;
     this.glow.setPosition(fx, fy - 4).setAlpha(glowA).setScale(g.state === 'windup' ? 0.9 : 0.6);
@@ -228,7 +230,7 @@ class DroneView implements EnemyView {
     const cy = Math.round(pos.y + b.h / 2);
     const charging = w.state === 'windup';
     const key = charging ? droneKey('charge') : droneKey(Math.floor(time / 300) % 2 === 0 ? 'idle0' : 'idle1');
-    this.sprite.setTexture(key).setPosition(cx, cy + 4).setFlipX(w.facing < 0);
+    this.sprite.setTexture(key).setScale(texScale(this.sprite.scene, key)).setPosition(cx, cy + 4).setFlipX(w.facing < 0);
     flash(this.sprite, w.flash > 0);
     this.glow.setPosition(cx, cy);
     this.core.setPosition(cx, cy).setScale(0.25 + w.charge * 0.55).setAlpha(0.5 + w.charge * 0.5);
@@ -283,7 +285,7 @@ export class BossView {
       default:
         break;
     }
-    this.sprite.setTexture(key).setPosition(fx + shake, fy).setFlipX(boss.facing < 0);
+    this.sprite.setTexture(key).setScale(texScale(this.sprite.scene, key)).setPosition(fx + shake, fy).setFlipX(boss.facing < 0);
     flash(this.sprite, boss.flash > 0);
     const hot = boss.state.endsWith('Windup') ? 0.6 + boss.windupProgress * 0.4 : boss.state === 'stunned' || boss.state === 'dead' ? 0.1 : 0.4;
     this.glow.setPosition(fx, fy - 16).setAlpha(hot * (boss.phase === 2 ? 1.2 : 1)).setScale(boss.phase === 2 ? 1.3 : 1.05);
