@@ -48,7 +48,7 @@ function buildShaft(): RoomDef {
   b.ledge(3, 31, 10);
   b.ledge(4, 15, 23);
   b.ledge(30, 25, 7);
-  b.ledge(28, 12, 10);
+  b.ledge(28, 12, 10).catwalk(38, 12, 4);
   b.mark('K', 8, 14);
   b.mark('W', 20, 23);
   b.mark('W', 12, 19);
@@ -76,7 +76,7 @@ function buildShaft(): RoomDef {
       // Two moving platforms and a slow freight lift (an alternate route in both directions).
       { type: 'platform', id: 'shaft-p1', col: 14, row: 28, cols: 3, path: [{ col: 14, row: 28 }, { col: 26, row: 28 }], speed: 36, mode: 'pingpong', wait: 0.6 },
       { type: 'platform', id: 'shaft-v1', col: 27, row: 25, cols: 3, path: [{ col: 27, row: 25 }, { col: 27, row: 15 }], speed: 34, mode: 'pingpong', wait: 1 },
-      { type: 'platform', id: 'shaft-lift', col: 38, row: 34, cols: 3, path: [{ col: 38, row: 34 }, { col: 38, row: 12 }], speed: 44, mode: 'pingpong', wait: 2.5 },
+      { type: 'platform', id: 'shaft-lift', col: 38, row: 34, cols: 3, path: [{ col: 38, row: 34 }, { col: 38, row: 15 }], speed: 44, mode: 'pingpong', wait: 2.5 },
     ],
   };
 }
