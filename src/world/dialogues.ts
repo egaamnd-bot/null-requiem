@@ -72,3 +72,6 @@ export const FRAGMENT_LORE: Readonly<Record<string, string>> = {
   'undercroft:F:0': '[SHARD — Ghost Transmission]\n"The Archive is at sub-level 4.\nCode: your birthday. You\'ll know it when you see it."',
   'null_archive:F:0': '[SHARD — Your Own Memory]\n"I remember now. My name is—\nThe data is fragmenting.\nI am more than what they erased."',
 };
+
+/** Dialogue graphs by id (filled by the campaign content below). */
+export const DIALOGUES: Record<string, import('../core/dialogue').DialogueDef> = {};

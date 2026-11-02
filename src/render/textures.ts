@@ -63,7 +63,7 @@ export const bulwarkKey = (f: BulwarkFrame): string => `bulwark-${f}`;
 
 export const NPC_KINDS = ['zero', 'mira', 'terminal'] as const;
 export type NpcKind = (typeof NPC_KINDS)[number];
-export const npcKey = (kind: NpcKind): string => `npc-${kind}`;
+export const npcKey = (kind: string): string => `npc-${kind}`;
 
 export const PANOPTIX_FRAMES = ['idle', 'laser', 'stagger', 'dead'] as const;
 export type PanoptixFrame = (typeof PANOPTIX_FRAMES)[number];

@@ -14,6 +14,8 @@ export interface PlayerAbilities {
   glitchStrike: boolean;
   /** Kinetic Coil: one extra jump while airborne. */
   airJump?: boolean;
+  /** Signal Energy regained per second (Signal Siphon upgrade). */
+  signalRegen?: number;
 }
 
 /**
@@ -186,7 +188,7 @@ export class Player {
     // Regen signal energy passively
     if (!this.dead) {
       const prev = this.signalEnergy;
-      this.signalEnergy = Math.min(SIGNAL.max, this.signalEnergy + SIGNAL.regenRate * dt);
+      this.signalEnergy = Math.min(SIGNAL.max, this.signalEnergy + (abilities.signalRegen ?? SIGNAL.regenRate) * dt);
       if (Math.floor(this.signalEnergy) !== Math.floor(prev)) {
         emit({ type: 'signalChanged', value: this.signalEnergy, max: SIGNAL.max });
       }

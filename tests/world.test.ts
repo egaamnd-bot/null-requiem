@@ -16,7 +16,8 @@ describe('Room data', () => {
       const { grid, markers } = TileGrid.fromAscii(room.layout, TILE_SIZE);
 
       it('is at least as large as the view, so the camera never shows outside the level', () => {
-        expect(grid.widthPx).toBeGreaterThanOrEqual(VIEW.width);
+        // The widest supported phone view (see core/viewport.ts) is 2.4:1 of the fixed 270 px height.
+        expect(grid.widthPx).toBeGreaterThanOrEqual(Math.max(VIEW.width, Math.ceil(VIEW.height * 2.4)));
         expect(grid.heightPx).toBeGreaterThanOrEqual(VIEW.height);
       });
 
@@ -431,7 +432,7 @@ describe('Game flow', () => {
     expect(world.retry()).toBe(false); // must wait for the game-over prompt
   });
 
-  it('defeating BULWARK-9 seals then reopens the gate and leads to victory', () => {
+  it('defeating BULWARK-9 seals then reopens the gate and opens the way on (the campaign continues; only the final boss wins)', () => {
     const world = worldAt('precinct', 2, 15);
     const run = (frames: number, f: (i: number) => InputFrame = () => input()) => stepWorld(world, frames, f);
     world.player.health.grantInvulnerability(999);
@@ -454,7 +455,9 @@ describe('Game flow', () => {
     expect(world.progression.bossDefeated).toBe(true);
     expect(world.flow.state).toBe('playing');
     run(Math.ceil(BOSS.bulwarkUnit.victoryDelay / DT) + 2);
-    expect(world.flow.state).toBe('victory');
+    // Campaign change: BULWARK-9 is a miniboss now. The run continues and the defeat is persisted.
+    expect(world.flow.state).toBe('playing');
+    expect(world.progression.defeatedBosses.has('bulwark-9')).toBe(true);
   });
 
   it('dying to the boss resets the encounter on retry', () => {

@@ -63,6 +63,7 @@ export type GameEvent =
   | { type: 'dialogueClosed' }
   | { type: 'vendorOpened'; vendorId: string }
   | { type: 'gameCompleted' }
-  | { type: 'airJump'; x: number; y: number };
+  | { type: 'airJump'; x: number; y: number }
+  | { type: 'loreFound'; id: string; title: string; text: string; x: number; y: number };
 
 export type Emit = (event: GameEvent) => void;

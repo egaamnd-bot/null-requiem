@@ -11,8 +11,14 @@ export interface NpcDef {
   /** Pixel position of the NPC's feet. */
   feetX: number;
   feetY: number;
-  /** Sprite variant for rendering ('zero' | 'mira' | 'terminal'). */
-  kind: 'zero' | 'mira' | 'terminal';
+  /** Placeholder / final sprite key (see render/textures NPC_KINDS). */
+  kind: string;
+  /** Dialogue graph id. When set, conversations run through the dialogue engine instead of cycling `lines`. */
+  dialogueId?: string;
+  /** Speaker-facing description for the interaction prompt ("Talk", "Read", "Trade"). */
+  verb?: string;
+  /** Stable registry id, e.g. 'mechanic-halden'. */
+  npcId?: string;
 }
 
 export class NpcEntity {
@@ -21,7 +27,10 @@ export class NpcEntity {
   readonly lines: readonly string[];
   readonly feetX: number;
   readonly feetY: number;
-  readonly kind: NpcDef['kind'];
+  readonly kind: string;
+  readonly dialogueId: string | undefined;
+  readonly verb: string;
+  readonly npcId: string;
   /** Index of the next line to show. */
   private lineIndex = 0;
 
@@ -32,6 +41,9 @@ export class NpcEntity {
     this.feetX = def.feetX;
     this.feetY = def.feetY;
     this.kind = def.kind;
+    this.dialogueId = def.dialogueId;
+    this.verb = def.verb ?? (def.kind === 'terminal' ? 'Read' : 'Talk');
+    this.npcId = def.npcId ?? def.id;
   }
 
   get currentLine(): string {
