@@ -23,14 +23,14 @@ const ENV: AssetDef[] = REGIONS.flatMap((r) => {
       ...common, id: `env_${r.id}_bg_far`, name: `${r.name} — Far Background`, purpose: 'Slowest parallax layer (0.12x camera). Tiles horizontally.',
       w: 480, h: 270, anchor: { x: 0, y: 0 }, anims: { far: anim(1, 1, false) },
       description: `Far skyline/ceiling layer. ${r.mood} Low contrast, atmospheric perspective, no gameplay-readable detail, seamless left-right tile. Landscape 16:9 at 480x270 logical (deliver 1920x1080).`,
-      integration: 'swap-ready', note: 'Replaces the procedural far layer when `public/assets/final/env_<region>_bg_far.png` exists.',
+      integration: 'needs-engine-work', note: 'AUDIT: RoomView builds per-room textures `far-<roomId>` and never reads this key, so delivering the file does not replace the backdrop yet. See docs/GEMINI_PACK_01_BRIEF.md §7 (patch R2).',
       keys: [`env-${r.id}-bg-far`],
     }),
     def({
       ...common, id: `env_${r.id}_bg_mid`, name: `${r.name} — Mid Background`, purpose: 'Mid parallax layer (0.3x). Tiles horizontally. Larger structures.',
       w: 480, h: 270, anchor: { x: 0, y: 0 }, anims: { mid: anim(1, 1, false) },
       description: `Mid layer: larger structures and architecture with more contrast than the far layer. ${r.props}. Seamless left-right tile, transparent where the far layer should show through.`,
-      integration: 'swap-ready', note: 'Replaces the procedural mid layer when the file exists.', keys: [`env-${r.id}-bg-mid`],
+      integration: 'needs-engine-work', note: 'AUDIT: not read by RoomView yet (patch R2 in the Pack 01 brief).', keys: [`env-${r.id}-bg-mid`],
     }),
     def({
       ...common, id: `env_${r.id}_fg_silhouette`, name: `${r.name} — Foreground Silhouettes`, purpose: 'Strong dark foreground shapes drawn in front of the playfield (pipes, cables, railings) at the screen edges.',

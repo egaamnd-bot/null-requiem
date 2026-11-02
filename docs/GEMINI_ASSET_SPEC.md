@@ -18,7 +18,7 @@
 | --- | --- | ---: | ---: |
 | Pack 01 — Courier | Complete player sprite sheets, movement and combat animations, Backtrace animations, damage and death. | 11 | 29 |
 | Pack 02 — Core Enemies | Security Drone, Scrap Hound, Street Scavenger, Heavy Enforcer, Phase Stalker, Sentry Turret, Null Echo. | 7 | 75 |
-| Pack 03 — NPCs | All initial NPC characters with idle and interaction animations, and dialogue portraits. | 10 | 45 |
+| Pack 03 — NPCs | All initial NPC characters with idle and interaction animations, and dialogue portraits. | 11 | 51 |
 | Pack 04 — Environment | Rainline Alley, Transit Stacks, Precinct Vault: tilesets, backgrounds, props and interactive objects. | 28 | 173 |
 | Pack 05 — Environment Expansion | Neon Undercity, Industrial Core, Null Cathedral: tilesets, backgrounds, props. | 20 | 145 |
 | Pack 06 — Bosses and Effects | Boss sprite sheets, combat effects, Backtrace effects, environmental effects. | 20 | 144 |
@@ -368,6 +368,18 @@ All initial NPC characters with idle and interaction animations, and dialogue po
 - **Appears in:** Reactor Hall
 - **Delivery:** `npc_temporal_researcher.png`
 
+#### `npc_desert_man` — Desert Man (Rainline Wanderer)  [P0]
+
+- **Purpose:** Desert Man (Rainline Wanderer): dialogue NPC.
+- **Description:** A weathered wanderer from beyond the city walls in a sun-bleached sand-coloured robe and layered wraps over a dark rain-slicker, wide travel hood, a cracked amber visor pushed up on the forehead, a canteen and rolled blanket on the back. Out of place in the rain: dry-coloured, calm, unhurried.
+- **Frame size:** 24×32 logical px (deliver at 1×, 2× or 4×; integer multiples only)
+- **Sheet:** one row per animation, 4 columns × 2 rows = 96×64 px at 1×. Animations in row order: `idle` 4f @ 3fps loop; `talk` 2f @ 5fps loop
+- **Anchor:** 0.5, 1
+- **Hitbox (gameplay, for reference):** 12×22 at offset 6, 10
+- **Palette:** #2a2014 #c9a46a #ffb02e #3cf2ff
+- **Appears in:** Rainline Alley
+- **Delivery:** `npc_desert_man.png` — NEW id (Production Pack 01). Not placed in any room and has no NPC-registry entry yet: delivering art is safe; showing him needs a content hook (registry + dialogue), which the Producer has not requested.
+
 #### `npc_null_echo` — Null Echo (Erased Survivor)  [P2]
 
 - **Purpose:** Null Echo (Erased Survivor): dialogue NPC.
@@ -406,7 +418,7 @@ Rainline Alley, Transit Stacks, Precinct Vault: tilesets, backgrounds, props and
 - **Anchor:** 0, 0
 - **Palette:** #05060c #272c3e #8f9bbd #3cf2ff #1a0d26
 - **Appears in:** Rainline Alley, Rainline Depot, The Undercroft
-- **Delivery:** `env_rainline_bg_far.png` — Replaces the procedural far layer when `public/assets/final/env_<region>_bg_far.png` exists.
+- **Delivery:** `env_rainline_bg_far.png` — AUDIT: RoomView builds per-room textures `far-<roomId>` and never reads this key, so delivering the file does not replace the backdrop yet. See docs/GEMINI_PACK_01_BRIEF.md §7 (patch R2).
 
 #### `env_rainline_bg_mid` — Rainline Alley — Mid Background  [P1]
 
@@ -417,7 +429,7 @@ Rainline Alley, Transit Stacks, Precinct Vault: tilesets, backgrounds, props and
 - **Anchor:** 0, 0
 - **Palette:** #05060c #272c3e #8f9bbd #3cf2ff #1a0d26
 - **Appears in:** Rainline Alley, Rainline Depot, The Undercroft
-- **Delivery:** `env_rainline_bg_mid.png` — Replaces the procedural mid layer when the file exists.
+- **Delivery:** `env_rainline_bg_mid.png` — AUDIT: not read by RoomView yet (patch R2 in the Pack 01 brief).
 
 #### `env_rainline_fg_silhouette` — Rainline Alley — Foreground Silhouettes  [P1]
 
@@ -462,7 +474,7 @@ Rainline Alley, Transit Stacks, Precinct Vault: tilesets, backgrounds, props and
 - **Anchor:** 0, 0
 - **Palette:** #04060e #252a3a #9aa6c4 #ff3ea5 #0d1830
 - **Appears in:** Transit Stacks, Stacks Yard, The Stacks Shaft
-- **Delivery:** `env_transit_bg_far.png` — Replaces the procedural far layer when `public/assets/final/env_<region>_bg_far.png` exists.
+- **Delivery:** `env_transit_bg_far.png` — AUDIT: RoomView builds per-room textures `far-<roomId>` and never reads this key, so delivering the file does not replace the backdrop yet. See docs/GEMINI_PACK_01_BRIEF.md §7 (patch R2).
 
 #### `env_transit_bg_mid` — Transit Stacks — Mid Background  [P1]
 
@@ -473,7 +485,7 @@ Rainline Alley, Transit Stacks, Precinct Vault: tilesets, backgrounds, props and
 - **Anchor:** 0, 0
 - **Palette:** #04060e #252a3a #9aa6c4 #ff3ea5 #0d1830
 - **Appears in:** Transit Stacks, Stacks Yard, The Stacks Shaft
-- **Delivery:** `env_transit_bg_mid.png` — Replaces the procedural mid layer when the file exists.
+- **Delivery:** `env_transit_bg_mid.png` — AUDIT: not read by RoomView yet (patch R2 in the Pack 01 brief).
 
 #### `env_transit_fg_silhouette` — Transit Stacks — Foreground Silhouettes  [P1]
 
@@ -518,7 +530,7 @@ Rainline Alley, Transit Stacks, Precinct Vault: tilesets, backgrounds, props and
 - **Anchor:** 0, 0
 - **Palette:** #08050a #2c2a36 #a69e92 #ff3b4e #2a0a14
 - **Appears in:** Precinct Checkpoint, Holding Cells, Precinct Vault
-- **Delivery:** `env_precinct_bg_far.png` — Replaces the procedural far layer when `public/assets/final/env_<region>_bg_far.png` exists.
+- **Delivery:** `env_precinct_bg_far.png` — AUDIT: RoomView builds per-room textures `far-<roomId>` and never reads this key, so delivering the file does not replace the backdrop yet. See docs/GEMINI_PACK_01_BRIEF.md §7 (patch R2).
 
 #### `env_precinct_bg_mid` — Precinct Vault — Mid Background  [P1]
 
@@ -529,7 +541,7 @@ Rainline Alley, Transit Stacks, Precinct Vault: tilesets, backgrounds, props and
 - **Anchor:** 0, 0
 - **Palette:** #08050a #2c2a36 #a69e92 #ff3b4e #2a0a14
 - **Appears in:** Precinct Checkpoint, Holding Cells, Precinct Vault
-- **Delivery:** `env_precinct_bg_mid.png` — Replaces the procedural mid layer when the file exists.
+- **Delivery:** `env_precinct_bg_mid.png` — AUDIT: not read by RoomView yet (patch R2 in the Pack 01 brief).
 
 #### `env_precinct_fg_silhouette` — Precinct Vault — Foreground Silhouettes  [P1]
 
@@ -722,7 +734,7 @@ Neon Undercity, Industrial Core, Null Cathedral: tilesets, backgrounds, props.
 - **Anchor:** 0, 0
 - **Palette:** #0c0516 #2a2236 #b8a0d8 #ff3ea5 #4a1450
 - **Appears in:** Undercity Plaza, Derelict Arcade, The Leaning Towers
-- **Delivery:** `env_undercity_bg_far.png` — Replaces the procedural far layer when `public/assets/final/env_<region>_bg_far.png` exists.
+- **Delivery:** `env_undercity_bg_far.png` — AUDIT: RoomView builds per-room textures `far-<roomId>` and never reads this key, so delivering the file does not replace the backdrop yet. See docs/GEMINI_PACK_01_BRIEF.md §7 (patch R2).
 
 #### `env_undercity_bg_mid` — Neon Undercity — Mid Background  [P1]
 
@@ -733,7 +745,7 @@ Neon Undercity, Industrial Core, Null Cathedral: tilesets, backgrounds, props.
 - **Anchor:** 0, 0
 - **Palette:** #0c0516 #2a2236 #b8a0d8 #ff3ea5 #4a1450
 - **Appears in:** Undercity Plaza, Derelict Arcade, The Leaning Towers
-- **Delivery:** `env_undercity_bg_mid.png` — Replaces the procedural mid layer when the file exists.
+- **Delivery:** `env_undercity_bg_mid.png` — AUDIT: not read by RoomView yet (patch R2 in the Pack 01 brief).
 
 #### `env_undercity_fg_silhouette` — Neon Undercity — Foreground Silhouettes  [P1]
 
@@ -778,7 +790,7 @@ Neon Undercity, Industrial Core, Null Cathedral: tilesets, backgrounds, props.
 - **Anchor:** 0, 0
 - **Palette:** #100804 #2e2a2a #c99a6a #ff9f3e #4a1a0a
 - **Appears in:** The Pipeworks, The Foundry, Reactor Hall, The Kiln
-- **Delivery:** `env_industrial_bg_far.png` — Replaces the procedural far layer when `public/assets/final/env_<region>_bg_far.png` exists.
+- **Delivery:** `env_industrial_bg_far.png` — AUDIT: RoomView builds per-room textures `far-<roomId>` and never reads this key, so delivering the file does not replace the backdrop yet. See docs/GEMINI_PACK_01_BRIEF.md §7 (patch R2).
 
 #### `env_industrial_bg_mid` — Industrial Core — Mid Background  [P1]
 
@@ -789,7 +801,7 @@ Neon Undercity, Industrial Core, Null Cathedral: tilesets, backgrounds, props.
 - **Anchor:** 0, 0
 - **Palette:** #100804 #2e2a2a #c99a6a #ff9f3e #4a1a0a
 - **Appears in:** The Pipeworks, The Foundry, Reactor Hall, The Kiln
-- **Delivery:** `env_industrial_bg_mid.png` — Replaces the procedural mid layer when the file exists.
+- **Delivery:** `env_industrial_bg_mid.png` — AUDIT: not read by RoomView yet (patch R2 in the Pack 01 brief).
 
 #### `env_industrial_fg_silhouette` — Industrial Core — Foreground Silhouettes  [P1]
 
@@ -834,7 +846,7 @@ Neon Undercity, Industrial Core, Null Cathedral: tilesets, backgrounds, props.
 - **Anchor:** 0, 0
 - **Palette:** #06020e #1c1030 #b070ff #cc44ff #2a0a4a
 - **Appears in:** The Null Archive, The Nave, The Sanctum
-- **Delivery:** `env_cathedral_bg_far.png` — Replaces the procedural far layer when `public/assets/final/env_<region>_bg_far.png` exists.
+- **Delivery:** `env_cathedral_bg_far.png` — AUDIT: RoomView builds per-room textures `far-<roomId>` and never reads this key, so delivering the file does not replace the backdrop yet. See docs/GEMINI_PACK_01_BRIEF.md §7 (patch R2).
 
 #### `env_cathedral_bg_mid` — Null Cathedral — Mid Background  [P1]
 
@@ -845,7 +857,7 @@ Neon Undercity, Industrial Core, Null Cathedral: tilesets, backgrounds, props.
 - **Anchor:** 0, 0
 - **Palette:** #06020e #1c1030 #b070ff #cc44ff #2a0a4a
 - **Appears in:** The Null Archive, The Nave, The Sanctum
-- **Delivery:** `env_cathedral_bg_mid.png` — Replaces the procedural mid layer when the file exists.
+- **Delivery:** `env_cathedral_bg_mid.png` — AUDIT: not read by RoomView yet (patch R2 in the Pack 01 brief).
 
 #### `env_cathedral_fg_silhouette` — Null Cathedral — Foreground Silhouettes  [P1]
 
