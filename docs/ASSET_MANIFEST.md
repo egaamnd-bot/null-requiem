@@ -146,12 +146,12 @@
 | `ui_title_emblem` | Title Emblem | ui | 1 | P1 | procedural-legacy | swap-ready |
 | `ui_hud_cell` | Integrity Cell (HUD) | ui | 2 | P0 | procedural-legacy | swap-ready |
 | `ui_hud_backtrace` | Backtrace Indicator | ui | 1 | P0 | procedural-legacy | swap-ready |
-| `ui_panel_9slice` | Panel (9-slice) | ui | 1 | P1 | code-drawn | placeholder |
-| `ui_button_9slice` | Button (9-slice) | ui | 3 | P1 | code-drawn | placeholder |
+| `ui_panel_9slice` | Panel (9-slice) | ui | 1 | P1 | code-drawn | swap-ready |
+| `ui_button_9slice` | Button (9-slice) | ui | 6 | P1 | code-drawn | swap-ready |
 | `ui_touch_controls` | Touch Controls | ui | 14 | P0 | code-drawn | placeholder |
 | `ui_boss_bar` | Boss Health Bar | ui | 4 | P1 | code-drawn | placeholder |
 | `ui_map_frame` | World Map Frame and Markers | ui | 6 | P1 | code-drawn | placeholder |
-| `ui_dialogue_choice` | Dialogue Choice Button | ui | 2 | P1 | code-drawn | placeholder |
+| `ui_dialogue_choice` | Dialogue Choice Button | ui | 2 | P1 | code-drawn | swap-ready |
 | `icon_scrap` | Scrap | icon | 1 | P1 | code-drawn | placeholder |
 | `icon_item_keycard` | Precinct Keycard | icon | 1 | P1 | code-drawn | placeholder |
 | `icon_item_med_kit` | Med Kit | icon | 1 | P1 | code-drawn | placeholder |

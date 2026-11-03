@@ -22,7 +22,7 @@
 | Pack 04 — Environment | Rainline Alley, Transit Stacks, Precinct Vault: tilesets, backgrounds, props and interactive objects. | 28 | 173 |
 | Pack 05 — Environment Expansion | Neon Undercity, Industrial Core, Null Cathedral: tilesets, backgrounds, props. | 20 | 145 |
 | Pack 06 — Bosses and Effects | Boss sprite sheets, combat effects, Backtrace effects, environmental effects. | 20 | 144 |
-| Pack 07 — UI and Audio | UI artwork, icons, dialogue portraits, music and sound effects. | 55 | 104 |
+| Pack 07 — UI and Audio | UI artwork, icons, dialogue portraits, music and sound effects. | 55 | 107 |
 
 ## Pack 01 — Courier
 
@@ -1293,7 +1293,7 @@ UI artwork, icons, dialogue portraits, music and sound effects.
 #### `ui_panel_9slice` — Panel (9-slice)  [P1]
 
 - **Purpose:** Dialogue panel, menus, journal pages. Scales without distortion.
-- **Description:** A dark translucent plate with a thin cyan outline, chamfered corners, subtle scan lines; 16px corner slices.
+- **Description:** A dark translucent plate with a thin cyan outline, chamfered corners, subtle scan lines; 16 px corner slices (nine-slice margins in src/assets/ui9.ts).
 - **Frame size:** 48×48 logical px (deliver at 1×, 2× or 4×; integer multiples only)
 - **Sheet:** one row per animation, 1 columns × 1 rows = 48×48 px at 1×. Animations in row order: `panel` 1f @ 1fps loop
 - **Anchor:** 0, 0
@@ -1303,10 +1303,10 @@ UI artwork, icons, dialogue portraits, music and sound effects.
 
 #### `ui_button_9slice` — Button (9-slice)  [P1]
 
-- **Purpose:** Menu buttons with idle / focus / pressed states.
+- **Purpose:** Menu buttons: idle, focus (keyboard/gamepad), pressed, disabled, selected (active tab), destructive.
 - **Description:** A chamfered rectangle button; focus adds a bright cyan edge, pressed a violet fill.
 - **Frame size:** 48×24 logical px (deliver at 1×, 2× or 4×; integer multiples only)
-- **Sheet:** one row per animation, 1 columns × 3 rows = 48×72 px at 1×. Animations in row order: `idle` 1f @ 1fps loop; `focus` 1f @ 1fps loop; `pressed` 1f @ 1fps loop
+- **Sheet:** one row per animation, 1 columns × 6 rows = 48×144 px at 1×. Animations in row order: `idle` 1f @ 1fps loop; `focus` 1f @ 1fps loop; `pressed` 1f @ 1fps loop; `disabled` 1f @ 1fps loop; `selected` 1f @ 1fps loop; `destructive` 1f @ 1fps loop
 - **Anchor:** 0, 0
 - **Palette:** #0a0a18 #3cf2ff #9b59ff
 - **Appears in:** UI

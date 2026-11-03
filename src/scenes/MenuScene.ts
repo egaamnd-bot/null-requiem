@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { Skin } from '../render/uiSkin';
 import { RENDER_QUALITIES } from '../core/renderScale';
 import { applyRenderScale } from '../render/renderScaleRuntime';
 import { view } from '../config/view';
@@ -105,7 +106,9 @@ export class MenuScene extends Phaser.Scene {
     const H = this.H;
     const m = view.margin;
     this.root.add(this.add.rectangle(0, 0, W, H, PALETTE.void, 0.92).setOrigin(0));
-    this.root.add(this.add.rectangle(m.left, m.top + 2, W - m.left - m.right, H - m.top - m.bottom - 4, PALETTE.ink, 0.55).setOrigin(0).setStrokeStyle(1, PALETTE.steel, 0.7));
+    const panelRect = this.add.rectangle(m.left, m.top + 2, W - m.left - m.right, H - m.top - m.bottom - 4, PALETTE.ink, 0.55).setOrigin(0).setStrokeStyle(1, PALETTE.steel, 0.7);
+    const panelSkin = Skin.attach(this, panelRect, 'panel');
+    this.root.add(panelSkin ? [panelRect, panelSkin.image] : [panelRect]);
     // Tabs
     const tabs = this.tabs();
     const tabW = Math.min(88, (W - m.left - m.right - 90) / Math.max(1, tabs.length));
@@ -116,7 +119,9 @@ export class MenuScene extends Phaser.Scene {
       const active = t === this.tab;
       const frame = this.add.rectangle(x, y, tabW, 18, active ? PALETTE.violet : PALETTE.ink, active ? 0.8 : 0.6).setStrokeStyle(1, active ? PALETTE.cyan : PALETTE.steel, 0.9);
       const txt = this.add.text(x, y, label, { fontFamily: UI_FONT, fontSize: '9px', color: css(active ? PALETTE.chrome : PALETTE.mist), resolution: 2 }).setOrigin(0.5).setLetterSpacing(1);
-      this.root.add([frame, txt]);
+      const tabSkin = Skin.attach(this, frame, 'button');
+      tabSkin?.sync(active ? 'selected' : 'idle');
+      this.root.add(tabSkin ? [frame, tabSkin.image, txt] : [frame, txt]);
       if (tabs.length > 1) {
         this.tabTargets.push(
           createTapTarget(this, {
@@ -169,10 +174,15 @@ export class MenuScene extends Phaser.Scene {
   private button(x: number, y: number, w: number, h: number, label: string, onTap: () => void, enabled = true, into?: Phaser.GameObjects.Container, persistent = false): Phaser.GameObjects.Text {
     const frame = this.add.rectangle(x, y, w, h, PALETTE.ink, 0.7).setStrokeStyle(1, enabled ? PALETTE.cyan : PALETTE.steel, enabled ? 0.8 : 0.4);
     const txt = this.add.text(x, y, label, { fontFamily: UI_FONT, fontSize: '9px', color: css(enabled ? PALETTE.chrome : PALETTE.steel), resolution: 2 }).setOrigin(0.5);
-    (into ?? this.content).add([frame, txt]);
+    const skin = Skin.attach(this, frame, 'button');
+    skin?.sync(enabled ? 'idle' : 'disabled');
+    (into ?? this.content).add(skin ? [frame, skin.image, txt] : [frame, txt]);
     const tt = createTapTarget(this, {
       x, y, width: w + 4, height: h + 4,
-      onPress: (d) => frame.setFillStyle(d ? PALETTE.violet : PALETTE.ink, d ? 0.85 : 0.7),
+      onPress: (d) => {
+        frame.setFillStyle(d ? PALETTE.violet : PALETTE.ink, d ? 0.85 : 0.7);
+        skin?.sync(!enabled ? 'disabled' : d ? 'pressed' : 'idle');
+      },
       onTap: () => {
         if (!enabled) return;
         this.data0.services.sfx.play('confirm');

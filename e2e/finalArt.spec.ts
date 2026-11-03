@@ -314,3 +314,56 @@ test('the Courier plays delivered interact frames when talking (R6) and effects 
   const seen = await page.evaluate(() => [...(window as unknown as { __seen: Set<string> }).__seen]);
   expect(seen.length, 'no interact frame was ever shown').toBeGreaterThan(0);
 });
+
+test('UI nine-slice skin: delivered button art replaces the code-drawn buttons with the right states and margins (UI skin layer)', async ({ page }) => {
+  // 6 state rows (idle, focus, pressed, disabled, selected, destructive); each row = flat colour with RED corners of the declared margins (10 x 8 logical = 40 x 32 px at 4x)
+  const rowColour: [number, number, number][] = [[0, 0, 255], [0, 255, 0], [255, 255, 0], [128, 128, 128], [0, 255, 255], [255, 0, 255]];
+  const png = new PNG({ width: 192, height: 96 * 6 });
+  for (let y = 0; y < png.height; y++) {
+    for (let x = 0; x < 192; x++) {
+      const row = Math.floor(y / 96);
+      const ly = y % 96;
+      const corner = (x < 40 || x >= 192 - 40) && (ly < 32 || ly >= 96 - 32);
+      const [r, g, b] = corner ? [255, 0, 0] : rowColour[row]!;
+      const i = (y * 192 + x) * 4;
+      png.data[i] = r; png.data[i + 1] = g; png.data[i + 2] = b; png.data[i + 3] = 255;
+    }
+  }
+  await deliver(page, { 'ui_button_9slice.png': PNG.sync.write(png) });
+  await page.goto('/');
+  await page.waitForFunction(() => (window as unknown as { nullRequiemGame: { scene: { isActive(k: string): boolean } } }).nullRequiemGame?.scene.isActive('title'), null, { timeout: 20000 });
+  await page.waitForTimeout(500);
+  const slices = await page.evaluate(() => {
+    const g = (window as unknown as { nullRequiemGame: { scene: { getScene(k: string): { children: { list: { type: string; texture: { key: string }; x: number; y: number; displayWidth: number; displayHeight: number }[] } } } } }).nullRequiemGame;
+    return g.scene.getScene('title').children.list.filter((o) => o.type === 'NineSlice').map((o) => ({ key: o.texture.key, x: o.x, y: o.y, w: o.displayWidth, h: o.displayHeight }));
+  });
+  expect(slices.length).toBeGreaterThanOrEqual(2);
+  expect(slices[0]!.key).toBe('ui_button_9slice__focus_0'); // the selected item shows the focus state
+  expect(slices[1]!.key).toBe('ui_button_9slice__idle_0');
+  for (const s of slices) {
+    expect(s.w).toBeCloseTo(190, 1);
+    expect(s.h).toBeCloseTo(26, 1);
+  }
+  // margins: along the top band of the first button the red corner is 10 logical px wide, whatever the art's pixel size
+  const shot = PNG.sync.read(await page.screenshot());
+  const pxPerLogical = shot.height / 270;
+  const cx = slices[0]!.x * pxPerLogical;
+  const cy = Math.round((slices[0]!.y - 13 + 3) * pxPerLogical); // 3 logical px below the top edge: inside the top corner band (8 px)
+  const cyMid = Math.round(slices[0]!.y * pxPerLogical);
+  const left = cx - (190 / 2) * pxPerLogical;
+  const px = (x: number, row = cy) => {
+    const i = (row * shot.width + Math.round(x)) * 4;
+    return [shot.data[i]!, shot.data[i + 1]!, shot.data[i + 2]!];
+  };
+  let red = 0;
+  for (let x = left + 1; x < left + 40 * pxPerLogical; x++) {
+    const [r = 0, g = 0, b = 0] = px(x);
+    if (r > 150 && g < 80 && b < 80) red++;
+    else if (red > 0) break;
+  }
+  expect(red / pxPerLogical).toBeGreaterThan(8);
+  expect(red / pxPerLogical).toBeLessThan(12);
+  // the middle row at the centre shows the state colour (green focus), not red
+  const [r, g] = px(cx, cyMid);
+  expect(g!).toBeGreaterThan(r! + 50);
+});
