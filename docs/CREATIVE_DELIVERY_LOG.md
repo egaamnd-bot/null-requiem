@@ -14,6 +14,7 @@ Status values: `Not delivered` · `In validation` (files in `art/incoming/`) · 
 | 2026-11-03 | — | **Nothing.** PR #6 contains the handoff document only (no images, no audio). | n/a | Repository prepared to receive deliveries (see `docs/CREATIVE_HANDOFF_REVIEW.md`). |
 | 2026-11-03 | — | **Nothing.** Producer confirmed after the Android test that the game still shows the original placeholder art; creative production (all 38 visuals, UI art, music, ambience, SFX) is ChatGPT's and has not started delivering. | n/a | Audio masters go to `art/audio/masters/` (not shipped); runtime Ogg to `public/audio/`. Procedure: `docs/INTEGRATION_RUNBOOK.md`. |
 | 2026-11-03 | `Pack_01_Creative_Handoff.zip` | **Reference + sketches only; no runtime asset.** 3 concept PNGs, 4 OST sketches, 1 rain loop, 12 short SFX WAVs. | 11 SFX/UI pass the audio validator (0 errors, stereo/peak warnings); 4 music + rain rejected (duration, loudness, not Ogg); drone SFX unmapped; PNGs are not sprite sheets. | Not marked Delivered (author states they are unfinished). Details: `docs/VISUAL_ENHANCEMENT_01.md`. |
+| 2026-11-03 | `Pack_01_Creative_Handoff.zip` → `feature/audio-upgrade-01` | **Audio processed and delivered as preliminary runtime files**: 4 music, 1 ambience, 12 SFX/UI (17 sounds) built from the handoff sketches (masters: `art/audio/masters/handoff-01/*.flac`). | `npm run audio:validate`: 17 accepted, 0 errors, 0 warnings (loudness, loop seam, peak, duration, Ogg decode). | Producer authorised using the package as preliminary material. Not final masters. Still missing: city ambience, stingers, footsteps/land/airjump/hurt/death, enemy telegraph/projectile/death, doors close, relay, pressure plate, etc. |
 
 ## Workstream A — Pack 01 visuals (38 files)
 
@@ -66,52 +67,52 @@ Canonical ids and the runtime contract are in `src/audio/catalog.ts` (see `docs/
 
 | Asset id | Group | Final path | Spec | Status | Validation |
 | --- | --- | --- | --- | --- | --- |
-| `music_title_theme` | music | `public/audio/music/music_title_theme.ogg` | 45–240 s, seamless loop | Not delivered | — |
-| `music_rainline_exploration` | music | `public/audio/music/music_rainline_exploration.ogg` | 45–240 s, seamless loop | Not delivered | — |
-| `music_rainline_combat` | music | `public/audio/music/music_rainline_combat.ogg` | 45–180 s, seamless loop | Not delivered | — |
-| `music_boss_bulwark9` | music | `public/audio/music/music_boss_bulwark9.ogg` | 45–180 s, seamless loop | Not delivered | — |
+| `music_title_theme` | music | `public/audio/music/music_title_theme.ogg` | 45–240 s, seamless loop | Delivered (preliminary) | 0 errors / 0 warnings — processed from the handoff sketch by `tools/audio/process_handoff.py` (Ogg q5); Producer ear-check pending |
+| `music_rainline_exploration` | music | `public/audio/music/music_rainline_exploration.ogg` | 45–240 s, seamless loop | Delivered (preliminary) | 0 errors / 0 warnings — processed from the handoff sketch by `tools/audio/process_handoff.py` (Ogg q5); Producer ear-check pending |
+| `music_rainline_combat` | music | `public/audio/music/music_rainline_combat.ogg` | 45–180 s, seamless loop | Delivered (preliminary) | 0 errors / 0 warnings — processed from the handoff sketch by `tools/audio/process_handoff.py` (Ogg q5); Producer ear-check pending |
+| `music_boss_bulwark9` | music | `public/audio/music/music_boss_bulwark9.ogg` | 45–180 s, seamless loop | Delivered (preliminary) | 0 errors / 0 warnings — processed from the handoff sketch by `tools/audio/process_handoff.py` (Ogg q5); Producer ear-check pending |
 | `music_backtrace_motif` | stinger | `public/audio/music/music_backtrace_motif.ogg` | 0.5–8 s | Not delivered | — |
 | `music_victory` | stinger | `public/audio/music/music_victory.ogg` | 3–40 s | Not delivered | — |
 | `music_game_over` | stinger | `public/audio/music/music_game_over.ogg` | 2–30 s | Not delivered | — |
 | `music_safe_room` | music | `public/audio/music/music_safe_room.ogg` | 30–180 s, seamless loop | Not delivered | — |
-| `amb_rainline_loop` | ambience | `public/audio/ambience/amb_rainline_loop.ogg` | 20–120 s, seamless loop | Not delivered | — |
+| `amb_rainline_loop` | ambience | `public/audio/ambience/amb_rainline_loop.ogg` | 20–120 s, seamless loop | Delivered (preliminary) | 0 errors / 0 warnings — processed from the handoff sketch by `tools/audio/process_handoff.py` (Ogg q5); Producer ear-check pending |
 | `amb_transit_stacks_loop` | ambience | `public/audio/ambience/amb_transit_stacks_loop.ogg` | 20–120 s, seamless loop | Not delivered | — |
 | `amb_precinct_vault_loop` | ambience | `public/audio/ambience/amb_precinct_vault_loop.ogg` | 20–120 s, seamless loop | Not delivered | — |
 | `sfx_player_footstep_wet` | sfx | `public/audio/sfx/sfx_player_footstep_wet.ogg` | 0.04–0.4 s | Not delivered | — |
-| `sfx_player_jump` | sfx | `public/audio/sfx/sfx_player_jump.ogg` | 0.05–0.5 s | Not delivered | — |
+| `sfx_player_jump` | sfx | `public/audio/sfx/sfx_player_jump.ogg` | 0.05–0.5 s | Delivered (preliminary) | 0 errors / 0 warnings — processed from the handoff sketch by `tools/audio/process_handoff.py` (Ogg q5); Producer ear-check pending |
 | `sfx_player_land` | sfx | `public/audio/sfx/sfx_player_land.ogg` | 0.05–0.6 s | Not delivered | — |
 | `sfx_player_airjump` | sfx | `public/audio/sfx/sfx_player_airjump.ogg` | 0.05–0.6 s | Not delivered | — |
-| `sfx_player_dash` | sfx | `public/audio/sfx/sfx_player_dash.ogg` | 0.05–0.6 s | Not delivered | — |
-| `sfx_player_attack` | sfx | `public/audio/sfx/sfx_player_attack.ogg` | 0.05–0.5 s | Not delivered | — |
+| `sfx_player_dash` | sfx | `public/audio/sfx/sfx_player_dash.ogg` | 0.05–0.6 s | Delivered (preliminary) | 0 errors / 0 warnings — processed from the handoff sketch by `tools/audio/process_handoff.py` (Ogg q5); Producer ear-check pending |
+| `sfx_player_attack` | sfx | `public/audio/sfx/sfx_player_attack.ogg` | 0.05–0.5 s | Delivered (preliminary) | 0 errors / 0 warnings — processed from the handoff sketch by `tools/audio/process_handoff.py` (Ogg q5); Producer ear-check pending |
 | `sfx_player_hurt` | sfx | `public/audio/sfx/sfx_player_hurt.ogg` | 0.1–0.8 s | Not delivered | — |
 | `sfx_player_death` | sfx | `public/audio/sfx/sfx_player_death.ogg` | 0.3–2.5 s | Not delivered | — |
 | `sfx_backtrace_charge` | sfx | `public/audio/sfx/sfx_backtrace_charge.ogg` | 0.1–1.5 s | Not delivered | — |
-| `sfx_backtrace_release` | sfx | `public/audio/sfx/sfx_backtrace_release.ogg` | 0.1–1.5 s | Not delivered | — |
-| `sfx_backtrace_arrival` | sfx | `public/audio/sfx/sfx_backtrace_arrival.ogg` | 0.1–1.5 s | Not delivered | — |
+| `sfx_backtrace_release` | sfx | `public/audio/sfx/sfx_backtrace_release.ogg` | 0.1–1.5 s | Delivered (preliminary) | 0 errors / 0 warnings — processed from the handoff sketch by `tools/audio/process_handoff.py` (Ogg q5); Producer ear-check pending |
+| `sfx_backtrace_arrival` | sfx | `public/audio/sfx/sfx_backtrace_arrival.ogg` | 0.1–1.5 s | Delivered (preliminary) | 0 errors / 0 warnings — processed from the handoff sketch by `tools/audio/process_handoff.py` (Ogg q5); Producer ear-check pending |
 | `sfx_backtrace_ready` | sfx | `public/audio/sfx/sfx_backtrace_ready.ogg` | 0.1–1 s | Not delivered | — |
 | `sfx_backtrace_cooldown` | sfx | `public/audio/sfx/sfx_backtrace_cooldown.ogg` | 0.1–2 s | Not delivered | — |
 | `sfx_enemy_telegraph` | sfx | `public/audio/sfx/sfx_enemy_telegraph.ogg` | 0.1–1 s | Not delivered | — |
 | `sfx_scrap_hound_lunge` | sfx | `public/audio/sfx/sfx_scrap_hound_lunge.ogg` | 0.1–1 s | Not delivered | — |
-| `sfx_drone_charge` | sfx | `public/audio/sfx/sfx_drone_charge.ogg` | 0.2–1.5 s | Not delivered | — |
+| `sfx_drone_charge` | sfx | `public/audio/sfx/sfx_drone_charge.ogg` | 0.2–1.5 s | Delivered (preliminary) | 0 errors / 0 warnings — processed from the handoff sketch by `tools/audio/process_handoff.py` (Ogg q5); Producer ear-check pending |
 | `sfx_drone_projectile` | sfx | `public/audio/sfx/sfx_drone_projectile.ogg` | 0.05–0.8 s | Not delivered | — |
-| `sfx_hit_light` | sfx | `public/audio/sfx/sfx_hit_light.ogg` | 0.04–0.4 s | Not delivered | — |
+| `sfx_hit_light` | sfx | `public/audio/sfx/sfx_hit_light.ogg` | 0.04–0.4 s | Delivered (preliminary) | 0 errors / 0 warnings — processed from the handoff sketch by `tools/audio/process_handoff.py` (Ogg q5); Producer ear-check pending |
 | `sfx_hit_heavy` | sfx | `public/audio/sfx/sfx_hit_heavy.ogg` | 0.06–0.8 s | Not delivered | — |
 | `sfx_enemy_death` | sfx | `public/audio/sfx/sfx_enemy_death.ogg` | 0.1–1.2 s | Not delivered | — |
 | `sfx_boss_warning` | sfx | `public/audio/sfx/sfx_boss_warning.ogg` | 0.3–3 s | Not delivered | — |
-| `sfx_door_open` | sfx | `public/audio/sfx/sfx_door_open.ogg` | 0.1–1.5 s | Not delivered | — |
+| `sfx_door_open` | sfx | `public/audio/sfx/sfx_door_open.ogg` | 0.1–1.5 s | Delivered (preliminary) | 0 errors / 0 warnings — processed from the handoff sketch by `tools/audio/process_handoff.py` (Ogg q5); Producer ear-check pending |
 | `sfx_door_close` | sfx | `public/audio/sfx/sfx_door_close.ogg` | 0.1–1.5 s | Not delivered | — |
 | `sfx_relay_activate` | sfx | `public/audio/sfx/sfx_relay_activate.ogg` | 0.2–2 s | Not delivered | — |
 | `sfx_pressure_plate` | sfx | `public/audio/sfx/sfx_pressure_plate.ogg` | 0.05–0.8 s | Not delivered | — |
 | `sfx_breakable_wall` | sfx | `public/audio/sfx/sfx_breakable_wall.ogg` | 0.2–1.5 s | Not delivered | — |
 | `sfx_pickup_integrity` | sfx | `public/audio/sfx/sfx_pickup_integrity.ogg` | 0.1–1.5 s | Not delivered | — |
-| `sfx_pickup_memory` | sfx | `public/audio/sfx/sfx_pickup_memory.ogg` | 0.1–1.5 s | Not delivered | — |
+| `sfx_pickup_memory` | sfx | `public/audio/sfx/sfx_pickup_memory.ogg` | 0.1–1.5 s | Delivered (preliminary) | 0 errors / 0 warnings — processed from the handoff sketch by `tools/audio/process_handoff.py` (Ogg q5); Producer ear-check pending |
 | `sfx_pickup_scrap` | sfx | `public/audio/sfx/sfx_pickup_scrap.ogg` | 0.03–0.5 s | Not delivered | — |
 | `sfx_pickup_module` | sfx | `public/audio/sfx/sfx_pickup_module.ogg` | 0.3–3 s | Not delivered | — |
 | `sfx_checkpoint` | sfx | `public/audio/sfx/sfx_checkpoint.ogg` | 0.2–2 s | Not delivered | — |
 | `sfx_quest_update` | sfx | `public/audio/sfx/sfx_quest_update.ogg` | 0.1–1.5 s | Not delivered | — |
-| `sfx_ui_focus` | ui | `public/audio/ui/sfx_ui_focus.ogg` | 0.04–0.5 s | Not delivered | — |
-| `sfx_ui_confirm` | ui | `public/audio/ui/sfx_ui_confirm.ogg` | 0.04–0.5 s | Not delivered | — |
-| `sfx_ui_back` | ui | `public/audio/ui/sfx_ui_back.ogg` | 0.04–0.5 s | Not delivered | — |
+| `sfx_ui_focus` | ui | `public/audio/ui/sfx_ui_focus.ogg` | 0.04–0.5 s | Delivered (preliminary) | 0 errors / 0 warnings — processed from the handoff sketch by `tools/audio/process_handoff.py` (Ogg q5); Producer ear-check pending |
+| `sfx_ui_confirm` | ui | `public/audio/ui/sfx_ui_confirm.ogg` | 0.04–0.5 s | Delivered (preliminary) | 0 errors / 0 warnings — processed from the handoff sketch by `tools/audio/process_handoff.py` (Ogg q5); Producer ear-check pending |
+| `sfx_ui_back` | ui | `public/audio/ui/sfx_ui_back.ogg` | 0.04–0.5 s | Delivered (preliminary) | 0 errors / 0 warnings — processed from the handoff sketch by `tools/audio/process_handoff.py` (Ogg q5); Producer ear-check pending |
 | `sfx_ui_pause` | ui | `public/audio/ui/sfx_ui_pause.ogg` | 0.04–0.5 s | Not delivered | — |
 | `sfx_ui_error` | ui | `public/audio/ui/sfx_ui_error.ogg` | 0.04–0.5 s | Not delivered | — |
 | `sfx_ui_tab` | ui | `public/audio/ui/sfx_ui_tab.ogg` | 0.04–0.5 s | Not delivered | — |

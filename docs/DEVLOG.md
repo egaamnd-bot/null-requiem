@@ -154,3 +154,11 @@ Producer asked for a visibly better next APK without waiting for art. Details an
 - Found and fixed the real cause of the flat look: mid-layer glow helper drew hard squares. Graded sky; new `Atmosphere` layer (fog, haze, near rain, motes, wet-floor sheen/glints/ripples); Courier implant/blade glow + dash afterimages; red enemy telegraph + impact flashes; HUD plate and Backtrace-ready glow.
 - Handoff zip triaged: references and unfinished sketches only; nothing marked Delivered; 11 SFX sketches validate, music sketches rejected by the validator.
 - Environment note: this container's Playwright expects chromium_headless_shell-1194; a symlink to the installed 1243 build was needed to run the e2e suite.
+
+## Session 2026-11-03 (night) — visual upgrade 02 + audio upgrade 01 (Producer-approved)
+
+Producer tested APK `aa5fcbb` on a device: fine. Approved the full visual/sound upgrade. Branches: `feature/visual-upgrade-02` (PR #12, base `feature/visual-enhancement`) and `feature/audio-upgrade-01` (PR #13, base `feature/visual-upgrade-02`; its tip carries both).
+- Visual: title backdrop (`titleBackdrop.ts`), wet-floor reflections (`reflection.ts`), Backtrace echo trail, neon touch rims, pause glow, toast hidden under pause. Details: `docs/VISUAL_ENHANCEMENT_01.md` (Upgrade 02).
+- Audio: `tools/audio/process_handoff.py` conditions the supplied sketches (masters FLAC in `art/audio/masters/handoff-01/`), 17 sounds validate with 0 errors / 0 warnings and ship as Ogg; ledger rows → `Delivered (preliminary)`. Details/gaps/missing triggers: `docs/AUDIO_UPGRADE_01.md`.
+- Earlier today: the interact e2e test was flaky on slow runners (also on the pre-visual branch); fixed with a fallback trigger (see QA_STATUS).
+- Container note: Playwright needs `/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell` (symlink to the installed 1243 build); a leftover CPU-hog process from an experiment skewed local runs until killed.

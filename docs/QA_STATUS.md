@@ -178,3 +178,10 @@ Producer to test on a real Android phone and mark each row. Until every row pass
 - Visual pass cost (software renderer, local): ~5.75 fps before vs ~5 fps after (inferred ~10–13%; noisy). Added a lite mode: when the render scale is demoted to 1x (FPS safety net or the player's low setting) near-rain, motes, glints and ripples are switched off; particle rates cut ~35%.
 - Local after the fix: tsc clean, vitest 583/583, Playwright 26 passed / 1 skipped.
 - Evidence for `aa5fcbb`: CI #92/#93 success; "Android Debug APK" #65 (run 41598818180) success on attempt 1 **and** on a manual re-run (attempt 2); artifact `null-requiem-android-debug-aa5fcbb1621c70cf460f3dfb1e16729637092f54` (7,244,323 bytes). Two passes are encouraging, not proof the flake is gone.
+
+## Visual upgrade 02 + audio upgrade 01 (2026-11-03 night)
+
+- `feature/visual-upgrade-02` (`d302928`, PR #12): CI #96/#98 success, Android Debug APK #67 success.
+- `feature/audio-upgrade-01` (`9702b0c`, PR #13, contains both): CI #97/#99 success; **Android Debug APK #68 (run 41607502343) success**, artifact `null-requiem-android-debug-9702b0cad290b2674d088eeb3374c2caebc55457` (11,344,230 bytes — larger because it now bundles ≈4 MB of Ogg audio).
+- Verified locally: tsc clean, vitest 583/583, Playwright 26 passed / 1 skipped, `npm run audio:validate` 17 accepted / 0 errors / 0 warnings, browser check that recorded music/ambience/SFX decode and play without console errors.
+- Unverified: how the audio sounds and balances on a phone, combat stem in a real fight, decoded-audio memory (~50 MB) on low-end devices, frame rate with the new title/reflection effects. Device test pending from the Producer.
