@@ -126,6 +126,9 @@ export class Atmosphere {
   private readonly haze: Phaser.GameObjects.Image;
   private readonly glints: { img: Phaser.GameObjects.Image; run: Run; speed: number; phase: number }[] = [];
   private readonly runs: Run[];
+  private readonly emitters: Phaser.GameObjects.Particles.ParticleEmitter[] = [];
+  /** Lite mode (render scale demoted to 1x by the FPS safety net or chosen by the player): no particles, glints or ripples. */
+  private lite = false;
   private rippleClock = 0;
   private lastT = 0;
   private readonly rng: () => number;
@@ -171,7 +174,8 @@ export class Atmosphere {
     // Drifting dust/embers: world space, very slow, additive.
     const w = grid.widthPx;
     const h = grid.heightPx;
-    add(
+    this.emitters.push(
+      add(
       scene.add
         .particles(0, 0, KEY.mote, {
           x: { min: 0, max: w },
@@ -183,13 +187,15 @@ export class Atmosphere {
           alpha: { start: 0, end: 0, ease: (t: number) => Math.sin(t * Math.PI) * 0.55 },
           tint: [glow, PALETTE.magenta, PALETTE.sodium, 0xc9d6ff],
           blendMode: Phaser.BlendModes.ADD,
-          frequency: Math.max(90, 380000 / Math.max(w, 480)),
+          frequency: Math.max(130, 520000 / Math.max(w, 480)),
           quantity: 1,
         })
         .setDepth(D.motes),
+      ),
     );
     // Near rain: sparse, longer, brighter streaks falling in front of the playfield.
-    add(
+    this.emitters.push(
+      add(
       scene.add
         .particles(0, 0, KEY.rainNear, {
           x: { min: -40, max: w },
@@ -199,10 +205,11 @@ export class Atmosphere {
           rotate: -9,
           lifespan: 900,
           alpha: { min: 0.1, max: 0.28 },
-          frequency: Math.max(22, 26000 / Math.max(w, 480)),
+          frequency: Math.max(34, 40000 / Math.max(w, 480)),
           quantity: 1,
         })
         .setDepth(D.nearRain),
+      ),
     );
   }
 
@@ -217,11 +224,20 @@ export class Atmosphere {
     const t = time / 1000;
     const dt = Math.min(0.1, Math.max(0, t - this.lastT));
     this.lastT = t;
+    const lite = view.renderScale <= 1;
+    if (lite !== this.lite) {
+      this.lite = lite;
+      for (const e of this.emitters) {
+        e.emitting = !lite;
+        e.setVisible(!lite);
+      }
+      for (const g of this.glints) g.img.setVisible(!lite);
+    }
     this.fogFar.tilePositionX = t * 5 + camera.scrollX * 0.05;
     this.fogNear.tilePositionX = -t * 9 + camera.scrollX * 0.14;
     this.fogNear.setAlpha(0.12 + Math.sin(t * 0.35) * 0.03);
 
-    for (const g of this.glints) {
+    for (const g of this.lite ? [] : this.glints) {
       const u = ((t * g.speed + g.phase) % (g.run.w + 60)) - 30;
       g.img.setPosition(g.run.x + u, g.run.y + 1);
       const edge = Math.min(1, Math.max(0, Math.min(u + 30, g.run.w + 30 - u) / 30));
@@ -230,8 +246,8 @@ export class Atmosphere {
 
     // Rain ripples on the floors currently on screen.
     this.rippleClock -= dt;
-    if (this.rippleClock <= 0 && this.runs.length) {
-      this.rippleClock = 0.09;
+    if (this.rippleClock <= 0 && this.runs.length && !this.lite) {
+      this.rippleClock = 0.14;
       const x0 = camera.scrollX;
       const x1 = camera.scrollX + camera.width;
       const y0 = camera.scrollY;
