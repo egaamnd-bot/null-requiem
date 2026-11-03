@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { COMBAT } from '../config/tuning';
+import { view } from '../config/view';
 import type { ScrapHound } from '../core/enemies/scrapHound';
 import type { Enemy } from '../core/enemies/enemy';
 import type { BulwarkUnit } from '../core/enemies/bulwarkUnit';
@@ -49,10 +50,16 @@ export class PlayerView {
   private readonly blade: Phaser.GameObjects.Image;
   private ghostClock = 0;
   private readonly scene: Phaser.Scene;
+  /** Trailing scarf: a short chain of points that lags behind the Courier (presentation only). */
+  private readonly scarf: Phaser.GameObjects.Graphics;
+  private readonly scarfPts: { x: number; y: number }[] = Array.from({ length: 6 }, () => ({ x: 0, y: 0 }));
+  private scarfInit = false;
+  private lastFoot = 0;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.reflection = new Reflection(scene, 0x8fd8ff, 0.18);
+    this.scarf = scene.add.graphics().setDepth(DEPTH.player - 0.5);
     this.implant = scene.add.image(0, 0, TEX.glow).setTint(PALETTE.cyan).setBlendMode(Phaser.BlendModes.ADD).setScale(0.3).setDepth(DEPTH.player + 1);
     this.blade = scene.add.image(0, 0, TEX.glowSoft).setTint(PALETTE.cyan).setBlendMode(Phaser.BlendModes.ADD).setScale(0.34, 0.2).setDepth(DEPTH.player + 1);
     this.glow = scene.add.image(0, 0, TEX.glowSoft).setTint(PALETTE.cyan).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.3).setScale(1.2).setDepth(DEPTH.player - 1);
@@ -143,6 +150,53 @@ export class PlayerView {
       .setAlpha(alive ? 0.2 + swing + Math.sin(time / 300) * 0.04 : 0)
       .setVisible(alive);
 
+    // Scarf chain: anchored at the neck, each point is pulled toward the previous one at a fixed link length, with a little
+    // gravity and a drag opposite to the Courier's motion; thickness tapers to the tip.
+    const ax = feetX - p.facing * 2;
+    const ay = feetY - 24;
+    const pts = this.scarfPts;
+    if (!this.scarfInit || p.dead) {
+      pts.forEach((q, i) => {
+        q.x = ax - p.facing * i * 3;
+        q.y = ay + i * 0.5;
+      });
+      this.scarfInit = !p.dead;
+    }
+    pts[0]!.x = ax;
+    pts[0]!.y = ay;
+    for (let i = 1; i < pts.length; i++) {
+      const q = pts[i]!;
+      const prev = pts[i - 1]!;
+      q.x += -b.vx * dt * 0.35 + Math.sin(time / 260 + i) * 0.12 * dt * 60;
+      q.y += 22 * dt + (b.onGround ? 0 : -b.vy * dt * 0.25);
+      let dx = q.x - prev.x;
+      let dy = q.y - prev.y;
+      const len = Math.hypot(dx, dy) || 1;
+      dx = (dx / len) * 3.2;
+      dy = (dy / len) * 3.2;
+      q.x = prev.x + dx;
+      q.y = prev.y + dy;
+    }
+    this.scarf.clear();
+    if (!p.dead) {
+      for (let i = 1; i < pts.length; i++) {
+        const a = pts[i - 1]!;
+        const c = pts[i]!;
+        this.scarf.lineStyle(2.6 - i * 0.32, i % 2 ? PALETTE.magenta : 0xd02a82, 0.95 - i * 0.08);
+        this.scarf.lineBetween(a.x, a.y, c.x, c.y);
+      }
+    }
+
+    // Run dust: a small puff at every foot-plant (about every other run frame), skipped in lite mode.
+    if (b.onGround && Math.abs(b.vx) > 60 && view.renderScale > 1) {
+      const step = Math.floor(this.runClock / 2);
+      if (step !== this.lastFoot) {
+        this.lastFoot = step;
+        const d = this.scene.add.image(feetX - p.facing * 4, feetY - 1, TEX.dust).setTint(PALETTE.mist).setAlpha(0.35).setScale(0.6).setDepth(DEPTH.player - 1);
+        this.scene.tweens.add({ targets: d, x: d.x - p.facing * 7, y: d.y - 5, alpha: 0, scale: 1.3, duration: 320, ease: 'Sine.easeOut', onComplete: () => d.destroy() });
+      }
+    }
+
     // Dash afterimages: copies of the current frame that fade out behind the Courier.
     if (p.isDashing) {
       this.ghostClock -= dt;
@@ -200,6 +254,7 @@ export class PlayerView {
     this.implant.destroy();
     this.blade.destroy();
     this.reflection.destroy();
+    this.scarf.destroy();
   }
 }
 
@@ -263,6 +318,9 @@ class HoundView implements EnemyView {
   private readonly glow: Phaser.GameObjects.Image;
   private readonly tell: Phaser.GameObjects.Image;
   private readonly reflection: Reflection;
+  private readonly shadow: Phaser.GameObjects.Image;
+  private trailClock = 0;
+  private readonly scene: Phaser.Scene;
   /** R8: painted telegraph glint frames (null = the code-drawn spark). */
   private readonly tellFrames: string[] | null;
 
@@ -272,6 +330,8 @@ class HoundView implements EnemyView {
     this.sprite = scene.add.image(0, 0, houndKey('walk0')).setOrigin(0.5, 1).setDepth(DEPTH.enemies);
     this.tell = scene.add.image(0, 0, TEX.spark).setTint(PALETTE.white).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.enemies + 1).setVisible(false);
     this.reflection = new Reflection(scene, 0xff7a9a, 0.16);
+    this.scene = scene;
+    this.shadow = scene.add.image(0, 0, TEX.glowSoft).setTint(0x000000).setAlpha(0.4).setScale(0.55, 0.12).setDepth(DEPTH.enemies - 2);
   }
 
   update(e: Enemy, pos: RenderPos, time: number): void {
@@ -289,6 +349,16 @@ class HoundView implements EnemyView {
     this.sprite.setTexture(key).setPosition(fx + shake, fy).setFlipX(g.facing < 0);
     flash(this.sprite, g.flash > 0);
     this.reflection.update(this.sprite, b.onGround);
+    this.shadow.setPosition(fx, fy).setVisible(b.onGround);
+    // Lunge: red afterimages behind the hound (lite mode: none).
+    if (g.state === 'lunge' && view.renderScale > 1) {
+      this.trailClock -= 0.016;
+      if (this.trailClock <= 0) {
+        this.trailClock = 0.035;
+        const t = this.scene.add.image(this.sprite.x, this.sprite.y, this.sprite.texture.key, this.sprite.frame.name).setOrigin(0.5, 1).setFlipX(this.sprite.flipX).setTint(PALETTE.danger).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.45).setDepth(DEPTH.enemies - 1);
+        this.scene.tweens.add({ targets: t, alpha: 0, duration: 170, onComplete: () => t.destroy() });
+      }
+    } else this.trailClock = 0;
     const glowA = g.state === 'windup' ? 0.75 : g.state === 'recover' ? 0.12 : 0.35;
     this.glow.setPosition(fx, fy - 4).setAlpha(glowA).setScale(g.state === 'windup' ? 0.9 : 0.6);
     // A pale glint above the eye announces the lunge.
@@ -303,6 +373,7 @@ class HoundView implements EnemyView {
     this.glow.destroy();
     this.tell.destroy();
     this.reflection.destroy();
+    this.shadow.destroy();
   }
 }
 
@@ -310,8 +381,10 @@ class DroneView implements EnemyView {
   private readonly sprite: Phaser.GameObjects.Image;
   private readonly glow: Phaser.GameObjects.Image;
   private readonly core: Phaser.GameObjects.Image;
+  private readonly thrust: Phaser.GameObjects.Image;
 
   constructor(scene: Phaser.Scene) {
+    this.thrust = scene.add.image(0, 0, TEX.glowSoft).setTint(PALETTE.cyan).setBlendMode(Phaser.BlendModes.ADD).setScale(0.18, 0.4).setAlpha(0.3).setDepth(DEPTH.enemies - 1);
     this.glow = scene.add.image(0, 0, TEX.glowSoft).setTint(PALETTE.magenta).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.35).setScale(0.7).setDepth(DEPTH.enemies - 1);
     this.sprite = scene.add.image(0, 0, droneKey('idle0')).setDepth(DEPTH.enemies).setAlpha(0.95);
     this.core = scene.add.image(0, 0, TEX.glow).setTint(PALETTE.sodium).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.enemies + 1);
@@ -327,6 +400,7 @@ class DroneView implements EnemyView {
     this.sprite.setTexture(key).setPosition(cx, cy + 4).setFlipX(w.facing < 0);
     flash(this.sprite, w.flash > 0);
     this.glow.setPosition(cx, cy);
+    this.thrust.setPosition(cx, cy + 12).setAlpha(0.22 + Math.sin(time / 90) * 0.06).setVisible(view.renderScale > 1);
     this.core.setPosition(cx, cy).setScale(0.25 + w.charge * 0.55).setAlpha(0.5 + w.charge * 0.5);
   }
 
@@ -334,6 +408,7 @@ class DroneView implements EnemyView {
     this.sprite.destroy();
     this.glow.destroy();
     this.core.destroy();
+    this.thrust.destroy();
   }
 }
 

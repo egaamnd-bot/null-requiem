@@ -49,3 +49,19 @@ Screenshots: `docs/screenshots/upgrade-02/`. All presentation-only; effects that
 | Pause menu | Violet-tinted rows, pulsing cyan selection glow; toast no longer prints through the menu | `UIScene.ts` |
 
 Still not done: dialogue panel restyle beyond the nine-slice hooks, icon art, painted foreground, real Courier/enemy sprites (waiting on ChatGPT).
+
+## Production 03 (branch `feature/visual-production-03`)
+
+Screenshots: `docs/screenshots/production-03/`. Presentation only; every added effect that costs particles or fill-rate is off in lite mode (render scale 1x).
+
+| Area | Change | Where |
+| --- | --- | --- |
+| Environment | Steam vents (≤3 per room on wide floors), volumetric light beams under neon ledge strips, hanging-cable foreground band (parallax 1.2x, only when no painted foreground exists) | `Atmosphere.ts`, `RoomView.ts` |
+| Courier | Trailing magenta scarf chain that lags with motion and gravity; run dust at foot-plants | `ActorViews.ts` `PlayerView` |
+| Enemies | Contact shadow + red lunge afterimages (Scrap Hound), thrust glow (Security Drone) | `ActorViews.ts` |
+| HUD / dialogue | Glow behind full integrity cells (danger tint at ≤ 2), cyan edge + glow + magenta tick on the dialogue panel | `UIScene.ts` |
+| Hygiene | `test-results/` is no longer tracked | `.gitignore` |
+
+Fixed while testing: the cable band's vertical sway wrapped the texture and drew stray dashes (removed). Not done: painted foreground/backgrounds and real sprites (ChatGPT), icon art, boss bar frame.
+
+Test note: in this container the browser suite needs `--timeout=120000` (the default 45 s is too tight for the software renderer here); with it all 26 pass (1 skipped). CI uses the normal timeout and passed on every previous branch.
