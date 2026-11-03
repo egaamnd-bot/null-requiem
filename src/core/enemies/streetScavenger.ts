@@ -52,7 +52,7 @@ export class StreetScavenger extends Enemy<ScavengerState> {
         const dist = Math.abs(dx);
         if (this.elite && dist >= T.eliteThrowMin && this.throwCooldown <= 0 && sees) {
           this.setState('throw');
-          ctx.emit({ type: 'enemyWindup', x: this.centerX, y: this.centerY });
+          ctx.emit({ type: 'enemyWindup', x: this.centerX, y: this.centerY, kind: this.kind });
           break;
         }
         const edge = b.onGround && (wallAhead(b, ctx.grid, this.facing) || !groundAhead(b, ctx.grid, this.facing));
@@ -60,7 +60,7 @@ export class StreetScavenger extends Enemy<ScavengerState> {
         b.vx = edge ? 0 : this.facing * speed;
         if (dist <= T.attackRange && Math.abs(ctx.playerY - this.centerY) < 24) {
           this.setState('windup');
-          ctx.emit({ type: 'enemyWindup', x: this.centerX, y: this.centerY });
+          ctx.emit({ type: 'enemyWindup', x: this.centerX, y: this.centerY, kind: this.kind });
         } else if (this.lostSight > T.loseSightTime) {
           this.setState('patrol');
         }

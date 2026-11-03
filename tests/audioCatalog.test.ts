@@ -22,13 +22,15 @@ describe('audio catalog', () => {
     const themes = AUDIO_CATALOG.filter((e) => e.theme).map((e) => e.theme!);
     expect(new Set(themes).size).toBe(themes.length);
     for (const t of themes) expect(Object.keys(THEMES)).toContain(t);
+    for (const e of AUDIO_CATALOG) if (e.layerOf) expect(AUDIO_BY_ID.get(e.layerOf)?.theme, e.id).toBeTruthy();
     expect(ENTRY_FOR_CUE.size).toBe(cues.length);
     expect(ENTRY_FOR_THEME.size).toBe(themes.length);
   });
   it('anything marked wired really has a cue or theme to attach to; hooks/engine entries have none', () => {
     for (const e of AUDIO_CATALOG) {
-      if (e.engine === 'wired') expect(e.cue ?? e.theme ?? e.region, e.id).toBeTruthy();
-      else expect(e.cue ?? e.theme ?? e.region, e.id).toBeUndefined();
+      const target = e.cue ?? e.theme ?? e.region ?? e.layerOf;
+      if (e.engine === 'wired' || e.engine === 'hooked') expect(target, e.id).toBeTruthy();
+      else expect(target, e.id).toBeUndefined();
     }
   });
   it('covers every sound id named in the creative handoff (UI sounds are renamed sfx_ui_*)', () => {

@@ -163,7 +163,7 @@ export class TitleScene extends Phaser.Scene {
     if (this.starting) return;
     this.starting = true;
     this.services.sfx.unlock();
-    this.services.sfx.play('confirm');
+    this.services.sfx.playOr('uiContinue', 'confirm');
     this.services.sfx.startDrone();
     this.cameras.main.fadeOut(400, 5, 6, 12);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {

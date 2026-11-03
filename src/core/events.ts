@@ -21,7 +21,7 @@ export type GameEvent =
   | { type: 'timedGate'; open: boolean }
   | { type: 'gateLocked'; x: number; y: number }
   | { type: 'gateLatched' }
-  | { type: 'enemyWindup'; x: number; y: number }
+  | { type: 'enemyWindup'; x: number; y: number; /** Which enemy wound up (presentation: per-enemy sounds). */ kind?: string }
   | { type: 'enemyShoot'; x: number; y: number }
   | { type: 'enemyDied'; x: number; y: number; kind: string }
   | { type: 'projectileBurst'; x: number; y: number }

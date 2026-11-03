@@ -586,7 +586,10 @@ export class UIScene extends Phaser.Scene {
       this.pauseMenu.index = 0;
       this.pauseMenu.targets.forEach((t) => t.reset());
     }
-    if (over && !this.wasOver) this.gameOverTargets.forEach((t) => t.reset());
+    if (over && !this.wasOver) {
+      this.gameOverTargets.forEach((t) => t.reset());
+      this.session.services.sfx.play('gameOver');
+    }
     this.wasPaused = paused;
     this.wasOver = over;
 

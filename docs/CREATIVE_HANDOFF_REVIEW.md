@@ -46,3 +46,10 @@ Details: `docs/audio/README.md`, `docs/UI_ASSET_SPEC.md`, `docs/CREATIVE_DELIVER
 2. **Audio on iOS Safari/older browsers:** Ogg Vorbis support varies; the Capacitor Android WebView and Chrome decode it. Undecodable files fall back to the procedural sound by design.
 3. **Looping:** Vorbis decodes sample-accurately in Chrome/Android WebView; MP3/AAC have encoder padding gaps, so they are not accepted for loops.
 4. **Nothing has been generated or heard yet.** All numbers about loudness/duration are targets for the deliverer, not measurements.
+
+## 5. Producer decisions (2026-11-03) after the Android test
+
+The Producer's Android test of the engineering stack passed. Decisions: Ogg Vorbis approved; masters in `art/audio/masters/`, runtime files in `public/audio/`;
+safe-room music only with a genuine safe-room state (none exists → blocked, nothing invented); an audio-only combat signal from existing events is approved (built, no AI/balance
+change); the shared boss theme stays. Artwork is still the original placeholder art — expected, since ChatGPT has not delivered any file. See `docs/audio/README.md` and
+`docs/INTEGRATION_RUNBOOK.md`.

@@ -13,6 +13,7 @@ import { InputManager } from '../input/InputManager';
 import { BossView, EchoView, EnemyViewRegistry, NpcView, PanoptixView, PlayerView, ProjectileViews, type RenderPos } from '../render/ActorViews';
 import { InteractViews, PatternBossView } from '../render/CampaignViews';
 import { themeFor } from '../audio/musicTheory';
+import { CombatTracker, FootstepTracker } from '../audio/triggers';
 import { collectedRecords } from '../ui/menuModel';
 import { MENU_SCENE, type MenuTab } from './MenuScene';
 import { Fx } from '../render/Fx';
@@ -40,6 +41,10 @@ export class GameScene extends Phaser.Scene {
   private vignette!: Phaser.GameObjects.Image;
   private roomView: RoomView | null = null;
   private playerView!: PlayerView;
+  // Audio-only observers: they read events/state and never feed back into the simulation.
+  private readonly combatTracker = new CombatTracker();
+  private readonly footsteps = new FootstepTracker();
+  private lastBacktraceCooldown = 0;
   private echoView!: EchoView;
   private enemyViews!: EnemyViewRegistry;
   private projectileViews!: ProjectileViews;
@@ -113,12 +118,16 @@ export class GameScene extends Phaser.Scene {
       onPause: () => this.pause(),
     });
 
+    this.combatTracker.reset();
+    this.footsteps.reset();
+    this.lastBacktraceCooldown = 0;
     const onBlur = () => this.pause();
     this.game.events.on(Phaser.Core.Events.BLUR, onBlur);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.game.events.off(Phaser.Core.Events.BLUR, onBlur);
       this.game.events.off(VIEW_CHANGED, this.onViewChanged, this);
       this.scene.stop(MOBILE_SCENE);
+      this.services.music.setCombat(0);
       this.controls.destroy();
       this.roomView?.destroy();
       this.roomView = null;
@@ -173,10 +182,22 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  /** Footsteps, Backtrace-ready chime and the combat signal for layered music. Read-only: nothing here touches the simulation. */
+  private updateAudioObservers(now: number, dt: number): void {
+    const w = this.world;
+    const p = w.player;
+    const sfx = this.services.sfx;
+    if (this.footsteps.update(dt, { onGround: p.body.onGround, vx: p.body.vx, active: w.flow.state === 'playing' && !p.dead && !p.isDashing && !w.inDialogue })) sfx.play('footstep');
+    const cd = w.backtrace.cooldown;
+    if (this.lastBacktraceCooldown > 0 && cd <= 0 && w.progression.has('backtrace') && !p.dead) sfx.play('btReady');
+    this.lastBacktraceCooldown = cd;
+    this.services.music.setCombat(this.combatTracker.update(now, dt));
+  }
+
   private pause(): void {
     if (this.world.pause()) {
       this.fx.setPaused(true);
-      this.services.sfx.play('menu');
+      this.services.sfx.playOr('uiPause', 'menu');
     }
   }
 
@@ -339,6 +360,7 @@ export class GameScene extends Phaser.Scene {
     for (const e of world.drainEvents()) {
       this.fx.handle(e);
       this.services.sfx.handle(e);
+      this.combatTracker.note(e, time / 1000);
       if (e.type === 'playerLand') this.playerView.onLand(e.heavy);
       if (e.type === 'playerJump') this.playerView.onJump();
       if (e.type === 'backtrace') this.playerView.trigger('backtrace');
@@ -368,6 +390,7 @@ export class GameScene extends Phaser.Scene {
     const player = world.player;
     const ppos = this.renderPos(player.body, alpha);
     this.playerView.update(player, ppos, dt, time);
+    this.updateAudioObservers(time / 1000, dt);
     this.echoView.update(world, time);
     this.enemyViews.sync(room.enemies, (en) => this.renderPos(en.body, alpha), time);
     if (room.boss && this.bossView) this.bossView.update(room.boss, this.renderPos(room.boss.body, alpha), time);
