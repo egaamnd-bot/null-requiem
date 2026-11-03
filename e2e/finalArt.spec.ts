@@ -307,13 +307,15 @@ test('the Courier plays delivered interact frames when talking (R6) and effects 
     };
     requestAnimationFrame(f);
   });
-  await page.keyboard.down('f');
-  await page.waitForTimeout(120);
-  await page.keyboard.up('f');
-  // Poll instead of a fixed wait: the software renderer on CI can be slow enough that a 900 ms window misses the short interact pose.
-  await page
-    .waitForFunction(() => (window as unknown as { __seen: Set<string> }).__seen.size > 0, null, { timeout: 8000 })
-    .catch(() => undefined);
+  // The software renderer on CI can run at a handful of frames per second, so a single 120 ms key press can fall between two input
+  // polls and never register. Press and release repeatedly (hold long enough for several frames) until the pose is seen.
+  for (let attempt = 0; attempt < 10; attempt++) {
+    await page.keyboard.down('f');
+    await page.waitForTimeout(500);
+    await page.keyboard.up('f');
+    await page.waitForTimeout(500);
+    if (await page.evaluate(() => (window as unknown as { __seen: Set<string> }).__seen.size > 0)) break;
+  }
   const seen = await page.evaluate(() => [...(window as unknown as { __seen: Set<string> }).__seen]);
   expect(seen.length, 'no interact frame was ever shown').toBeGreaterThan(0);
 });
