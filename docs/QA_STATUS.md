@@ -185,3 +185,10 @@ Producer to test on a real Android phone and mark each row. Until every row pass
 - `feature/audio-upgrade-01` (`9702b0c`, PR #13, contains both): CI #97/#99 success; **Android Debug APK #68 (run 41607502343) success**, artifact `null-requiem-android-debug-9702b0cad290b2674d088eeb3374c2caebc55457` (11,344,230 bytes — larger because it now bundles ≈4 MB of Ogg audio).
 - Verified locally: tsc clean, vitest 583/583, Playwright 26 passed / 1 skipped, `npm run audio:validate` 17 accepted / 0 errors / 0 warnings, browser check that recorded music/ambience/SFX decode and play without console errors.
 - Unverified: how the audio sounds and balances on a phone, combat stem in a real fight, decoded-audio memory (~50 MB) on low-end devices, frame rate with the new title/reflection effects. Device test pending from the Producer.
+
+## Visual production 03 + audio production 02 (2026-11-03 evening)
+
+- `feature/visual-production-03` (`5740a9d`, PR #14): CI #102/#104 success, Android Debug APK #70 success.
+- `feature/audio-production-02` (`5a9bd32`, PR #15, contains both): CI #106/#107 success; **Android Debug APK #72 (run 41621602474) success**, artifact `null-requiem-android-debug-5a9bd329eef49b4088ba511ef1ba7541bc7d0ea9` (13,617,936 bytes; ≈ 6 MB of Ogg audio).
+- Verified locally: tsc clean, vitest 583/583, `npm run audio:validate` 54 accepted / 0 errors / 0 warnings, Playwright 26 passed / 1 skipped (with `--timeout=120000` in this container; the 45 s default timed out on 1–4 slow tests here, including on the previous branch tip, so that is environment speed, not a regression; CI at the default timeout is green), browser check that the music, rain bed and two ambience layers decode and play, decoded audio ≈ 30 MB (title) / ≈ 47 MB (Rainline).
+- Unverified: on-device smoothness with the extra effects, how the 37 synthesised sounds and the ambience layers sound and balance, memory ≈ 65 MB with the combat stem on low-RAM phones. Device test pending from the Producer.
