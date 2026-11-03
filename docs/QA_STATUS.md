@@ -165,3 +165,9 @@ Producer to test on a real Android phone and mark each row. Until every row pass
 | 13 | Home button / app switch while holding a button: no stuck input on return | |
 | 14 | Game fills the screen (no browser chrome, notch/cutout not covering controls) | |
 | 15 | Audio plays after first tap; no obvious frame-rate problems | |
+
+## `feature/visual-enhancement` (visual pass) — local evidence 2026-11-03
+
+- Verified locally: `npx tsc --noEmit` clean; `npx vitest run` 583/583; `npm run build`; Playwright 26 passed, 1 skipped (delivered-art, no assets).
+- Verified: before/after screenshots in `docs/screenshots/` (software renderer, Pixel 7 landscape).
+- Unverified: frame rate/battery on a phone with the added particles; CI/APK for this branch (see PR once run).

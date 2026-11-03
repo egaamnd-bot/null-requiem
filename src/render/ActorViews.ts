@@ -42,8 +42,16 @@ export class PlayerView {
   private shots: OneShotTrack | null = null;
   private slashFrames: Record<'side' | 'up' | 'down', string[] | null> = { side: null, up: null, down: null };
   private clock = 0;
+  /** Controlled cyan accents (presentation only): spinal implant, rail-blade edge and a dash afterimage trail. */
+  private readonly implant: Phaser.GameObjects.Image;
+  private readonly blade: Phaser.GameObjects.Image;
+  private ghostClock = 0;
+  private readonly scene: Phaser.Scene;
 
   constructor(scene: Phaser.Scene) {
+    this.scene = scene;
+    this.implant = scene.add.image(0, 0, TEX.glow).setTint(PALETTE.cyan).setBlendMode(Phaser.BlendModes.ADD).setScale(0.3).setDepth(DEPTH.player + 1);
+    this.blade = scene.add.image(0, 0, TEX.glowSoft).setTint(PALETTE.cyan).setBlendMode(Phaser.BlendModes.ADD).setScale(0.34, 0.2).setDepth(DEPTH.player + 1);
     this.glow = scene.add.image(0, 0, TEX.glowSoft).setTint(PALETTE.cyan).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.3).setScale(1.2).setDepth(DEPTH.player - 1);
     this.sprite = scene.add.image(0, 0, playerKey('idle0')).setOrigin(0.5, 1).setDepth(DEPTH.player).setScale(0.65);
     this.slash = scene.add.image(0, 0, TEX.slashSide).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.player + 1).setVisible(false);
@@ -118,6 +126,36 @@ export class PlayerView {
 
     this.glow.setPosition(feetX, feetY - 12).setAlpha(p.dead ? 0.12 : 0.28 + Math.sin(time / 300) * 0.04);
 
+    // Implant: slow pulse, brighter while Backtrace is ready/active. Blade: faint edge light that flares during an attack.
+    const alive = !p.dead;
+    const pulse = 0.5 + Math.sin(time / 420) * 0.12;
+    this.implant.setPosition(feetX - p.facing * 3, feetY - 26).setAlpha(alive ? pulse : 0).setVisible(alive);
+    const swing = p.attackPhase === 'active' ? 0.5 : 0;
+    this.blade
+      .setPosition(feetX + p.facing * (p.isAttacking ? 14 : 9), feetY - (p.isAttacking ? 16 : 11))
+      .setAngle(p.isAttacking ? 0 : p.facing * 60)
+      .setScale(p.isAttacking ? 0.5 : 0.3, 0.16)
+      .setAlpha(alive ? 0.2 + swing + Math.sin(time / 300) * 0.04 : 0)
+      .setVisible(alive);
+
+    // Dash afterimages: copies of the current frame that fade out behind the Courier.
+    if (p.isDashing) {
+      this.ghostClock -= dt;
+      if (this.ghostClock <= 0) {
+        this.ghostClock = 0.028;
+        const g = this.scene.add
+          .image(this.sprite.x, this.sprite.y, this.sprite.texture.key, this.sprite.frame.name)
+          .setOrigin(0.5, 1)
+          .setFlipX(this.sprite.flipX)
+          .setScale(this.sprite.scaleX, this.sprite.scaleY)
+          .setTint(PALETTE.cyan)
+          .setBlendMode(Phaser.BlendModes.ADD)
+          .setAlpha(0.5)
+          .setDepth(DEPTH.player - 2);
+        this.scene.tweens.add({ targets: g, alpha: 0, duration: 190, onComplete: () => g.destroy() });
+      }
+    } else this.ghostClock = 0;
+
     // Slash arc appears for the active window plus a short fade.
     if (p.attackPhase === 'active' && p.attackId !== this.lastAttackId) {
       this.lastAttackId = p.attackId;
@@ -154,6 +192,8 @@ export class PlayerView {
     this.sprite.destroy();
     this.glow.destroy();
     this.slash.destroy();
+    this.implant.destroy();
+    this.blade.destroy();
   }
 }
 

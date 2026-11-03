@@ -18,6 +18,9 @@ docs, not executed; **[unverified]** = not checked.
 
 ## Current state (2026-11-03) — stack of PRs, none merged
 
+Top of stack is now `feature/visual-enhancement` (PR #11, procedural atmosphere pass; see `docs/VISUAL_ENHANCEMENT_01.md`). Handoff zip contained references/sketches only.
+
+
 `main` ← #4 `milestone/full-production` ← #5 `feature/render-foundation` ← #6 `creative/pack-01-production` (ChatGPT's handoff, docs only) ← #7 `feature/creative-readiness` ← #8 `feature/audio-runtime` ← #9 `feature/audio-hooks-intake` ← **#10 `feature/ui-skin-layer`** (tip).
 
 - **Roles:** Producer approves; ChatGPT is Creative Director / asset producer and delivers validated batches; Claude owns engine integration, tests and Android verification.

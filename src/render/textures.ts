@@ -874,18 +874,18 @@ export function makeBackdrop(scene: Phaser.Scene, key: string, tint: number, lay
     };
     if (layer === 'far') {
       const sky = ctx.createLinearGradient(0, 0, 0, H);
-      sky.addColorStop(0, '#30104e');
-      sky.addColorStop(0.45, '#8a287f');
-      sky.addColorStop(0.72, '#ec5db2');
-      sky.addColorStop(1, '#24163e');
+      sky.addColorStop(0, '#0a0614');
+      sky.addColorStop(0.42, '#2a1048');
+      sky.addColorStop(0.72, '#9a2a7c');
+      sky.addColorStop(1, '#1a0d26');
       ctx.fillStyle = sky;
       ctx.fillRect(0, 0, W, H);
       glow(735, 148, 240, 'rgba(255,153,231,ALPHA)', 0.8);
       glow(225, 270, 230, 'rgba(91,77,255,ALPHA)', 0.8);
       // Large pale moon / atmospheric light source.
       const moon = ctx.createRadialGradient(740, 145, 12, 740, 145, 120);
-      moon.addColorStop(0, 'rgba(255,242,255,0.92)');
-      moon.addColorStop(0.72, 'rgba(255,191,246,0.55)');
+      moon.addColorStop(0, 'rgba(255,236,255,0.8)');
+      moon.addColorStop(0.72, 'rgba(255,170,240,0.4)');
       moon.addColorStop(1, 'rgba(255,160,245,0)');
       ctx.fillStyle = moon;
       ctx.beginPath(); ctx.arc(740,145,120,0,Math.PI*2); ctx.fill();
@@ -974,9 +974,10 @@ export function makeBackdrop(scene: Phaser.Scene, key: string, tint: number, lay
       // Glowing cables, signal lamps and scattered foreground rain.
       for(let i=0;i<18;i++) {
         const x=rng()*W, y=80+rng()*370;
-        const color=rng()>0.5?'rgba(63,255,218,0.9)':'rgba(255,72,210,0.85)';
-        glow(x,y,18,color,0.5);
-        ctx.fillStyle=color; ctx.beginPath(); ctx.arc(x,y,2+rng()*2,0,Math.PI*2); ctx.fill();
+        const cyan=rng()>0.5;
+        // (the glow() helper substitutes ALPHA; a plain rgba() here used to paint a hard square)
+        glow(x,y,26,cyan?'rgba(63,255,218,ALPHA)':'rgba(255,72,210,ALPHA)',1.1);
+        ctx.fillStyle=cyan?'rgba(150,255,238,0.95)':'rgba(255,150,225,0.9)'; ctx.beginPath(); ctx.arc(x,y,2+rng()*2,0,Math.PI*2); ctx.fill();
       }
       ctx.strokeStyle='rgba(195,207,255,0.22)'; ctx.lineWidth=1;
       for(let i=0;i<65;i++) {

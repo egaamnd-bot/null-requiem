@@ -126,6 +126,22 @@ export class Fx {
     this.scene.tweens.add({ targets: img, scale: toScale, alpha: 0, duration: ms, ease: 'Cubic.easeOut', onComplete: () => img.destroy() });
   }
 
+  /** Enemy wind-up warning: a danger-red ring that contracts onto the attacker (distinct from the cyan player/environment rings). */
+  private telegraph(x: number, y: number): void {
+    const img = this.scene.add.image(x, y, TEX.ring).setTint(PALETTE.danger).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.fx).setScale(1.5).setAlpha(0.15);
+    this.scene.tweens.add({ targets: img, scale: 0.45, alpha: 0.85, duration: 200, ease: 'Cubic.easeIn', onComplete: () => img.destroy() });
+    const core = this.scene.add.image(x, y, TEX.glow).setTint(PALETTE.danger).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.fx).setScale(0.3).setAlpha(0.2);
+    this.scene.tweens.add({ targets: core, scale: 0.9, alpha: 0.7, duration: 200, ease: 'Sine.easeIn', yoyo: true, onComplete: () => core.destroy() });
+  }
+
+  /** A short white-hot flash with a coloured halo at the point of impact. */
+  private impact(x: number, y: number, color: number, size: number): void {
+    const halo = this.scene.add.image(x, y, TEX.glow).setTint(color).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.fx).setScale(size * 0.5).setAlpha(0.85);
+    const core = this.scene.add.image(x, y, TEX.glow).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.fx + 1).setScale(size * 0.22).setAlpha(1);
+    this.scene.tweens.add({ targets: halo, scale: size, alpha: 0, duration: 150, ease: 'Cubic.easeOut', onComplete: () => halo.destroy() });
+    this.scene.tweens.add({ targets: core, scale: size * 0.45, alpha: 0, duration: 90, onComplete: () => core.destroy() });
+  }
+
   /** A streak of data particles along the path the player rewound through. */
   private streak(x0: number, y0: number, x1: number, y1: number): void {
     const n = Math.min(40, Math.max(8, Math.round(Math.hypot(x1 - x0, y1 - y0) / 6)));
@@ -139,6 +155,7 @@ export class Fx {
     switch (e.type) {
       case 'playerLand':
         this.dust.explode(e.heavy ? 8 : 4, e.x, e.y);
+        if (e.heavy) this.ring(e.x, e.y - 1, PALETTE.mist, 0.7, 240);
         break;
       case 'playerJump':
         this.dust.explode(3, e.x, e.y);
@@ -161,6 +178,7 @@ export class Fx {
         break;
       }
       case 'hit':
+        this.impact(e.x, e.y, e.target === 'enemy' || e.target === 'boss' ? (e.killed ? PALETTE.sodium : PALETTE.cyan) : PALETTE.mist, e.killed ? 1.5 : 0.9);
         if (!playFxSprite(this.scene, 'fx_hit_spark', 'spark', e.x, e.y, { depth: DEPTH.fx, additive: true })) this.sparks.explode(e.killed ? 14 : 7, e.x, e.y);
         if (e.target === 'enemy' || e.target === 'boss') this.stop(e.killed ? HITSTOP.kill : HITSTOP.hit);
         if (e.target === 'wall') this.dust.explode(6, e.x, e.y);
@@ -169,7 +187,11 @@ export class Fx {
       case 'enemyDied':
         this.debris.explode(18, e.x, e.y);
         break;
+      case 'enemyWindup':
+        this.telegraph(e.x, e.y);
+        break;
       case 'playerHurt':
+        this.impact(e.x, e.y, PALETTE.danger, 1.3);
         this.sparks.explode(10, e.x, e.y);
         this.stop(HITSTOP.hurt);
         this.shake(140, 0.008);
