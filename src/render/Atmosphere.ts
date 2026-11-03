@@ -24,7 +24,7 @@ const D = {
   haze: 39,
 } as const;
 
-export const ATM_KEYS = { grade: 'atm-grade', fog: 'atm-fog', rainNear: 'atm-rain-near', ripple: 'atm-ripple', glint: 'atm-glint', haze: 'atm-haze', mote: 'atm-mote' } as const;
+export const ATM_KEYS = { grade: 'atm-grade', fog: 'atm-fog', rainNear: 'atm-rain-near', ripple: 'atm-ripple', glint: 'atm-glint', haze: 'atm-haze', mote: 'atm-mote', beam: 'atm-beam', steam: 'atm-steam', cables: 'atm-cables' } as const;
 
 /** Soft cloud-like strip, tileable horizontally (a handful of wrapped radial blobs). */
 function makeFog(scene: Phaser.Scene): void {
@@ -87,6 +87,59 @@ export function makeAtmosphereTextures(scene: Phaser.Scene): void {
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, 4, 64);
   });
+  // Light beam: a soft downward cone (narrow at the lamp, wide at the floor), white so it can be tinted.
+  canvasTexture(scene, ATM_KEYS.beam, 64, 96, (ctx) => {
+    const g = ctx.createLinearGradient(0, 0, 0, 96);
+    g.addColorStop(0, 'rgba(255,255,255,0.55)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(26, 0);
+    ctx.lineTo(38, 0);
+    ctx.lineTo(62, 96);
+    ctx.lineTo(2, 96);
+    ctx.closePath();
+    ctx.fill();
+  });
+  canvasTexture(scene, ATM_KEYS.steam, 16, 16, (ctx) => {
+    const g = ctx.createRadialGradient(8, 8, 0, 8, 8, 8);
+    g.addColorStop(0, 'rgba(255,255,255,0.7)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 16, 16);
+  });
+  // Hanging cables and a few signal lamps for a top foreground band (tileable horizontally, 256x60).
+  canvasTexture(scene, ATM_KEYS.cables, 256, 60, (ctx) => {
+    const rng = createRng(4242);
+    for (let i = 0; i < 6; i++) {
+      const x0 = i * 46 - 10 + rng() * 14;
+      const x1 = x0 + 50 + rng() * 40;
+      const sag = 12 + rng() * 30;
+      for (const dx of [-256, 0, 256]) {
+        ctx.beginPath();
+        ctx.moveTo(x0 + dx, -2);
+        ctx.quadraticCurveTo((x0 + x1) / 2 + dx, sag * 2, x1 + dx, -2);
+        ctx.strokeStyle = 'rgba(5,6,12,0.95)';
+        ctx.lineWidth = 3 + rng() * 2;
+        ctx.stroke();
+        ctx.strokeStyle = rng() < 0.5 ? 'rgba(255,62,165,0.45)' : 'rgba(60,242,255,0.4)';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+      }
+    }
+    for (let i = 0; i < 4; i++) {
+      const x = rng() * 256;
+      const y = 8 + rng() * 22;
+      const cyan = rng() < 0.5;
+      for (const dx of [-256, 0, 256]) {
+        const g = ctx.createRadialGradient(x + dx, y, 0, x + dx, y, 7);
+        g.addColorStop(0, cyan ? 'rgba(150,255,240,0.95)' : 'rgba(255,150,220,0.95)');
+        g.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(x + dx - 7, y - 7, 14, 14);
+      }
+    }
+  });
   canvasTexture(scene, ATM_KEYS.mote, 3, 3, (ctx) => {
     ctx.fillStyle = 'rgba(255,255,255,0.35)';
     ctx.fillRect(0, 0, 3, 3);
@@ -124,6 +177,7 @@ export class Atmosphere {
   private readonly fogFar: Phaser.GameObjects.TileSprite;
   private readonly fogNear: Phaser.GameObjects.TileSprite;
   private readonly haze: Phaser.GameObjects.Image;
+  private readonly cables: Phaser.GameObjects.TileSprite;
   private readonly glints: { img: Phaser.GameObjects.Image; run: Run; speed: number; phase: number }[] = [];
   private readonly runs: Run[];
   private readonly emitters: Phaser.GameObjects.Particles.ParticleEmitter[] = [];
@@ -138,6 +192,7 @@ export class Atmosphere {
     grid: TileGrid,
     seed: number,
     glow: number,
+    private readonly paintedFg = false,
   ) {
     makeAtmosphereTextures(scene);
     this.rng = createRng(seed * 7 + 5);
@@ -156,6 +211,9 @@ export class Atmosphere {
     );
     // Ground haze in front of everything but the HUD, kept faint so silhouettes stay readable.
     this.haze = add(scene.add.image(0, view.height - 64, ATM_KEYS.haze).setOrigin(0).setDisplaySize(view.width, 64).setScrollFactor(0).setDepth(D.haze).setTint(0x1a0d26).setAlpha(0.45));
+
+    // Foreground cables: a dark hanging band over the top of the screen, parallaxing faster than the playfield (never in lite mode).
+    this.cables = add(scene.add.tileSprite(0, 0, view.width, 60, ATM_KEYS.cables).setOrigin(0).setScrollFactor(0).setDepth(D.haze).setAlpha(0.7).setVisible(!this.paintedFg));
 
     // Wet floor: a bright wet edge, a sodium/cyan sheen just under the surface, and slow glints sliding along the run.
     this.runs = floorRuns(grid);
@@ -193,6 +251,30 @@ export class Atmosphere {
         .setDepth(D.motes),
       ),
     );
+    // Steam vents: a few soft rising plumes on wide floors (deterministic positions, decoration only).
+    const wide = this.runs.filter((r) => r.w >= 96);
+    const vents = Math.min(3, Math.floor(wide.length / 2));
+    for (let i = 0; i < vents; i++) {
+      const run = wide[Math.floor(this.rng() * wide.length)]!;
+      const vx = run.x + 24 + this.rng() * (run.w - 48);
+      this.emitters.push(
+        add(
+          scene.add
+            .particles(vx, run.y, ATM_KEYS.steam, {
+              x: { min: -2, max: 2 },
+              speedY: { min: -28, max: -14 },
+              speedX: { min: -5, max: 8 },
+              lifespan: { min: 1400, max: 2200 },
+              scale: { start: 0.5, end: 1.6 },
+              alpha: { start: 0.2, end: 0 },
+              tint: [0xaab4d8, glow],
+              frequency: 160,
+              quantity: 1,
+            })
+            .setDepth(D.sheen - 0.5),
+        ),
+      );
+    }
     // Near rain: sparse, longer, brighter streaks falling in front of the playfield.
     this.emitters.push(
       add(
@@ -218,6 +300,7 @@ export class Atmosphere {
     this.fogFar.setSize(width, 64).setY(height * 0.34);
     this.fogNear.setSize(width, 64).setY(height * 0.58);
     this.haze.setDisplaySize(width, 64).setY(height - 64);
+    this.cables.setSize(width, 60);
   }
 
   update(time: number, camera: Phaser.Cameras.Scene2D.Camera, glow: number): void {
@@ -232,10 +315,12 @@ export class Atmosphere {
         e.setVisible(!lite);
       }
       for (const g of this.glints) g.img.setVisible(!lite);
+      this.cables.setVisible(!lite && !this.paintedFg);
     }
     this.fogFar.tilePositionX = t * 5 + camera.scrollX * 0.05;
     this.fogNear.tilePositionX = -t * 9 + camera.scrollX * 0.14;
     this.fogNear.setAlpha(0.12 + Math.sin(t * 0.35) * 0.03);
+    this.cables.tilePositionX = camera.scrollX * 1.2 + Math.sin(t * 0.7) * 3;
 
     for (const g of this.lite ? [] : this.glints) {
       const u = ((t * g.speed + g.phase) % (g.run.w + 60)) - 30;

@@ -12,7 +12,7 @@ import { canvasTexture, makeBackdrop, px, TEX } from './textures';
 import { autotileIndex, catwalkIndex } from '../assets/autotile';
 import { tilesetFor, type Tileset } from './tileset';
 import { WTEX } from './worldTextures';
-import { Atmosphere } from './Atmosphere';
+import { Atmosphere, ATM_KEYS, makeAtmosphereTextures } from './Atmosphere';
 
 export const DEPTH = {
   sky: -100,
@@ -60,6 +60,8 @@ export class RoomView {
   private readonly mid: Phaser.GameObjects.TileSprite;
   private readonly fg: Phaser.GameObjects.TileSprite | null = null;
   private readonly atmosphere: Atmosphere;
+  private readonly beams: Phaser.GameObjects.Image[] = [];
+  private beamsLite = false;
   /** Tile scale of each parallax layer (world px per texture px); keeps world-space parallax speed independent of texture size. */
   private farScale = 0.5;
   private midScale = 0.5;
@@ -80,6 +82,7 @@ export class RoomView {
     const room = world.room;
     const theme = room.def.theme;
     const id = room.def.id;
+    makeAtmosphereTextures(scene); // light beams are placed while the lights are built, before the Atmosphere layer exists
 
     // Sky gradient (screen-fixed).
     const skyKey = `sky-${id}`;
@@ -122,7 +125,7 @@ export class RoomView {
 
     this.buildLights(room.grid, room);
     this.buildObjects(room);
-    this.atmosphere = new Atmosphere(scene, room.grid, id.length * 13 + id.charCodeAt(0), theme.glow);
+    this.atmosphere = new Atmosphere(scene, room.grid, id.length * 13 + id.charCodeAt(0), theme.glow, !!this.fg);
   }
 
   private add<T extends Phaser.GameObjects.GameObject>(obj: T): T {
@@ -298,6 +301,10 @@ export class RoomView {
             const glow = this.scene.add.image(x + 6, y + 4, TEX.glow).setTint(color).setBlendMode(Phaser.BlendModes.ADD).setScale(0.6, 0.35).setDepth(DEPTH.terrain + 1);
             this.add(glow);
             this.pulses.push({ obj: glow, base: 0.45, amp: 0.15, speed: 0.6 + rng(), phase: rng() * 6, flicker: rng() < 0.25 });
+            // Volumetric beam falling from the strip (decoration; hidden in lite mode by the pulse update).
+            const beam = this.scene.add.image(x + 6, y, ATM_KEYS.beam).setOrigin(0.5, 0).setTint(color).setBlendMode(Phaser.BlendModes.ADD).setScale(0.8, 0.9).setAlpha(0.14).setDepth(DEPTH.terrain - 1);
+            this.add(beam);
+            this.beams.push(beam);
           }
         }
         if (count < 60 && grid.get(c, r) === Tile.Solid && !grid.isSolid(c, r - 1) && grid.get(c, r - 1) !== Tile.Hazard && hash(c, r, 8) < 0.06) {
@@ -434,6 +441,10 @@ export class RoomView {
   update(time: number, camera: Phaser.Cameras.Scene2D.Camera): void {
     const t = time / 1000;
     this.atmosphere.update(time, camera, this.world.room.def.theme.glow);
+    if (this.beamsLite !== (view.renderScale <= 1)) {
+      this.beamsLite = view.renderScale <= 1;
+      for (const b of this.beams) b.setVisible(!this.beamsLite);
+    }
     // World-space parallax speed is independent of the texture's pixel size: tilePosition is in texture px, so divide by the tile scale.
     const PAR = 0.5; // the original generated layers (tile scale 0.5) define the feel
     this.far.tilePositionX = (camera.scrollX * 0.12 * PAR) / this.farScale;

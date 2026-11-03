@@ -37,6 +37,7 @@ export class UIScene extends Phaser.Scene {
   private session!: Session;
   private controls!: InputManager;
   private cells: Phaser.GameObjects.Image[] = [];
+  private cellGlows: Phaser.GameObjects.Image[] = [];
   private btIcon!: Phaser.GameObjects.Image;
   /** Wet-Neon HUD plate behind the integrity cells and a ready-glow behind the Backtrace icon (presentation only). */
   private hudPlate!: Phaser.GameObjects.Rectangle;
@@ -95,6 +96,7 @@ export class UIScene extends Phaser.Scene {
     this.session = data.session;
     this.restartPending = false;
     this.cells = [];
+    this.cellGlows = [];
     this.toastTimer = 0;
     this.bannerTimer = 0;
     this.overlayFrames = 0;
@@ -191,6 +193,10 @@ export class UIScene extends Phaser.Scene {
     const panelSkin = Skin.attach(this, panelRect, 'panel');
     c.add(panelSkin ? [panelRect, panelSkin.image] : [panelRect]);
     c.add(this.add.rectangle(x, y, w, 14, PALETTE.violet, 0.45).setOrigin(0));
+    // Wet-Neon edge: a cyan hairline with a soft glow along the top of the panel and a magenta tick by the name.
+    c.add(this.add.rectangle(x, y, w, 1, PALETTE.cyan, 0.7).setOrigin(0));
+    c.add(this.add.image(x + w / 2, y, TEX.glow).setTint(PALETTE.cyan).setBlendMode(Phaser.BlendModes.ADD).setScale(w / 64, 0.35).setAlpha(0.22));
+    c.add(this.add.rectangle(x, y + 1, 2, 13, PALETTE.magenta, 0.9).setOrigin(0));
     this.dlgName = this.add.text(x + 8, y + 2, '', { fontFamily: UI_FONT, fontSize: '9px', color: css(PALETTE.chrome), resolution: 2 }).setLetterSpacing(2);
     this.dlgText = this.add.text(x + 8, y + 20, '', { fontFamily: UI_FONT, fontSize: '9px', color: css(PALETTE.chrome), wordWrap: { width: w - 16 }, lineSpacing: 3, resolution: 2 });
     this.dlgHint = this.add.text(x + w - 8, y + h - 10, '', { fontFamily: UI_MONO, fontSize: '7px', color: css(PALETTE.cyan), resolution: 2 }).setOrigin(1, 1);
@@ -515,6 +521,7 @@ export class UIScene extends Phaser.Scene {
     const hud = this.session.world.hud();
     // Integrity cells (health) — top left.
     while (this.cells.length < hud.maxHealth) {
+      this.cellGlows.push(this.add.image(view.margin.left + 2 + this.cells.length * 10 + 4, view.margin.top + 8, TEX.glow).setTint(PALETTE.cyan).setBlendMode(Phaser.BlendModes.ADD).setScale(0.42).setAlpha(0.3).setDepth(-1));
       this.cells.push(this.add.image(view.margin.left + 2 + this.cells.length * 10, view.margin.top + 8, TEX.hudCellFull).setOrigin(0, 0.5));
     }
     this.cells.forEach((img, i) => {
@@ -522,6 +529,7 @@ export class UIScene extends Phaser.Scene {
       const full = i < hud.health;
       img.setVisible(visible).setTexture(full ? TEX.hudCellFull : TEX.hudCellEmpty);
       const pulse = full && i === hud.health - 1 && hud.health <= 2 ? 0.6 + Math.sin(this.time.now / 120) * 0.4 : 1;
+      this.cellGlows[i]?.setVisible(visible && full).setTint(hud.health <= 2 ? PALETTE.danger : PALETTE.cyan).setAlpha(0.18 + 0.14 * pulse);
       img.setAlpha(this.hurtFlash > 0 && !full ? 0.5 + Math.sin(this.time.now / 30) * 0.5 : pulse);
     });
     this.hurtFlash = Math.max(0, this.hurtFlash - dt);
