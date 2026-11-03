@@ -171,3 +171,4 @@ Producer to test on a real Android phone and mark each row. Until every row pass
 - Verified locally: `npx tsc --noEmit` clean; `npx vitest run` 583/583; `npm run build`; Playwright 26 passed, 1 skipped (delivered-art, no assets).
 - Verified: before/after screenshots in `docs/screenshots/` (software renderer, Pixel 7 landscape).
 - Unverified: frame rate/battery on a phone with the added particles; CI/APK for this branch (see PR once run).
+- CI evidence for `e86a079` (PR #11): "CI" push run 41591921135 and PR run 41591938273 **success**; "Android Debug APK" run 41591921097 **success**, artifact `null-requiem-android-debug-e86a079511307f5df06105c068c60daa619a2757` (7,243,729 bytes, expires 2026-11-17). Device test: pending Producer.
