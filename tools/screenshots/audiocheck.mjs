@@ -6,7 +6,7 @@ const errs = []; page.on('pageerror', (e) => errs.push(String(e))); page.on('con
 await page.goto('http://127.0.0.1:4173/');
 await page.waitForFunction(() => window.nullRequiemGame?.scene.isActive('title'), null, { timeout: 30000 });
 await page.keyboard.press('Shift');
-const st = async (label) => console.log(label, JSON.stringify(await page.evaluate(() => { const a = window.nullRequiemAudio; const ids = ['music_title_theme','music_rainline_exploration','music_rainline_combat','sfx_player_jump','amb_rainline_loop']; return { manifest: a.bank.manifestLoaded, ready: Object.fromEntries(ids.map((i) => [i, a.bank.isReady(i)])), playingFile: a.music.playingFile }; })));
+const st = async (label) => console.log(label, JSON.stringify(await page.evaluate(() => { const a = window.nullRequiemAudio; const ids = ['music_title_theme','music_rainline_exploration','music_rainline_combat','sfx_player_jump','amb_rainline_loop','amb_city_traffic','amb_neon_sign_hum','music_victory']; return { manifest: a.bank.manifestLoaded, ready: Object.fromEntries(ids.map((i) => [i, a.bank.isReady(i)])), playingFile: a.music.playingFile, mem: Object.fromEntries(Object.entries(a.bank.decodedBytes().byId).map(([k, v]) => [k, (v / 1048576).toFixed(1) + 'MB'])), totalMB: (a.bank.decodedBytes().total / 1048576).toFixed(1) }; })));
 await page.waitForTimeout(4000); await st('title');
 await page.keyboard.press('Enter');
 await page.waitForFunction(() => window.nullRequiem?.world?.flow.state === 'playing', null, { timeout: 30000 });

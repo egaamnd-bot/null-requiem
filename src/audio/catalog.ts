@@ -30,6 +30,8 @@ export interface AudioEntry {
   layerOf?: string;
   /** Region whose rooms play this ambience loop. */
   region?: 'rainline' | 'transit' | 'precinct';
+  /** Regions in which this loop plays as a quiet LAYER under the region bed (city traffic, neon hum, machinery…). */
+  layerIn?: readonly ('rainline' | 'transit' | 'precinct')[];
   trigger: string;
   engine: EngineStatus;
   /** Playback trim in dB on top of the file (files are mastered to the targets in docs/audio/README.md). */
@@ -118,9 +120,18 @@ export const AUDIO_CATALOG: readonly AudioEntry[] = [
   ui('sfx_ui_save', 'uiSave', 'hooked', 'Progress saved (checkpoint save)'),
   ui('sfx_ui_continue', 'uiContinue', 'hooked', 'Continue / start a run from the title'),
   // ───────────────────────────────────────────────────────────────────────── atmosphere one-shots / layers (need an ambience scheduler)
-  ...['rain', 'thunder_rumble', 'electrical_buzz', 'neon_sign_hum', 'machinery', 'city_traffic', 'water_drip'].map((n) =>
-    ({ ...amb(`amb_${n}`, undefined, 'needs-engine', `Reusable atmosphere layer "${n}" (needs the ambience scheduler: looped bed or randomised one-shot per room)`), dir: 'ambience' as const, seconds: [1, 60] as readonly [number, number] }),
-  ),
+  ...['rain', 'thunder_rumble', 'electrical_buzz', 'neon_sign_hum', 'machinery', 'city_traffic', 'water_drip'].map((n) => {
+    // Looped layers are wired (they play under the region bed). Rain, thunder and water drips still need a one-shot scheduler.
+    const layers: Record<string, { in: readonly ('rainline' | 'transit' | 'precinct')[]; gainDb: number; note: string }> = {
+      city_traffic: { in: ['rainline', 'transit'], gainDb: -8, note: 'Distant city traffic layer (Rainline, Transit Stacks)' },
+      neon_sign_hum: { in: ['rainline'], gainDb: -12, note: 'Neon sign hum layer (Rainline)' },
+      machinery: { in: ['transit', 'precinct'], gainDb: -10, note: 'Machinery layer (Transit Stacks, Precinct Vault)' },
+      electrical_buzz: { in: ['precinct'], gainDb: -12, note: 'Electrical buzz layer (Precinct Vault)' },
+    };
+    const l = layers[n];
+    const base = amb(`amb_${n}`, undefined, l ? 'wired' : 'needs-engine', l ? l.note : `Reusable atmosphere layer "${n}" (needs the ambience scheduler: randomised one-shot per room)`);
+    return { ...base, dir: 'ambience' as const, seconds: [1, 60] as readonly [number, number], ...(l ? { layerIn: l.in, gainDb: l.gainDb } : {}) };
+  }),
 ];
 
 export const AUDIO_BY_ID: ReadonlyMap<string, AudioEntry> = new Map(AUDIO_CATALOG.map((e) => [e.id, e]));

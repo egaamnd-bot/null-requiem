@@ -28,7 +28,7 @@ describe('audio catalog', () => {
   });
   it('anything marked wired really has a cue or theme to attach to; hooks/engine entries have none', () => {
     for (const e of AUDIO_CATALOG) {
-      const target = e.cue ?? e.theme ?? e.region ?? e.layerOf;
+      const target = e.cue ?? e.theme ?? e.region ?? e.layerOf ?? e.layerIn;
       if (e.engine === 'wired' || e.engine === 'hooked') expect(target, e.id).toBeTruthy();
       else expect(target, e.id).toBeUndefined();
     }
