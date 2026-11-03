@@ -37,7 +37,7 @@ export class ScrapHound extends Enemy<HoundState> {
         if (this.canSeePlayer(ctx)) {
           this.facing = (sign(ctx.playerX - this.centerX) || this.facing) as 1 | -1;
           this.setState('windup');
-          ctx.emit({ type: 'enemyWindup', x: this.centerX, y: this.centerY });
+          ctx.emit({ type: 'enemyWindup', x: this.centerX, y: this.centerY, kind: this.kind });
         }
         break;
       }

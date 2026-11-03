@@ -45,7 +45,7 @@ export class WatcherDrone extends Enemy<DroneState> {
         this.seek(this.idleTargetX(), this.idleTargetY(), dt);
         if (aware && this.stateTime > 0.4) {
           this.setState('windup');
-          ctx.emit({ type: 'enemyWindup', x: this.centerX, y: this.centerY });
+          ctx.emit({ type: 'enemyWindup', x: this.centerX, y: this.centerY, kind: this.kind });
         }
         break;
       case 'windup':

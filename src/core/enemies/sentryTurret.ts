@@ -94,7 +94,7 @@ export class SentryTurret extends Enemy<TurretState> {
         this.aim += clamp(wrapAngle(target - this.aim), -6 * dt, 6 * dt);
         if (canEngage && this.stateTime >= T.idleScan) {
           this.setState('lock');
-          ctx.emit({ type: 'enemyWindup', x: this.centerX, y: this.centerY });
+          ctx.emit({ type: 'enemyWindup', x: this.centerX, y: this.centerY, kind: this.kind });
         }
         break;
       }

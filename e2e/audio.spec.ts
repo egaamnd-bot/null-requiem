@@ -127,3 +127,66 @@ test('region ambience plays as a loop when its file is delivered', async ({ page
   await page.waitForFunction(() => (window as unknown as { nullRequiem?: { world: { flow: { state: string } } } }).nullRequiem?.world.flow.state === 'playing', null, { timeout: 20000 });
   await page.waitForFunction(() => (window as unknown as AudioProbe).__starts.some((s) => s.loop && s.dur === 3), null, { timeout: 15000 });
 });
+
+// ------------------------------------------------------------------------------------------------ hooks (audio-only triggers)
+
+const startGame = async (page: Page) => {
+  await boot(page);
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => (window as unknown as { nullRequiem?: { world: { flow: { state: string } } } }).nullRequiem?.world.flow.state === 'playing', null, { timeout: 20000 });
+};
+
+test('hooked cues: door close, per-enemy windup and UI sounds play recorded files only when delivered', async ({ page }) => {
+  await spy(page);
+  await deliver(
+    page,
+    { version: 1, sounds: { sfx_door_close: { files: [{ file: 'a.wav' }] }, sfx_scrap_hound_lunge: { files: [{ file: 'b.wav' }] }, sfx_ui_back: { files: [{ file: 'c.wav' }] } } },
+    { 'sfx/a.wav': sineWav(300, 0.31), 'sfx/b.wav': sineWav(400, 0.32), 'ui/c.wav': sineWav(500, 0.33) },
+  );
+  await boot(page);
+  await page.waitForFunction(() => (window as unknown as AudioProbe).nullRequiemAudio.bank.isReady('sfx_ui_back'), null, { timeout: 10000 });
+  const r = await page.evaluate(() => {
+    const w = window as unknown as AudioProbe & { nullRequiemAudio: { sfx: { handle(e: unknown): void } } };
+    const durs = () => w.__starts.map((s) => s.dur);
+    const osc0 = w.__osc;
+    w.nullRequiemAudio.sfx.handle({ type: 'doorChanged', id: 'd', open: false, x: 0, y: 0 });
+    w.nullRequiemAudio.sfx.handle({ type: 'enemyWindup', x: 0, y: 0, kind: 'scrapHound' });
+    w.nullRequiemAudio.sfx.play('uiBack');
+    const recorded = durs();
+    const oscRecorded = w.__osc - osc0;
+    // not delivered: the existing procedural sounds still play
+    w.nullRequiemAudio.sfx.handle({ type: 'doorChanged', id: 'd', open: true, x: 0, y: 0 });
+    w.nullRequiemAudio.sfx.handle({ type: 'enemyWindup', x: 0, y: 0, kind: 'watcherDrone' });
+    w.nullRequiemAudio.sfx.play('uiTab'); // recorded-only cue without a file: silent, never an error
+    return { recorded, oscRecorded, oscAfter: w.__osc - osc0 };
+  });
+  expect(r.recorded).toEqual([0.31, 0.32, 0.33]);
+  expect(r.oscRecorded).toBe(0);
+  expect(r.oscAfter).toBeGreaterThan(0);
+});
+
+test('footsteps follow ground travel and combat events layer the combat stem in sync (audio-only signals)', async ({ page }) => {
+  await spy(page);
+  await deliver(
+    page,
+    { version: 1, sounds: { sfx_player_footstep_wet: { files: [{ file: 'f.wav' }] }, music_rainline_exploration: { files: [{ file: 'e.wav' }] }, music_rainline_combat: { files: [{ file: 'c.wav' }] } } },
+    { 'sfx/f.wav': sineWav(200, 0.17), 'music/e.wav': sineWav(110, 4, 22050, 2), 'music/c.wav': sineWav(220, 4, 22050, 2) },
+  );
+  await startGame(page);
+  await page.waitForFunction(() => (window as unknown as AudioProbe).nullRequiemAudio.bank.isReady('sfx_player_footstep_wet'), null, { timeout: 10000 });
+  await page.waitForFunction(() => (window as unknown as AudioProbe).nullRequiemAudio.music.playingFile, null, { timeout: 15000 });
+  // no combat yet: only the exploration loop runs
+  expect(await page.evaluate(() => (window as unknown as AudioProbe).__starts.filter((s) => s.loop && s.dur === 4).length)).toBe(1);
+  // walking produces footsteps
+  const before = await page.evaluate(() => (window as unknown as AudioProbe).__starts.filter((s) => s.dur === 0.17).length);
+  // (the software renderer runs the simulation in slow motion, so wait for the sim to cover the distance rather than for wall-clock time)
+  await page.keyboard.down('ArrowRight');
+  await page.waitForFunction((b0) => (window as unknown as AudioProbe).__starts.filter((s) => s.dur === 0.17).length - b0 >= 2, before, { timeout: 30000 });
+  await page.keyboard.up('ArrowRight');
+  // a real simulation combat event raises the combat signal and starts the stem
+  await page.evaluate(() => {
+    const w = window as unknown as { nullRequiem: { world: { emit(e: unknown): void } } };
+    w.nullRequiem.world.emit({ type: 'enemyWindup', x: 0, y: 0, kind: 'scrapHound' });
+  });
+  await page.waitForFunction(() => (window as unknown as AudioProbe).__starts.filter((s) => s.loop && s.dur === 4).length === 2, null, { timeout: 10000 });
+});

@@ -45,7 +45,27 @@ export type Cue =
   | 'upgrade'
   | 'record'
   | 'rewindSelf'
-  | 'talk';
+  | 'talk'
+  // Recorded-only cues (no procedural sound): silent until their file is delivered. See src/audio/catalog.ts `hooked`.
+  | 'footstep'
+  | 'arrival'
+  | 'btReady'
+  | 'btCooldown'
+  | 'btMotif'
+  | 'houndLunge'
+  | 'droneCharge'
+  | 'heavyHit'
+  | 'doorClose'
+  | 'relayActivate'
+  | 'integrity'
+  | 'gameOver'
+  | 'uiBack'
+  | 'uiPause'
+  | 'uiError'
+  | 'uiTab'
+  | 'uiSlider'
+  | 'uiSave'
+  | 'uiContinue';
 
 export class Sfx {
   private ctx: AudioContext | null = null;
@@ -56,6 +76,8 @@ export class Sfx {
   /** Recorded sounds (optional). When a cue has a decoded file it plays instead of the procedural sound. */
   bank: AudioBank | null = null;
   private readonly running = new Map<string, AudioBufferSourceNode[]>();
+  /** Stingers follow the MUSIC volume, not the effects volume. */
+  private stingerBus: GainNode | null = null;
   /** Called once, right after the AudioContext exists (the audio bank starts loading then). */
   onContext: ((ctx: AudioContext) => void) | null = null;
 
@@ -75,6 +97,9 @@ export class Sfx {
       this.master = this.ctx.createGain();
       this.master.gain.value = this.level();
       this.master.connect(this.ctx.destination);
+      this.stingerBus = this.ctx.createGain();
+      this.stingerBus.gain.value = this.stingerLevel();
+      this.stingerBus.connect(this.ctx.destination);
       this.onContext?.(this.ctx);
       const len = this.ctx.sampleRate * 0.5;
       this.noiseBuffer = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
@@ -95,9 +120,14 @@ export class Sfx {
     return this.muted ? 0 : 0.35 * getSettings().sfxVolume;
   }
 
+  private stingerLevel(): number {
+    return this.muted ? 0 : 0.5 * getSettings().musicVolume;
+  }
+
   /** Re-read player settings (volume) and apply them. */
   applySettings(): void {
     if (this.master && this.ctx) this.master.gain.setTargetAtTime(this.level(), this.ctx.currentTime, 0.05);
+    if (this.stingerBus && this.ctx) this.stingerBus.gain.setTargetAtTime(this.stingerLevel(), this.ctx.currentTime, 0.05);
     this.onSettings?.();
   }
 
@@ -145,7 +175,7 @@ export class Sfx {
   }
 
   /** Play a recorded version of an entry. Returns true when a file exists for it (even if a voice limit skipped it), so the procedural fallback never doubles it. */
-  private playFile(entry: AudioEntry): boolean {
+  private playFile(entry: AudioEntry, delay = 0): boolean {
     const ctx = this.ctx;
     const bank = this.bank;
     if (!ctx || !bank || !this.master) return false;
@@ -169,7 +199,7 @@ export class Sfx {
     src.playbackRate.value = rate;
     const g = ctx.createGain();
     g.gain.value = dbToGain(entry.gainDb + (s.file.gainDb ?? 0));
-    src.connect(g).connect(this.master);
+    src.connect(g).connect(entry.kind === 'stinger' && this.stingerBus ? this.stingerBus : this.master);
     const list = this.running.get(entry.id) ?? [];
     list.push(src);
     this.running.set(entry.id, list);
@@ -177,8 +207,20 @@ export class Sfx {
       const l = this.running.get(entry.id);
       if (l) this.running.set(entry.id, l.filter((x) => x !== src));
     };
-    src.start();
+    src.start(ctx.currentTime + delay);
     return true;
+  }
+
+  /** Play the recorded sound of a cue if (and only if) a file exists. Returns whether it did. */
+  tryCue(cue: Cue, delay = 0): boolean {
+    if (!this.ctx || this.muted) return false;
+    const entry = ENTRY_FOR_CUE.get(cue);
+    return !!entry && this.playFile(entry, delay);
+  }
+
+  /** Recorded version if delivered, otherwise the given existing cue (keeps today's sound until the file arrives). */
+  playOr(cue: Cue, fallback: Cue): void {
+    if (!this.tryCue(cue)) this.play(fallback);
   }
 
   play(cue: Cue): void {
@@ -334,6 +376,10 @@ export class Sfx {
       case 'hit':
         return this.play(e.target === 'switch' ? 'switch' : e.killed && e.target !== 'projectile' ? 'kill' : e.target === 'projectile' ? 'burst' : 'hit');
       case 'enemyWindup':
+        // Per-enemy recorded wind-ups when delivered; otherwise the shared procedural one.
+        if (e.kind === 'scrapHound' && this.tryCue('houndLunge')) return;
+        if (e.kind === 'watcherDrone' && this.tryCue('droneCharge')) return;
+        return this.play('windup');
       case 'bossWindup':
         return this.play('windup');
       case 'enemyShoot':
@@ -341,9 +387,16 @@ export class Sfx {
       case 'projectileBurst':
         return this.play('burst');
       case 'checkpoint':
-        return this.play('checkpoint');
+        this.play('checkpoint');
+        if (e.firstTime) this.tryCue('relayActivate');
+        this.tryCue('uiSave');
+        return;
       case 'backtrace':
-        return this.play('backtrace');
+        this.play('backtrace');
+        this.tryCue('arrival', 0.12);
+        this.tryCue('btCooldown');
+        this.tryCue('btMotif');
+        return;
       case 'switchHit':
         return this.play('switch');
       case 'timedGate':
@@ -351,6 +404,8 @@ export class Sfx {
       case 'abilityUnlocked':
         return this.play('ability');
       case 'secretFound':
+        // Integrity cells are the only secret pickup: a delivered dedicated sound replaces the generic one.
+        if (this.tryCue('integrity')) return;
         return this.play('secret');
       case 'wallBroken':
         return this.play('wall');
@@ -369,8 +424,10 @@ export class Sfx {
       case 'plateChanged':
         return this.play('plate');
       case 'doorChanged':
+        if (!e.open && this.tryCue('doorClose')) return;
+        return this.play('door');
       case 'nodePowered':
-        return this.play(e.type === 'nodePowered' ? 'plate' : 'door');
+        return this.play('plate');
       case 'doorLocked':
         return this.play('clang');
       case 'questUpdated':
@@ -384,7 +441,11 @@ export class Sfx {
       case 'bossTelegraph':
         return this.play('telegraph');
       case 'bossStaggered':
+        this.tryCue('heavyHit');
         return this.play('clang');
+      case 'glitchStrike':
+        this.tryCue('heavyHit');
+        return;
       case 'echoRewind':
         return this.play('rewindSelf');
       case 'npcTalk':

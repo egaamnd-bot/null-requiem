@@ -1,6 +1,6 @@
 import { getSettings } from '../state/settings';
 import type { AudioBank } from './AudioBank';
-import { ENTRY_FOR_THEME } from './catalog';
+import { AUDIO_CATALOG, ENTRY_FOR_THEME } from './catalog';
 import { dbToGain, loopRegion } from './files';
 import { midiToHz, noteOfDegree, THEMES, type Theme } from './musicTheory';
 import type { Sfx } from './Sfx';
@@ -23,6 +23,13 @@ export class Music {
   bank: AudioBank | null = null;
   private fileSrc: AudioBufferSourceNode | null = null;
   private fileThemeId: string | null = null;
+  private fileStartedAt = 0;
+  private fileLoopLen = 0;
+  /** Audio-only combat intensity 0..1 (see triggers.ts CombatTracker). Drives the combat stem when one is delivered. */
+  private combat = 0;
+  private combatSrc: AudioBufferSourceNode | null = null;
+  private combatGain: GainNode | null = null;
+  private combatId: string | null = null;
 
   constructor(private readonly sfx: Sfx) {
     sfx.onSettings = () => this.applyVolume();
@@ -30,6 +37,11 @@ export class Music {
 
   get current(): Theme {
     return this.theme;
+  }
+
+  /** Set every frame by the scene from the CombatTracker. No effect without a delivered combat stem. */
+  setCombat(intensity: number): void {
+    this.combat = Math.max(0, Math.min(1, intensity));
   }
 
   /** True while a recorded track (not the procedural score) is playing. */
@@ -75,6 +87,7 @@ export class Music {
       this.rebuild(ctx, this.fading);
       this.fading = null;
     }
+    if (this.fileSrc) this.updateCombatLayer(ctx);
     if (!this.gain || this.theme === 'silence' || this.fileSrc) return;
     const def = THEMES[this.theme];
     // Schedule a short window ahead so frame hiccups never create gaps.
@@ -102,6 +115,39 @@ export class Music {
     o.stop(at + dur + 0.05);
   }
 
+  /** Combat stem: starts (phase-aligned with the exploration loop) the first time combat is requested and its file is decoded. */
+  private updateCombatLayer(ctx: AudioContext): void {
+    const base = this.fileThemeId;
+    if (!base || !this.bank || !this.gain) return;
+    const layer = AUDIO_CATALOG.find((e) => e.layerOf === base);
+    if (!layer) return;
+    if (!this.combatSrc) {
+      if (this.combat <= 0.01 || !this.bank.listed(layer.id)) return;
+      const s = this.bank.pick(layer, 0);
+      if (!s) {
+        void this.bank.ensure(layer.id);
+        return;
+      }
+      const src = ctx.createBufferSource();
+      src.buffer = s.buffer;
+      src.loop = true;
+      const r = loopRegion(s.file, s.buffer.duration);
+      src.loopStart = r.start;
+      src.loopEnd = r.end;
+      const g = ctx.createGain();
+      g.gain.value = 0;
+      src.connect(g).connect(this.gain);
+      // Same length as the exploration loop = a stem: join at the same phase so the two stay in sync.
+      const sameLength = Math.abs(s.buffer.duration - this.fileLoopLen) < 0.02;
+      const phase = sameLength && this.fileLoopLen > 0 ? (ctx.currentTime - this.fileStartedAt) % this.fileLoopLen : 0;
+      src.start(0, r.start + (phase % Math.max(0.01, r.end - r.start)));
+      this.combatSrc = src;
+      this.combatGain = g;
+      this.combatId = layer.id;
+    }
+    if (this.combatGain) this.combatGain.gain.setTargetAtTime(this.combat * dbToGain(layer.gainDb), ctx.currentTime, 0.4);
+  }
+
   private fileTrim(): number {
     const e = ENTRY_FOR_THEME.get(this.theme);
     const s = e && this.bank?.pick(e, 0);
@@ -111,6 +157,11 @@ export class Music {
   private teardown(ctx: AudioContext): void {
     const old = { gain: this.gain, a: this.droneA, b: this.droneB, f: this.fileSrc };
     if (this.fileThemeId && this.fileSrc) this.bank?.release(this.fileThemeId);
+    if (this.combatId) this.bank?.release(this.combatId);
+    const oldCombat = this.combatSrc;
+    this.combatSrc = null;
+    this.combatGain = null;
+    this.combatId = null;
     this.fileSrc = null;
     this.fileThemeId = null;
     if (old.gain) {
@@ -120,6 +171,7 @@ export class Music {
           old.a?.stop();
           old.b?.stop();
           old.f?.stop();
+          oldCombat?.stop();
           old.gain?.disconnect();
         } catch {
           /* already stopped */
@@ -157,6 +209,8 @@ export class Music {
         this.gain = out;
         this.fileSrc = src;
         this.fileThemeId = entry.id;
+        this.fileStartedAt = ctx.currentTime;
+        this.fileLoopLen = r.end - r.start;
         return;
       }
       void this.bank.ensure(entry.id);

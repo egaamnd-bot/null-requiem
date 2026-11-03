@@ -49,7 +49,7 @@ export class HeavyEnforcer extends Enemy<EnforcerState> {
         b.vx = blocked ? 0 : this.facing * T.walkSpeed;
         if (sees && Math.abs(dx) < 54 && this.cooldown <= 0) {
           this.setState('windup');
-          ctx.emit({ type: 'enemyWindup', x: this.centerX, y: this.centerY });
+          ctx.emit({ type: 'enemyWindup', x: this.centerX, y: this.centerY, kind: this.kind });
         }
         break;
       }

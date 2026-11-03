@@ -139,7 +139,7 @@ export class MenuScene extends Phaser.Scene {
     this.tab = t;
     this.scroll = 0;
     this.selected = 0;
-    this.data0.services.sfx.play('menu');
+    this.data0.services.sfx.playOr('uiTab', 'menu');
     this.build();
   }
 
@@ -387,6 +387,7 @@ export class MenuScene extends Phaser.Scene {
     const apply = (patch: Parameters<typeof updateSettings>[0]) => {
       updateSettings(patch);
       this.data0.services.sfx.applySettings();
+      this.data0.services.sfx.play('uiSlider');
       this.game.events.emit('settings-changed');
       this.renderContent();
     };
@@ -431,7 +432,7 @@ export class MenuScene extends Phaser.Scene {
       const label = u.cost === null ? 'MAXED' : `BUY ${u.cost}`;
       this.button(this.W - m.right - 56, y + 20, 76, 20, label, () => {
         const r = s.world.buyUpgrade(u.id);
-        if (!r.ok) this.data0.services.sfx.play('menu');
+        if (!r.ok) this.data0.services.sfx.playOr('uiError', 'menu');
         this.renderContent();
       }, u.cost !== null && u.affordable);
       y += 48;
@@ -443,7 +444,7 @@ export class MenuScene extends Phaser.Scene {
   private close(): void {
     if (this.closing) return;
     this.closing = true;
-    this.data0.services.sfx.play('menu');
+    this.data0.services.sfx.playOr('uiBack', 'menu');
     this.data0.onClose();
     this.scene.stop();
   }

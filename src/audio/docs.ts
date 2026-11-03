@@ -10,7 +10,7 @@ export function renderAudioCatalog(): string {
     '',
     '> GENERATED from `src/audio/catalog.ts` by `npm run docs:assets`. Do not edit by hand.',
     '',
-    `${AUDIO_CATALOG.length} sounds. **Engine** = \`wired\`: an existing game cue/theme/region maps to it; \`needs-hook\`: nothing triggers it yet (presentation hook needed); \`needs-engine\`: a system is missing (see \`docs/audio/README.md\`). Nothing in this table is delivered unless \`docs/CREATIVE_DELIVERY_LOG.md\` says so.`,
+    `${AUDIO_CATALOG.length} sounds. **Engine** = \`wired\`: an existing procedural cue/theme/region/layer maps to it (the file replaces that sound); \`hooked\`: the audio-only trigger is implemented, silent until the file arrives; \`needs-hook\`: nothing triggers it; \`needs-engine\`: a system is missing; \`blocked\`: deliberately not built (Producer decision). Nothing in this table is delivered unless \`docs/CREATIVE_DELIVERY_LOG.md\` says so.`,
     '',
   ];
   for (const [title, f] of [
@@ -22,6 +22,6 @@ export function renderAudioCatalog(): string {
     out.push(`## ${title}`, '', head, ...AUDIO_CATALOG.filter(f).map(row), '');
   }
   const count = (s: string) => AUDIO_CATALOG.filter((e) => e.engine === s).length;
-  out.push('## Summary', '', `wired ${count('wired')} · needs-hook ${count('needs-hook')} · needs-engine ${count('needs-engine')}`, '');
+  out.push('## Summary', '', `wired ${count('wired')} · hooked ${count('hooked')} · needs-hook ${count('needs-hook')} · needs-engine ${count('needs-engine')} · blocked ${count('blocked')}`, '');
   return `${out.join('\n').trimEnd()}\n`;
 }

@@ -85,7 +85,7 @@ export class PhaseStalker extends Enemy<StalkerState> {
             this.beginBlink(ctx, ctx.playerX, ctx.playerY, 0);
           } else {
             this.setState('windup');
-            ctx.emit({ type: 'enemyWindup', x: this.centerX, y: this.centerY });
+            ctx.emit({ type: 'enemyWindup', x: this.centerX, y: this.centerY, kind: this.kind });
           }
         }
         break;

@@ -128,3 +128,15 @@ PR #6 (`CREATIVE_PRODUCTION_HANDOFF.md`, docs only, draft) was reviewed, **not m
 - Audio runtime: `AudioBank` (optional manifest, lazy decode, release), recorded SFX in `Sfx` (variations, pitch, voices, retrigger, trims), recorded music with loop regions in `Music`, region `Ambience`; procedural audio is always the fallback. Bug found by the browser tests: music/ambience decided "nothing to play" before the manifest arrived (fixed with `manifestLoaded`/`onManifest`).
 - Audio tool: `npm run audio:build` — WAV/Ogg analysis (peak, clipping, BS.1770 loudness, loop seam, silence, DC), catalog windows, sidecar loop points, optional ffmpeg encode.
 - Nothing was delivered: ledger rows are all `Not delivered`; `public/assets/final/manifest.json` and `public/audio/` are empty.
+
+---
+
+## Session 2026-11-03 (later) — Producer decisions, audio hooks, delivery guards (Claude, Sonnet 5.5)
+
+Branch `feature/audio-hooks-intake` (stacked on `feature/audio-runtime`, PR #9). The Producer's Android test passed; decisions recorded in `docs/audio/README.md`.
+
+- Combat signal (audio-only) → `CombatTracker`, combat stem layered phase-aligned over exploration music. Safe-room music **blocked** (no genuine state exists; none invented). Shared boss theme kept.
+- Hooks (silent until files arrive): footsteps, Backtrace arrival/cooldown/ready/motif, per-enemy windups (`enemyWindup` event gained an optional `kind`), heavy hit, door close, relay activate, integrity pickup, UI back/pause/error/tab/slider/save/continue, game-over and victory stingers.
+- Observation from the browser tests: in the software renderer the simulation runs in slow motion (dt is capped), so distance-based triggers must be awaited by sim progress, not wall-clock time.
+- Guards for the first real delivery: `tests/deliveredAssets.test.ts` and `e2e/deliveredArt.spec.ts` re-validate every delivered visual/audio file (zero today; proven once with a synthetic file that was then removed). `docs/INTEGRATION_RUNBOOK.md` describes the batch procedure (separate `integrate/*` branch per batch, APK for the Producer).
+- Nothing creative was created or delivered.
