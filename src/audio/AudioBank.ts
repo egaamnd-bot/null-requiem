@@ -101,6 +101,18 @@ export class AudioBank {
     return job;
   }
 
+  /** Bytes currently held as decoded PCM (float32 per channel), for the Android memory review (never read by game code). */
+  decodedBytes(): { total: number; byId: Record<string, number> } {
+    const byId: Record<string, number> = {};
+    let total = 0;
+    for (const [id, list] of this.ready) {
+      const n = list.reduce((acc, d) => acc + d.buffer.length * d.buffer.numberOfChannels * 4, 0);
+      byId[id] = n;
+      total += n;
+    }
+    return { total, byId };
+  }
+
   /** Drop decoded buffers of a long sound (music/ambience) to free memory (a 90 s stereo loop is ≈ 31 MB decoded). */
   release(id: string): void {
     this.ready.delete(id);

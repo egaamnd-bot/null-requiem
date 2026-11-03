@@ -136,6 +136,302 @@
           "durationSeconds": 0.117
         }
       ]
+    },
+    "amb_city_traffic": {
+      "files": [
+        {
+          "file": "amb_city_traffic.ogg",
+          "durationSeconds": 23
+        }
+      ]
+    },
+    "amb_electrical_buzz": {
+      "files": [
+        {
+          "file": "amb_electrical_buzz.ogg",
+          "durationSeconds": 15.5
+        }
+      ]
+    },
+    "amb_machinery": {
+      "files": [
+        {
+          "file": "amb_machinery.ogg",
+          "durationSeconds": 19.2
+        }
+      ]
+    },
+    "amb_neon_sign_hum": {
+      "files": [
+        {
+          "file": "amb_neon_sign_hum.ogg",
+          "durationSeconds": 11.5
+        }
+      ]
+    },
+    "amb_precinct_vault_loop": {
+      "files": [
+        {
+          "file": "amb_precinct_vault_loop.ogg",
+          "durationSeconds": 29
+        }
+      ]
+    },
+    "amb_transit_stacks_loop": {
+      "files": [
+        {
+          "file": "amb_transit_stacks_loop.ogg",
+          "durationSeconds": 29
+        }
+      ]
+    },
+    "music_backtrace_motif": {
+      "files": [
+        {
+          "file": "music_backtrace_motif.ogg",
+          "durationSeconds": 2.6
+        }
+      ]
+    },
+    "music_game_over": {
+      "files": [
+        {
+          "file": "music_game_over.ogg",
+          "durationSeconds": 6.5
+        }
+      ]
+    },
+    "music_victory": {
+      "files": [
+        {
+          "file": "music_victory.ogg",
+          "durationSeconds": 8.5
+        }
+      ]
+    },
+    "sfx_backtrace_cooldown": {
+      "files": [
+        {
+          "file": "sfx_backtrace_cooldown.ogg",
+          "durationSeconds": 0.494
+        }
+      ]
+    },
+    "sfx_backtrace_ready": {
+      "files": [
+        {
+          "file": "sfx_backtrace_ready.ogg",
+          "durationSeconds": 0.366
+        }
+      ]
+    },
+    "sfx_boss_warning": {
+      "files": [
+        {
+          "file": "sfx_boss_warning.ogg",
+          "durationSeconds": 2.198
+        }
+      ]
+    },
+    "sfx_breakable_wall": {
+      "files": [
+        {
+          "file": "sfx_breakable_wall.ogg",
+          "durationSeconds": 0.997
+        }
+      ]
+    },
+    "sfx_checkpoint": {
+      "files": [
+        {
+          "file": "sfx_checkpoint.ogg",
+          "durationSeconds": 1.501
+        }
+      ]
+    },
+    "sfx_door_close": {
+      "files": [
+        {
+          "file": "sfx_door_close.ogg",
+          "durationSeconds": 0.297
+        }
+      ]
+    },
+    "sfx_drone_projectile": {
+      "files": [
+        {
+          "file": "sfx_drone_projectile.ogg",
+          "durationSeconds": 0.155
+        }
+      ]
+    },
+    "sfx_enemy_death": {
+      "files": [
+        {
+          "file": "sfx_enemy_death.ogg",
+          "durationSeconds": 0.811
+        }
+      ]
+    },
+    "sfx_enemy_telegraph": {
+      "files": [
+        {
+          "file": "sfx_enemy_telegraph.ogg",
+          "durationSeconds": 0.497
+        }
+      ]
+    },
+    "sfx_hit_heavy": {
+      "files": [
+        {
+          "file": "sfx_hit_heavy.ogg",
+          "durationSeconds": 0.447
+        }
+      ]
+    },
+    "sfx_pickup_integrity": {
+      "files": [
+        {
+          "file": "sfx_pickup_integrity.ogg",
+          "durationSeconds": 0.539
+        }
+      ]
+    },
+    "sfx_pickup_module": {
+      "files": [
+        {
+          "file": "sfx_pickup_module.ogg",
+          "durationSeconds": 1.918
+        }
+      ]
+    },
+    "sfx_pickup_scrap": {
+      "files": [
+        {
+          "file": "sfx_pickup_scrap.ogg",
+          "durationSeconds": 0.113
+        }
+      ]
+    },
+    "sfx_player_airjump": {
+      "files": [
+        {
+          "file": "sfx_player_airjump.ogg",
+          "durationSeconds": 0.216
+        }
+      ]
+    },
+    "sfx_player_death": {
+      "files": [
+        {
+          "file": "sfx_player_death.ogg",
+          "durationSeconds": 1.496
+        }
+      ]
+    },
+    "sfx_player_footstep_wet": {
+      "files": [
+        {
+          "file": "sfx_player_footstep_wet.ogg",
+          "durationSeconds": 0.137
+        }
+      ]
+    },
+    "sfx_player_hurt": {
+      "files": [
+        {
+          "file": "sfx_player_hurt.ogg",
+          "durationSeconds": 0.397
+        }
+      ]
+    },
+    "sfx_player_land": {
+      "files": [
+        {
+          "file": "sfx_player_land.ogg",
+          "durationSeconds": 0.271
+        }
+      ]
+    },
+    "sfx_pressure_plate": {
+      "files": [
+        {
+          "file": "sfx_pressure_plate.ogg",
+          "durationSeconds": 0.231
+        }
+      ]
+    },
+    "sfx_quest_update": {
+      "files": [
+        {
+          "file": "sfx_quest_update.ogg",
+          "durationSeconds": 0.378
+        }
+      ]
+    },
+    "sfx_relay_activate": {
+      "files": [
+        {
+          "file": "sfx_relay_activate.ogg",
+          "durationSeconds": 0.768
+        }
+      ]
+    },
+    "sfx_scrap_hound_lunge": {
+      "files": [
+        {
+          "file": "sfx_scrap_hound_lunge.ogg",
+          "durationSeconds": 0.419
+        }
+      ]
+    },
+    "sfx_ui_continue": {
+      "files": [
+        {
+          "file": "sfx_ui_continue.ogg",
+          "durationSeconds": 0.446
+        }
+      ]
+    },
+    "sfx_ui_error": {
+      "files": [
+        {
+          "file": "sfx_ui_error.ogg",
+          "durationSeconds": 0.217
+        }
+      ]
+    },
+    "sfx_ui_pause": {
+      "files": [
+        {
+          "file": "sfx_ui_pause.ogg",
+          "durationSeconds": 0.137
+        }
+      ]
+    },
+    "sfx_ui_save": {
+      "files": [
+        {
+          "file": "sfx_ui_save.ogg",
+          "durationSeconds": 0.299
+        }
+      ]
+    },
+    "sfx_ui_slider": {
+      "files": [
+        {
+          "file": "sfx_ui_slider.ogg",
+          "durationSeconds": 0.025
+        }
+      ]
+    },
+    "sfx_ui_tab": {
+      "files": [
+        {
+          "file": "sfx_ui_tab.ogg",
+          "durationSeconds": 0.045
+        }
+      ]
     }
   }
 }

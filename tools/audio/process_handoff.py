@@ -112,12 +112,8 @@ def make_loop(x, rate, xf):
     return np.concatenate([head, x[n:-n]], axis=0)
 
 
-def process_loop(out_dir, cid, stem, lufs, xf, reps, tempo_to):
-    rate, x = read_flac(stem)
-    if tempo_to:
-        x = stretch(rate, x, tempo_to)
-    loop = make_loop(x, rate, xf)
-    y = np.tile(loop, (reps, 1))
+def loudnorm_to_ogg(y, rate, lufs, out, q=5):
+    """Two-pass (linear) EBU R128 loudness normalisation of a float array, encoded to Ogg Vorbis. Returns the measured input LUFS."""
     with tempfile.TemporaryDirectory() as d:
         w = os.path.join(d, 'a.wav')
         write_wav(w, rate, y)
@@ -130,8 +126,18 @@ def process_loop(out_dir, cid, stem, lufs, xf, reps, tempo_to):
         )
         n = os.path.join(d, 'n.wav')
         run(['ffmpeg', '-loglevel', 'error', '-y', '-i', w, '-af', af, '-ar', str(rate), '-c:a', 'pcm_f32le', n])
-        encode_ogg(n, os.path.join(out_dir, cid + '.ogg'), 5)
-    return {'id': cid, 'duration': round(len(y) / rate, 3), 'measured_lufs_in': j['input_i']}
+        encode_ogg(n, out, q)
+    return j['input_i']
+
+
+def process_loop(out_dir, cid, stem, lufs, xf, reps, tempo_to):
+    rate, x = read_flac(stem)
+    if tempo_to:
+        x = stretch(rate, x, tempo_to)
+    loop = make_loop(x, rate, xf)
+    y = np.tile(loop, (reps, 1))
+    measured = loudnorm_to_ogg(y, rate, lufs, os.path.join(out_dir, cid + '.ogg'))
+    return {'id': cid, 'duration': round(len(y) / rate, 3), 'measured_lufs_in': measured}
 
 
 def main():

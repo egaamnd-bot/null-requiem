@@ -3,6 +3,61 @@
   "warnings": 0,
   "sounds": [
     {
+      "id": "amb_city_traffic",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "amb_city_traffic.ogg",
+          "durationSeconds": 23
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "amb_electrical_buzz",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "amb_electrical_buzz.ogg",
+          "durationSeconds": 15.5
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "amb_machinery",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "amb_machinery.ogg",
+          "durationSeconds": 19.2
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "amb_neon_sign_hum",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "amb_neon_sign_hum.ogg",
+          "durationSeconds": 11.5
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "amb_precinct_vault_loop",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "amb_precinct_vault_loop.ogg",
+          "durationSeconds": 29
+        }
+      ],
+      "issues": []
+    },
+    {
       "id": "amb_rainline_loop",
       "status": "accepted",
       "files": [
@@ -14,12 +69,45 @@
       "issues": []
     },
     {
+      "id": "amb_transit_stacks_loop",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "amb_transit_stacks_loop.ogg",
+          "durationSeconds": 29
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "music_backtrace_motif",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "music_backtrace_motif.ogg",
+          "durationSeconds": 2.6
+        }
+      ],
+      "issues": []
+    },
+    {
       "id": "music_boss_bulwark9",
       "status": "accepted",
       "files": [
         {
           "file": "music_boss_bulwark9.ogg",
           "durationSeconds": 51
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "music_game_over",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "music_game_over.ogg",
+          "durationSeconds": 6.5
         }
       ],
       "issues": []
@@ -58,6 +146,17 @@
       "issues": []
     },
     {
+      "id": "music_victory",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "music_victory.ogg",
+          "durationSeconds": 8.5
+        }
+      ],
+      "issues": []
+    },
+    {
       "id": "sfx_backtrace_arrival",
       "status": "accepted",
       "files": [
@@ -69,12 +168,78 @@
       "issues": []
     },
     {
+      "id": "sfx_backtrace_cooldown",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_backtrace_cooldown.ogg",
+          "durationSeconds": 0.494
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "sfx_backtrace_ready",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_backtrace_ready.ogg",
+          "durationSeconds": 0.366
+        }
+      ],
+      "issues": []
+    },
+    {
       "id": "sfx_backtrace_release",
       "status": "accepted",
       "files": [
         {
           "file": "sfx_backtrace_release.ogg",
           "durationSeconds": 0.477
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "sfx_boss_warning",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_boss_warning.ogg",
+          "durationSeconds": 2.198
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "sfx_breakable_wall",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_breakable_wall.ogg",
+          "durationSeconds": 0.997
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "sfx_checkpoint",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_checkpoint.ogg",
+          "durationSeconds": 1.501
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "sfx_door_close",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_door_close.ogg",
+          "durationSeconds": 0.297
         }
       ],
       "issues": []
@@ -102,6 +267,50 @@
       "issues": []
     },
     {
+      "id": "sfx_drone_projectile",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_drone_projectile.ogg",
+          "durationSeconds": 0.155
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "sfx_enemy_death",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_enemy_death.ogg",
+          "durationSeconds": 0.811
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "sfx_enemy_telegraph",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_enemy_telegraph.ogg",
+          "durationSeconds": 0.497
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "sfx_hit_heavy",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_hit_heavy.ogg",
+          "durationSeconds": 0.447
+        }
+      ],
+      "issues": []
+    },
+    {
       "id": "sfx_hit_light",
       "status": "accepted",
       "files": [
@@ -113,12 +322,56 @@
       "issues": []
     },
     {
+      "id": "sfx_pickup_integrity",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_pickup_integrity.ogg",
+          "durationSeconds": 0.539
+        }
+      ],
+      "issues": []
+    },
+    {
       "id": "sfx_pickup_memory",
       "status": "accepted",
       "files": [
         {
           "file": "sfx_pickup_memory.ogg",
           "durationSeconds": 0.417
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "sfx_pickup_module",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_pickup_module.ogg",
+          "durationSeconds": 1.918
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "sfx_pickup_scrap",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_pickup_scrap.ogg",
+          "durationSeconds": 0.113
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "sfx_player_airjump",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_player_airjump.ogg",
+          "durationSeconds": 0.216
         }
       ],
       "issues": []
@@ -146,12 +399,100 @@
       "issues": []
     },
     {
+      "id": "sfx_player_death",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_player_death.ogg",
+          "durationSeconds": 1.496
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "sfx_player_footstep_wet",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_player_footstep_wet.ogg",
+          "durationSeconds": 0.137
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "sfx_player_hurt",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_player_hurt.ogg",
+          "durationSeconds": 0.397
+        }
+      ],
+      "issues": []
+    },
+    {
       "id": "sfx_player_jump",
       "status": "accepted",
       "files": [
         {
           "file": "sfx_player_jump.ogg",
           "durationSeconds": 0.177
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "sfx_player_land",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_player_land.ogg",
+          "durationSeconds": 0.271
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "sfx_pressure_plate",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_pressure_plate.ogg",
+          "durationSeconds": 0.231
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "sfx_quest_update",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_quest_update.ogg",
+          "durationSeconds": 0.378
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "sfx_relay_activate",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_relay_activate.ogg",
+          "durationSeconds": 0.768
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "sfx_scrap_hound_lunge",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_scrap_hound_lunge.ogg",
+          "durationSeconds": 0.419
         }
       ],
       "issues": []
@@ -179,12 +520,78 @@
       "issues": []
     },
     {
+      "id": "sfx_ui_continue",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_ui_continue.ogg",
+          "durationSeconds": 0.446
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "sfx_ui_error",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_ui_error.ogg",
+          "durationSeconds": 0.217
+        }
+      ],
+      "issues": []
+    },
+    {
       "id": "sfx_ui_focus",
       "status": "accepted",
       "files": [
         {
           "file": "sfx_ui_focus.ogg",
           "durationSeconds": 0.117
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "sfx_ui_pause",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_ui_pause.ogg",
+          "durationSeconds": 0.137
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "sfx_ui_save",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_ui_save.ogg",
+          "durationSeconds": 0.299
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "sfx_ui_slider",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_ui_slider.ogg",
+          "durationSeconds": 0.025
+        }
+      ],
+      "issues": []
+    },
+    {
+      "id": "sfx_ui_tab",
+      "status": "accepted",
+      "files": [
+        {
+          "file": "sfx_ui_tab.ogg",
+          "durationSeconds": 0.045
         }
       ],
       "issues": []

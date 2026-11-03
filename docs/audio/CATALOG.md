@@ -75,14 +75,14 @@
 
 | Id | Kind | File | Duration | Loop | Trim | Pitch var | Voices / retrigger | Replaces | Engine | Trigger |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `amb_rain` | ambience | `public/audio/ambience/amb_rain.ogg` | 1–60 s | loop | -6 dB | — | 1 / ignore | — | needs-engine | Reusable atmosphere layer "rain" (needs the ambience scheduler: looped bed or randomised one-shot per room) |
-| `amb_thunder_rumble` | ambience | `public/audio/ambience/amb_thunder_rumble.ogg` | 1–60 s | loop | -6 dB | — | 1 / ignore | — | needs-engine | Reusable atmosphere layer "thunder_rumble" (needs the ambience scheduler: looped bed or randomised one-shot per room) |
-| `amb_electrical_buzz` | ambience | `public/audio/ambience/amb_electrical_buzz.ogg` | 1–60 s | loop | -6 dB | — | 1 / ignore | — | needs-engine | Reusable atmosphere layer "electrical_buzz" (needs the ambience scheduler: looped bed or randomised one-shot per room) |
-| `amb_neon_sign_hum` | ambience | `public/audio/ambience/amb_neon_sign_hum.ogg` | 1–60 s | loop | -6 dB | — | 1 / ignore | — | needs-engine | Reusable atmosphere layer "neon_sign_hum" (needs the ambience scheduler: looped bed or randomised one-shot per room) |
-| `amb_machinery` | ambience | `public/audio/ambience/amb_machinery.ogg` | 1–60 s | loop | -6 dB | — | 1 / ignore | — | needs-engine | Reusable atmosphere layer "machinery" (needs the ambience scheduler: looped bed or randomised one-shot per room) |
-| `amb_city_traffic` | ambience | `public/audio/ambience/amb_city_traffic.ogg` | 1–60 s | loop | -6 dB | — | 1 / ignore | — | needs-engine | Reusable atmosphere layer "city_traffic" (needs the ambience scheduler: looped bed or randomised one-shot per room) |
-| `amb_water_drip` | ambience | `public/audio/ambience/amb_water_drip.ogg` | 1–60 s | loop | -6 dB | — | 1 / ignore | — | needs-engine | Reusable atmosphere layer "water_drip" (needs the ambience scheduler: looped bed or randomised one-shot per room) |
+| `amb_rain` | ambience | `public/audio/ambience/amb_rain.ogg` | 1–60 s | loop | -6 dB | — | 1 / ignore | — | needs-engine | Reusable atmosphere layer "rain" (needs the ambience scheduler: randomised one-shot per room) |
+| `amb_thunder_rumble` | ambience | `public/audio/ambience/amb_thunder_rumble.ogg` | 1–60 s | loop | -6 dB | — | 1 / ignore | — | needs-engine | Reusable atmosphere layer "thunder_rumble" (needs the ambience scheduler: randomised one-shot per room) |
+| `amb_electrical_buzz` | ambience | `public/audio/ambience/amb_electrical_buzz.ogg` | 1–60 s | loop | -12 dB | — | 1 / ignore | — | wired | Electrical buzz layer (Precinct Vault) |
+| `amb_neon_sign_hum` | ambience | `public/audio/ambience/amb_neon_sign_hum.ogg` | 1–60 s | loop | -12 dB | — | 1 / ignore | — | wired | Neon sign hum layer (Rainline) |
+| `amb_machinery` | ambience | `public/audio/ambience/amb_machinery.ogg` | 1–60 s | loop | -10 dB | — | 1 / ignore | — | wired | Machinery layer (Transit Stacks, Precinct Vault) |
+| `amb_city_traffic` | ambience | `public/audio/ambience/amb_city_traffic.ogg` | 1–60 s | loop | -8 dB | — | 1 / ignore | — | wired | Distant city traffic layer (Rainline, Transit Stacks) |
+| `amb_water_drip` | ambience | `public/audio/ambience/amb_water_drip.ogg` | 1–60 s | loop | -6 dB | — | 1 / ignore | — | needs-engine | Reusable atmosphere layer "water_drip" (needs the ambience scheduler: randomised one-shot per room) |
 
 ## Summary
 
-wired 31 · hooked 19 · needs-hook 1 · needs-engine 7 · blocked 1
+wired 35 · hooked 19 · needs-hook 1 · needs-engine 3 · blocked 1
