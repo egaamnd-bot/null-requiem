@@ -35,3 +35,17 @@ Palette used: void `#05060c`, deep violet `#1a0d26`, cyan `#3cf2ff`, magenta `#f
 | `sfx_enemy_drone.wav` | Unmapped | No clear catalog id (telegraph vs charge vs projectile). Needs ChatGPT/Producer to say which. |
 
 The handoff README itself states these are sketches, so they are **not** marked Delivered and are not in `public/audio/`. If the Producer wants them in the next APK as temporary sounds: `cp art/incoming/audio-sketches/handoff-01/*.wav` into a flat folder, `npm run audio:build -- --in <folder> --out public/audio`, and add `Delivered (sketch)` rows — one decision, easy to reverse.
+
+## Upgrade 02 (branch `feature/visual-upgrade-02`)
+
+Screenshots: `docs/screenshots/upgrade-02/`. All presentation-only; effects that cost fill-rate or particles are skipped in lite mode (render scale demoted to 1x).
+
+| Area | Change | Where |
+| --- | --- | --- |
+| Title | Rainline skyline (generated far/mid layers, slow drift), night grade, fog band, ground haze + scrim, near rain, breathing neon haze, neon glow behind the title, Courier silhouette with cyan implant and wet reflection | `src/render/titleBackdrop.ts`, `TitleScene.ts` |
+| Reflections | Wet-floor reflection (flipped, squashed, faint) for the Courier and Scrap Hounds while grounded | `src/render/reflection.ts`, `ActorViews.ts` |
+| Backtrace | Row of fading cyan/violet echo capsules along the rewind path | `Fx.ts` |
+| Touch controls | Neon rim: outer glow ring, dark body, bright rim, wet highlight arc | `MobileControlsScene.ts` |
+| Pause menu | Violet-tinted rows, pulsing cyan selection glow; toast no longer prints through the menu | `UIScene.ts` |
+
+Still not done: dialogue panel restyle beyond the nine-slice hooks, icon art, painted foreground, real Courier/enemy sprites (waiting on ChatGPT).

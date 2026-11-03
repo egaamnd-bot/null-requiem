@@ -24,11 +24,11 @@ const D = {
   haze: 39,
 } as const;
 
-const KEY = { grade: 'atm-grade', fog: 'atm-fog', rainNear: 'atm-rain-near', ripple: 'atm-ripple', glint: 'atm-glint', haze: 'atm-haze', mote: 'atm-mote' } as const;
+export const ATM_KEYS = { grade: 'atm-grade', fog: 'atm-fog', rainNear: 'atm-rain-near', ripple: 'atm-ripple', glint: 'atm-glint', haze: 'atm-haze', mote: 'atm-mote' } as const;
 
 /** Soft cloud-like strip, tileable horizontally (a handful of wrapped radial blobs). */
 function makeFog(scene: Phaser.Scene): void {
-  canvasTexture(scene, KEY.fog, 256, 64, (ctx) => {
+  canvasTexture(scene, ATM_KEYS.fog, 256, 64, (ctx) => {
     const rng = createRng(1337);
     for (let i = 0; i < 26; i++) {
       const x = rng() * 256;
@@ -45,10 +45,10 @@ function makeFog(scene: Phaser.Scene): void {
   });
 }
 
-function makeAtmosphereTextures(scene: Phaser.Scene): void {
-  if (scene.textures.exists(KEY.grade)) return;
+export function makeAtmosphereTextures(scene: Phaser.Scene): void {
+  if (scene.textures.exists(ATM_KEYS.grade)) return;
   // Night grade: deep violet/void toward the top and bottom, clear through the middle where the action reads.
-  canvasTexture(scene, KEY.grade, 4, 135, (ctx) => {
+  canvasTexture(scene, ATM_KEYS.grade, 4, 135, (ctx) => {
     const g = ctx.createLinearGradient(0, 0, 0, 135);
     g.addColorStop(0, css(0x05060c, 0.72));
     g.addColorStop(0.35, css(0x1a0d26, 0.32));
@@ -58,21 +58,21 @@ function makeAtmosphereTextures(scene: Phaser.Scene): void {
     ctx.fillRect(0, 0, 4, 135);
   });
   makeFog(scene);
-  canvasTexture(scene, KEY.rainNear, 2, 16, (ctx) => {
+  canvasTexture(scene, ATM_KEYS.rainNear, 2, 16, (ctx) => {
     const g = ctx.createLinearGradient(0, 0, 0, 16);
     g.addColorStop(0, 'rgba(200,225,255,0)');
     g.addColorStop(1, 'rgba(200,225,255,0.9)');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, 1, 16);
   });
-  canvasTexture(scene, KEY.ripple, 16, 6, (ctx) => {
+  canvasTexture(scene, ATM_KEYS.ripple, 16, 6, (ctx) => {
     ctx.strokeStyle = 'rgba(255,255,255,0.9)';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.ellipse(8, 3, 6, 1.6, 0, 0, Math.PI * 2);
     ctx.stroke();
   });
-  canvasTexture(scene, KEY.glint, 24, 3, (ctx) => {
+  canvasTexture(scene, ATM_KEYS.glint, 24, 3, (ctx) => {
     const g = ctx.createLinearGradient(0, 0, 24, 0);
     g.addColorStop(0, 'rgba(255,255,255,0)');
     g.addColorStop(0.5, 'rgba(255,255,255,0.9)');
@@ -80,14 +80,14 @@ function makeAtmosphereTextures(scene: Phaser.Scene): void {
     ctx.fillStyle = g;
     ctx.fillRect(0, 1, 24, 1);
   });
-  canvasTexture(scene, KEY.haze, 4, 64, (ctx) => {
+  canvasTexture(scene, ATM_KEYS.haze, 4, 64, (ctx) => {
     const g = ctx.createLinearGradient(0, 0, 0, 64);
     g.addColorStop(0, 'rgba(255,255,255,0)');
     g.addColorStop(1, 'rgba(255,255,255,0.5)');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, 4, 64);
   });
-  canvasTexture(scene, KEY.mote, 3, 3, (ctx) => {
+  canvasTexture(scene, ATM_KEYS.mote, 3, 3, (ctx) => {
     ctx.fillStyle = 'rgba(255,255,255,0.35)';
     ctx.fillRect(0, 0, 3, 3);
     ctx.fillStyle = 'rgba(255,255,255,1)';
@@ -146,27 +146,27 @@ export class Atmosphere {
       return o;
     };
 
-    this.grade = add(scene.add.image(0, 0, KEY.grade).setOrigin(0).setDisplaySize(view.width, view.height).setScrollFactor(0).setDepth(D.grade));
+    this.grade = add(scene.add.image(0, 0, ATM_KEYS.grade).setOrigin(0).setDisplaySize(view.width, view.height).setScrollFactor(0).setDepth(D.grade));
 
     this.fogFar = add(
-      scene.add.tileSprite(0, view.height * 0.34, view.width, 64, KEY.fog).setOrigin(0).setScrollFactor(0).setDepth(D.fogFar).setTint(0x7a4cc2).setAlpha(0.28).setTileScale(2.4, 1.4),
+      scene.add.tileSprite(0, view.height * 0.34, view.width, 64, ATM_KEYS.fog).setOrigin(0).setScrollFactor(0).setDepth(D.fogFar).setTint(0x7a4cc2).setAlpha(0.28).setTileScale(2.4, 1.4),
     );
     this.fogNear = add(
-      scene.add.tileSprite(0, view.height * 0.58, view.width, 64, KEY.fog).setOrigin(0).setScrollFactor(0).setDepth(D.fogNear).setTint(glow).setAlpha(0.14).setTileScale(3.2, 1.8),
+      scene.add.tileSprite(0, view.height * 0.58, view.width, 64, ATM_KEYS.fog).setOrigin(0).setScrollFactor(0).setDepth(D.fogNear).setTint(glow).setAlpha(0.14).setTileScale(3.2, 1.8),
     );
     // Ground haze in front of everything but the HUD, kept faint so silhouettes stay readable.
-    this.haze = add(scene.add.image(0, view.height - 64, KEY.haze).setOrigin(0).setDisplaySize(view.width, 64).setScrollFactor(0).setDepth(D.haze).setTint(0x1a0d26).setAlpha(0.45));
+    this.haze = add(scene.add.image(0, view.height - 64, ATM_KEYS.haze).setOrigin(0).setDisplaySize(view.width, 64).setScrollFactor(0).setDepth(D.haze).setTint(0x1a0d26).setAlpha(0.45));
 
     // Wet floor: a bright wet edge, a sodium/cyan sheen just under the surface, and slow glints sliding along the run.
     this.runs = floorRuns(grid);
     const rng = this.rng;
     for (const run of this.runs) {
       add(scene.add.rectangle(run.x, run.y, run.w, 1, 0xc9d6ff, 0.38).setOrigin(0).setDepth(D.sheen));
-      add(scene.add.image(run.x, run.y + 1, KEY.haze).setOrigin(0).setDisplaySize(run.w, 7).setFlipY(true).setTint(glow).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.22).setDepth(D.sheen));
+      add(scene.add.image(run.x, run.y + 1, ATM_KEYS.haze).setOrigin(0).setDisplaySize(run.w, 7).setFlipY(true).setTint(glow).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.22).setDepth(D.sheen));
       const n = Math.max(1, Math.round(run.w / 120));
       for (let i = 0; i < n; i++) {
         const tint = rng() < 0.55 ? glow : rng() < 0.5 ? PALETTE.magenta : PALETTE.sodium;
-        const img = add(scene.add.image(run.x, run.y + 1, KEY.glint).setTint(tint).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0).setDepth(D.sheen + 1));
+        const img = add(scene.add.image(run.x, run.y + 1, ATM_KEYS.glint).setTint(tint).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0).setDepth(D.sheen + 1));
         this.glints.push({ img, run, speed: 6 + rng() * 10, phase: rng() * 100 });
       }
     }
@@ -177,7 +177,7 @@ export class Atmosphere {
     this.emitters.push(
       add(
       scene.add
-        .particles(0, 0, KEY.mote, {
+        .particles(0, 0, ATM_KEYS.mote, {
           x: { min: 0, max: w },
           y: { min: 0, max: h },
           speedX: { min: -6, max: 6 },
@@ -197,7 +197,7 @@ export class Atmosphere {
     this.emitters.push(
       add(
       scene.add
-        .particles(0, 0, KEY.rainNear, {
+        .particles(0, 0, ATM_KEYS.rainNear, {
           x: { min: -40, max: w },
           y: { min: -20, max: h * 0.55 },
           speedY: { min: 520, max: 640 },
@@ -256,7 +256,7 @@ export class Atmosphere {
       const run = vis[Math.floor(this.rng() * vis.length)];
       if (run) {
         const x = Math.max(run.x + 4, Math.min(run.x + run.w - 4, x0 + this.rng() * (x1 - x0)));
-        const img = this.scene.add.image(x, run.y + 2, KEY.ripple).setTint(glow).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.55).setScale(0.3, 0.3).setDepth(D.ripple);
+        const img = this.scene.add.image(x, run.y + 2, ATM_KEYS.ripple).setTint(glow).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.55).setScale(0.3, 0.3).setDepth(D.ripple);
         this.scene.tweens.add({ targets: img, scaleX: 1, scaleY: 1, alpha: 0, duration: 520, ease: 'Sine.easeOut', onComplete: () => img.destroy() });
       }
     }

@@ -25,6 +25,8 @@ interface Menu {
   targets: TapTarget[];
   actions: (() => void)[];
   index: number;
+  /** Wet-Neon selection glow behind the focused row (presentation only). */
+  glow?: Phaser.GameObjects.Image;
 }
 
 /**
@@ -320,7 +322,9 @@ export class UIScene extends Phaser.Scene {
         .setOrigin(0.5)
         .setLetterSpacing(5),
     );
-    const menu: Menu = { container: c, labels: [], frames: [], skins: [], pressed: [], targets: [], actions: items.map(([, act]) => act), index: 0 };
+    const glow = this.add.image(W / 2, -100, TEX.glow).setTint(PALETTE.cyan).setBlendMode(Phaser.BlendModes.ADD).setScale(4.2, 0.85).setAlpha(0.3);
+    c.add(glow);
+    const menu: Menu = { container: c, labels: [], frames: [], skins: [], pressed: [], targets: [], actions: items.map(([, act]) => act), index: 0, glow };
     items.forEach(([label], i) => {
       const y = 66 + i * 26;
       const frame = this.add.rectangle(W / 2, y, 200, 22, PALETTE.ink, 0.6).setStrokeStyle(1, PALETTE.steel, 0.6);
@@ -550,7 +554,8 @@ export class UIScene extends Phaser.Scene {
 
     // Toast & banner fades.
     this.toastTimer -= dt;
-    this.toast.setAlpha(Math.max(0, Math.min(1, this.toastTimer * 3)));
+    // Hidden while the pause menu is up (it used to print through the menu buttons).
+    this.toast.setAlpha(this.pauseMenu.container.visible ? 0 : Math.max(0, Math.min(1, this.toastTimer * 3)));
     this.bannerTimer -= dt;
     this.banner.setAlpha(Math.max(0, Math.min(1, this.bannerTimer * 1.5, (2.6 - this.bannerTimer) * 2)));
   }
@@ -568,11 +573,13 @@ export class UIScene extends Phaser.Scene {
       const down = menu.pressed[i] === true;
       l.setColor(css(down ? PALETTE.chrome : sel ? PALETTE.cyan : PALETTE.steel)).setScale(down ? 0.97 : 1);
       menu.frames[i]
-        ?.setFillStyle(down ? PALETTE.violet : PALETTE.ink, down ? 0.85 : 0.6)
-        .setStrokeStyle(1, sel ? PALETTE.cyan : PALETTE.steel, sel ? 0.9 : 0.6)
+        ?.setFillStyle(down ? PALETTE.violet : 0x1a0d26, down ? 0.85 : sel ? 0.8 : 0.68)
+        .setStrokeStyle(1, sel ? PALETTE.cyan : PALETTE.steel, sel ? 0.95 : 0.6)
         .setScale(down ? 0.97 : 1);
       menu.skins[i]?.sync(down ? 'pressed' : sel ? 'focus' : 'idle', down ? 0.97 : 1);
     });
+    const focus = menu.frames[menu.index];
+    if (menu.glow && focus) menu.glow.setY(focus.y).setAlpha(0.24 + Math.sin(this.time.now / 260) * 0.07);
     // Ignore input on the frame the overlay opened (the same key press that opened it).
     if (this.overlayFrames < 2) return;
     if (inp.justPressed('back') || inp.justPressed('pause')) {
