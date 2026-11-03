@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import type { GameEvent } from '../core/events';
+import { view } from '../config/view';
 import { getSettings } from '../state/settings';
 import { PALETTE } from './palette';
 import { DEPTH } from './RoomView';
@@ -142,6 +143,23 @@ export class Fx {
     this.scene.tweens.add({ targets: core, scale: size * 0.45, alpha: 0, duration: 90, onComplete: () => core.destroy() });
   }
 
+  /** Backtrace: a row of fading cyan afterimage capsules along the rewind path (skipped in lite mode). */
+  private echoTrail(x0: number, y0: number, x1: number, y1: number): void {
+    if (view.renderScale <= 1) return;
+    const n = Math.min(9, Math.max(3, Math.round(Math.hypot(x1 - x0, y1 - y0) / 28)));
+    for (let i = 0; i < n; i++) {
+      const t = i / (n - 1 || 1);
+      const g = this.scene.add
+        .image(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t - 12, TEX.glowSoft)
+        .setTint(i % 2 ? PALETTE.cyan : PALETTE.violet)
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setDepth(DEPTH.fx - 1)
+        .setScale(0.22, 0.42)
+        .setAlpha(0.7);
+      this.scene.tweens.add({ targets: g, alpha: 0, scaleX: 0.08, duration: 260 + i * 30, delay: i * 16, ease: 'Cubic.easeOut', onComplete: () => g.destroy() });
+    }
+  }
+
   /** A streak of data particles along the path the player rewound through. */
   private streak(x0: number, y0: number, x1: number, y1: number): void {
     const n = Math.min(40, Math.max(8, Math.round(Math.hypot(x1 - x0, y1 - y0) / 6)));
@@ -172,6 +190,7 @@ export class Fx {
         const streakArt = len > 4 && playFxSprite(this.scene, 'fx_backtrace_streak', 'streak', e.fromX, e.fromY, { depth: DEPTH.fx, rotation: Math.atan2(dy, dx), scaleX: len / 64, additive: true });
         if (!streakArt) this.streak(e.fromX, e.fromY, e.toX, e.toY);
         if (!playFxSprite(this.scene, 'fx_backtrace_arrival', 'burst', e.toX, e.toY, { depth: DEPTH.fx, additive: true })) this.ring(e.toX, e.toY, PALETTE.cyan, 1.5, 320);
+        this.echoTrail(e.fromX, e.fromY, e.toX, e.toY);
         this.data.explode(18, e.toX, e.toY);
         this.stop(HITSTOP.backtrace);
         this.flash(120, 40, 200, 230);

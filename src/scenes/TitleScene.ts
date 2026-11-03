@@ -11,6 +11,7 @@ import { css, PALETTE, UI_FONT, UI_MONO } from '../render/palette';
 import { TEX } from '../render/textures';
 import { SCENES, type Services } from './session';
 import { MENU_SCENE } from './MenuScene';
+import { TitleBackdrop } from '../render/titleBackdrop';
 
 type MenuItem = { label: string; action: () => void };
 
@@ -25,6 +26,8 @@ export class TitleScene extends Phaser.Scene {
   private targets: TapTarget[] = [];
   private index = 0;
   private emblem!: Phaser.GameObjects.Image;
+  private backdrop: TitleBackdrop | null = null;
+  private titleGlow!: Phaser.GameObjects.Image;
   private starting = false;
 
   constructor() {
@@ -54,7 +57,12 @@ export class TitleScene extends Phaser.Scene {
     this.game.events.on(VIEW_CHANGED, onView);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.game.events.off(VIEW_CHANGED, onView));
     this.cameras.main.setBackgroundColor(PALETTE.void);
-    this.add.image(W / 2, H / 2, TEX.glowSoft).setTint(PALETTE.violet).setBlendMode(Phaser.BlendModes.ADD).setScale(4, 2.4).setAlpha(0.3);
+    this.backdrop = new TitleBackdrop(this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.backdrop?.destroy();
+      this.backdrop = null;
+    });
+    this.titleGlow = this.add.image(W / 2, 112, TEX.glowSoft).setTint(PALETTE.magenta).setBlendMode(Phaser.BlendModes.ADD).setScale(5.2, 0.9).setAlpha(0.28);
     this.emblem = this.add.image(W / 2, 70, TEX.title).setBlendMode(Phaser.BlendModes.ADD);
     this.add
       .particles(0, 0, TEX.rain, {
@@ -178,6 +186,8 @@ export class TitleScene extends Phaser.Scene {
   }
 
   override update(time: number): void {
+    this.backdrop?.update(time);
+    this.titleGlow.setAlpha(0.24 + Math.sin(time / 700) * 0.06);
     this.emblem.setScale(1 + Math.sin(time / 900) * 0.04).setAlpha(0.85 + Math.sin(time / 600) * 0.1);
     const inp = this.controls;
     inp.update();

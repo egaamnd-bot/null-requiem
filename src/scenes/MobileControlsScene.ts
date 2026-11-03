@@ -205,10 +205,19 @@ export class MobileControlsScene extends Phaser.Scene {
     const { def, gfx, held } = v;
     const color = BUTTON_COLORS[def.key];
     gfx.clear();
-    gfx.fillStyle(color, held ? 0.7 : 0.28);
+    // Neon rim: soft outer glow rings, a body, a bright rim and a wet highlight arc (readable over bright backdrops too).
+    gfx.lineStyle(5, color, held ? 0.2 : 0.1);
+    gfx.strokeCircle(def.x, def.y, def.r + 2);
+    gfx.fillStyle(0x05060c, held ? 0.55 : 0.42);
     gfx.fillCircle(def.x, def.y, def.r);
-    gfx.lineStyle(1.5, color, held ? 1 : 0.6);
+    gfx.fillStyle(color, held ? 0.62 : 0.24);
+    gfx.fillCircle(def.x, def.y, def.r);
+    gfx.lineStyle(2, color, held ? 1 : 0.8);
     gfx.strokeCircle(def.x, def.y, def.r);
+    gfx.lineStyle(1.5, 0xffffff, held ? 0.4 : 0.22);
+    gfx.beginPath();
+    gfx.arc(def.x, def.y, def.r * 0.8, Math.PI * 1.15, Math.PI * 1.7);
+    gfx.strokePath();
   }
 
   private drawPause(pressed: boolean): void {

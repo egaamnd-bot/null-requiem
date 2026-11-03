@@ -8,6 +8,7 @@ import type { Player } from '../core/player';
 import type { Projectile } from '../core/projectile';
 import type { GameWorld } from '../core/world';
 import { PALETTE } from './palette';
+import { Reflection } from './reflection';
 import { DEPTH } from './RoomView';
 import type { NpcEntity } from '../core/npc';
 import type { PanoptixUnit } from '../core/enemies/panoptixUnit';
@@ -43,6 +44,7 @@ export class PlayerView {
   private slashFrames: Record<'side' | 'up' | 'down', string[] | null> = { side: null, up: null, down: null };
   private clock = 0;
   /** Controlled cyan accents (presentation only): spinal implant, rail-blade edge and a dash afterimage trail. */
+  private readonly reflection: Reflection;
   private readonly implant: Phaser.GameObjects.Image;
   private readonly blade: Phaser.GameObjects.Image;
   private ghostClock = 0;
@@ -50,6 +52,7 @@ export class PlayerView {
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
+    this.reflection = new Reflection(scene, 0x8fd8ff, 0.18);
     this.implant = scene.add.image(0, 0, TEX.glow).setTint(PALETTE.cyan).setBlendMode(Phaser.BlendModes.ADD).setScale(0.3).setDepth(DEPTH.player + 1);
     this.blade = scene.add.image(0, 0, TEX.glowSoft).setTint(PALETTE.cyan).setBlendMode(Phaser.BlendModes.ADD).setScale(0.34, 0.2).setDepth(DEPTH.player + 1);
     this.glow = scene.add.image(0, 0, TEX.glowSoft).setTint(PALETTE.cyan).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.3).setScale(1.2).setDepth(DEPTH.player - 1);
@@ -126,6 +129,8 @@ export class PlayerView {
 
     this.glow.setPosition(feetX, feetY - 12).setAlpha(p.dead ? 0.12 : 0.28 + Math.sin(time / 300) * 0.04);
 
+    this.reflection.update(this.sprite, b.onGround && !p.dead, p.isDashing ? 0.5 : 1);
+
     // Implant: slow pulse, brighter while Backtrace is ready/active. Blade: faint edge light that flares during an attack.
     const alive = !p.dead;
     const pulse = 0.5 + Math.sin(time / 420) * 0.12;
@@ -194,6 +199,7 @@ export class PlayerView {
     this.slash.destroy();
     this.implant.destroy();
     this.blade.destroy();
+    this.reflection.destroy();
   }
 }
 
@@ -256,6 +262,7 @@ class HoundView implements EnemyView {
   private readonly sprite: Phaser.GameObjects.Image;
   private readonly glow: Phaser.GameObjects.Image;
   private readonly tell: Phaser.GameObjects.Image;
+  private readonly reflection: Reflection;
   /** R8: painted telegraph glint frames (null = the code-drawn spark). */
   private readonly tellFrames: string[] | null;
 
@@ -264,6 +271,7 @@ class HoundView implements EnemyView {
     this.glow = scene.add.image(0, 0, TEX.glow).setTint(PALETTE.danger).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.enemies - 1);
     this.sprite = scene.add.image(0, 0, houndKey('walk0')).setOrigin(0.5, 1).setDepth(DEPTH.enemies);
     this.tell = scene.add.image(0, 0, TEX.spark).setTint(PALETTE.white).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.enemies + 1).setVisible(false);
+    this.reflection = new Reflection(scene, 0xff7a9a, 0.16);
   }
 
   update(e: Enemy, pos: RenderPos, time: number): void {
@@ -280,6 +288,7 @@ class HoundView implements EnemyView {
     else if (g.state === 'recover') key = houndKey('recover');
     this.sprite.setTexture(key).setPosition(fx + shake, fy).setFlipX(g.facing < 0);
     flash(this.sprite, g.flash > 0);
+    this.reflection.update(this.sprite, b.onGround);
     const glowA = g.state === 'windup' ? 0.75 : g.state === 'recover' ? 0.12 : 0.35;
     this.glow.setPosition(fx, fy - 4).setAlpha(glowA).setScale(g.state === 'windup' ? 0.9 : 0.6);
     // A pale glint above the eye announces the lunge.
@@ -293,6 +302,7 @@ class HoundView implements EnemyView {
     this.sprite.destroy();
     this.glow.destroy();
     this.tell.destroy();
+    this.reflection.destroy();
   }
 }
 
