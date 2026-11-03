@@ -36,6 +36,10 @@ export class UIScene extends Phaser.Scene {
   private controls!: InputManager;
   private cells: Phaser.GameObjects.Image[] = [];
   private btIcon!: Phaser.GameObjects.Image;
+  /** Wet-Neon HUD plate behind the integrity cells and a ready-glow behind the Backtrace icon (presentation only). */
+  private hudPlate!: Phaser.GameObjects.Rectangle;
+  private hudPlateEdge!: Phaser.GameObjects.Rectangle;
+  private btGlow!: Phaser.GameObjects.Image;
   private btFill!: Phaser.GameObjects.Rectangle;
   private btLabel!: Phaser.GameObjects.Text;
   private bossName!: Phaser.GameObjects.Text;
@@ -110,6 +114,9 @@ export class UIScene extends Phaser.Scene {
     this.controls = new InputManager(this);
     this.controls.swallow();
 
+    this.hudPlate = this.add.rectangle(0, 0, 10, 10, 0x05060c, 0.5).setOrigin(0).setDepth(-2);
+    this.hudPlateEdge = this.add.rectangle(0, 0, 10, 1, PALETTE.cyan, 0.55).setOrigin(0).setDepth(-1);
+    this.btGlow = this.add.image(0, 0, TEX.glow).setTint(PALETTE.cyan).setBlendMode(Phaser.BlendModes.ADD).setScale(0.8).setVisible(false).setDepth(-1);
     this.btIcon = this.add.image(0, 0, TEX.hudBacktrace).setOrigin(0, 0.5).setVisible(false);
     this.btFill = this.add.rectangle(0, 0, 16, 16, PALETTE.void, 0.7).setOrigin(0, 1).setVisible(false);
     this.btLabel = this.add
@@ -518,6 +525,11 @@ export class UIScene extends Phaser.Scene {
     // Backtrace indicator: icon dims and fills from the bottom while cooling down.
     const hy = view.margin.top + 8;
     const bx = view.margin.left + 4 + hud.maxHealth * 10 + 8;
+    // HUD plate: spans the cells, scrap counter and (when owned) the Backtrace indicator.
+    const plateW = 8 + hud.maxHealth * 10 + (hud.hasBacktrace ? 8 + 19 + 44 : 0) + 8;
+    this.hudPlate.setPosition(view.margin.left - 2, view.margin.top - 2).setSize(plateW, 34);
+    this.hudPlateEdge.setPosition(view.margin.left - 2, view.margin.top + 32).setSize(plateW, 1);
+    this.btGlow.setVisible(hud.hasBacktrace && hud.backtraceReady).setPosition(bx + 8, hy).setAlpha(0.35 + Math.sin(this.time.now / 380) * 0.12);
     this.btIcon.setVisible(hud.hasBacktrace).setPosition(bx, hy).setAlpha(hud.backtraceReady ? 1 : 0.45);
     this.btFill.setVisible(hud.hasBacktrace && hud.backtraceCooldown > 0).setPosition(bx, hy + 8).setSize(16, 16 * hud.backtraceCooldown);
     this.btLabel.setVisible(hud.hasBacktrace).setPosition(bx + 19, hy).setAlpha(hud.backtraceReady ? 0.9 : 0.35);

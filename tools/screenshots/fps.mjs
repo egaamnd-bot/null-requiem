@@ -1,0 +1,12 @@
+import { chromium, devices } from '@playwright/test';
+const b = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH });
+const ctx = await b.newContext({ ...devices['Pixel 7 landscape'], hasTouch: true });
+const page = await ctx.newPage();
+await page.goto('http://127.0.0.1:4173/');
+await page.waitForFunction(() => window.nullRequiemGame?.scene.isActive('title'), null, { timeout: 30000 });
+await page.keyboard.press('Enter');
+await page.waitForFunction(() => window.nullRequiem?.world?.flow.state === 'playing', null, { timeout: 30000 });
+await page.waitForTimeout(1500);
+const r = await page.evaluate(() => new Promise((res) => { let n = 0; const t0 = performance.now(); const f = () => { n++; if (performance.now() - t0 < 4000) requestAnimationFrame(f); else res({ fps: n / 4, children: window.nullRequiemGame.scene.getScene('game').children.list.length }); }; requestAnimationFrame(f); }));
+console.log(JSON.stringify(r));
+await b.close();

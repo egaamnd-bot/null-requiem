@@ -147,3 +147,10 @@ Nine-slice skins (`src/assets/ui9.ts`, `src/render/uiSkin.ts`) for buttons, pane
 Finding: the R1 world-size trick (source resolution + frame size) also works for Phaser 4 NineSlice — corner margins stay exactly the declared logical px whatever the art resolution (pixel-measured).
 `ui_button_9slice` gained the states disabled/selected/destructive (it had no delivered art, so no contract changed). Ledger now lists the six UI assets that can be received today.
 Not started: icon slots, touch-control art, portrait slot, boss bar frame, title emblem at manifest size.
+
+## Session 2026-11-03 (evening) — visual enhancement (branch `feature/visual-enhancement`, from `feature/ui-skin-layer`)
+
+Producer asked for a visibly better next APK without waiting for art. Details and limits: `docs/VISUAL_ENHANCEMENT_01.md`; screenshots `docs/screenshots/`.
+- Found and fixed the real cause of the flat look: mid-layer glow helper drew hard squares. Graded sky; new `Atmosphere` layer (fog, haze, near rain, motes, wet-floor sheen/glints/ripples); Courier implant/blade glow + dash afterimages; red enemy telegraph + impact flashes; HUD plate and Backtrace-ready glow.
+- Handoff zip triaged: references and unfinished sketches only; nothing marked Delivered; 11 SFX sketches validate, music sketches rejected by the validator.
+- Environment note: this container's Playwright expects chromium_headless_shell-1194; a symlink to the installed 1243 build was needed to run the e2e suite.

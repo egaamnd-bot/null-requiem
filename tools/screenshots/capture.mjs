@@ -1,0 +1,30 @@
+// Captures reproducible screenshots of the production build (vite preview must be running on :4173).
+// usage: node tools/screenshots/capture.mjs <outDir> [prefix]
+import { chromium, devices } from '@playwright/test';
+import { mkdirSync } from 'node:fs';
+const out = process.argv[2] ?? 'docs/screenshots';
+const prefix = process.argv[3] ?? 'shot';
+mkdirSync(out, { recursive: true });
+const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
+const ctx = await browser.newContext({ ...devices['Pixel 7 landscape'], hasTouch: true });
+const page = await ctx.newPage();
+await page.goto('http://127.0.0.1:4173/');
+await page.waitForFunction(() => window.nullRequiemGame?.scene.isActive('title'), null, { timeout: 30000 });
+await page.waitForTimeout(1500);
+await page.screenshot({ path: `${out}/${prefix}_title.png` });
+await page.keyboard.press('Enter');
+await page.waitForFunction(() => window.nullRequiem?.world?.flow.state === 'playing', null, { timeout: 30000 });
+await page.waitForTimeout(2500);
+await page.screenshot({ path: `${out}/${prefix}_game_idle.png` });
+await page.keyboard.down('ArrowRight');
+await page.waitForTimeout(900);
+await page.screenshot({ path: `${out}/${prefix}_game_run.png` });
+await page.keyboard.press('KeyX').catch(() => {});
+await page.waitForTimeout(90);
+await page.screenshot({ path: `${out}/${prefix}_game_attack.png` });
+await page.keyboard.up('ArrowRight');
+await page.keyboard.press('Escape');
+await page.waitForTimeout(700);
+await page.screenshot({ path: `${out}/${prefix}_pause.png` });
+await browser.close();
+console.log('saved to', out);

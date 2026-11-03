@@ -13,6 +13,7 @@ Status values: `Not delivered` · `In validation` (files in `art/incoming/`) · 
 | --- | --- | --- | --- | --- |
 | 2026-11-03 | — | **Nothing.** PR #6 contains the handoff document only (no images, no audio). | n/a | Repository prepared to receive deliveries (see `docs/CREATIVE_HANDOFF_REVIEW.md`). |
 | 2026-11-03 | — | **Nothing.** Producer confirmed after the Android test that the game still shows the original placeholder art; creative production (all 38 visuals, UI art, music, ambience, SFX) is ChatGPT's and has not started delivering. | n/a | Audio masters go to `art/audio/masters/` (not shipped); runtime Ogg to `public/audio/`. Procedure: `docs/INTEGRATION_RUNBOOK.md`. |
+| 2026-11-03 | `Pack_01_Creative_Handoff.zip` | **Reference + sketches only; no runtime asset.** 3 concept PNGs, 4 OST sketches, 1 rain loop, 12 short SFX WAVs. | 11 SFX/UI pass the audio validator (0 errors, stereo/peak warnings); 4 music + rain rejected (duration, loudness, not Ogg); drone SFX unmapped; PNGs are not sprite sheets. | Not marked Delivered (author states they are unfinished). Details: `docs/VISUAL_ENHANCEMENT_01.md`. |
 
 ## Workstream A — Pack 01 visuals (38 files)
 

@@ -12,6 +12,7 @@ import { canvasTexture, makeBackdrop, px, TEX } from './textures';
 import { autotileIndex, catwalkIndex } from '../assets/autotile';
 import { tilesetFor, type Tileset } from './tileset';
 import { WTEX } from './worldTextures';
+import { Atmosphere } from './Atmosphere';
 
 export const DEPTH = {
   sky: -100,
@@ -58,6 +59,7 @@ export class RoomView {
   private readonly far: Phaser.GameObjects.TileSprite;
   private readonly mid: Phaser.GameObjects.TileSprite;
   private readonly fg: Phaser.GameObjects.TileSprite | null = null;
+  private readonly atmosphere: Atmosphere;
   /** Tile scale of each parallax layer (world px per texture px); keeps world-space parallax speed independent of texture size. */
   private farScale = 0.5;
   private midScale = 0.5;
@@ -120,6 +122,7 @@ export class RoomView {
 
     this.buildLights(room.grid, room);
     this.buildObjects(room);
+    this.atmosphere = new Atmosphere(scene, room.grid, id.length * 13 + id.charCodeAt(0), theme.glow);
   }
 
   private add<T extends Phaser.GameObjects.GameObject>(obj: T): T {
@@ -425,10 +428,12 @@ export class RoomView {
     this.far.setSize(width, height);
     this.mid.setSize(width, height);
     this.fg?.setSize(width, height);
+    this.atmosphere.resize(width, height);
   }
 
   update(time: number, camera: Phaser.Cameras.Scene2D.Camera): void {
     const t = time / 1000;
+    this.atmosphere.update(time, camera, this.world.room.def.theme.glow);
     // World-space parallax speed is independent of the texture's pixel size: tilePosition is in texture px, so divide by the tile scale.
     const PAR = 0.5; // the original generated layers (tile scale 0.5) define the feel
     this.far.tilePositionX = (camera.scrollX * 0.12 * PAR) / this.farScale;
@@ -496,6 +501,7 @@ export class RoomView {
   }
 
   destroy(): void {
+    this.atmosphere.destroy();
     for (const o of this.objects) o.destroy();
     this.objects.length = 0;
   }
