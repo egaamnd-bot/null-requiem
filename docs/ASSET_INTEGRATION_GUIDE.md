@@ -52,7 +52,7 @@ Max 4×; K never exceeds what the screen can show. Linear texture filtering is i
 
 ## Known gaps (documented, not hidden)
 
-- Audio files (`audio_*`) are specified, but loading `.ogg` is not built; sound is synthesized.
+- Recorded audio: runtime implemented (`src/audio/AudioBank.ts`, `Sfx`, `Music`, `Ambience`; catalog `src/audio/catalog.ts`; CLI `npm run audio:build`; see `docs/audio/README.md`). No audio file has been delivered; the old manifest `audio_*` entries are superseded by the catalog.
 - Projectile frames: only the first frame of each projectile kind is shown.
 - Props and tilesets exist as placements/logic for Rainline (props) and for every region (tileset); other regions' props have no placements yet.
 - Portraits (`ui_portrait_*`) have no renderer slot yet (the dialogue panel is text only).

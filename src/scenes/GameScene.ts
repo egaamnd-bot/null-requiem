@@ -348,6 +348,7 @@ export class GameScene extends Phaser.Scene {
       if (e.type === 'vendorOpened') this.openMenu('vendor', e.vendorId);
       this.bus.emit('event', e);
     }
+    this.services.ambience.setRegion(world.room.def.region ?? null);
     this.services.music.setTheme(
       themeFor(world.room.def.region, {
         inGame: true,

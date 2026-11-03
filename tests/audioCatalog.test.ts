@@ -27,8 +27,8 @@ describe('audio catalog', () => {
   });
   it('anything marked wired really has a cue or theme to attach to; hooks/engine entries have none', () => {
     for (const e of AUDIO_CATALOG) {
-      if (e.engine === 'wired') expect(e.cue ?? e.theme, e.id).toBeTruthy();
-      else expect(e.cue ?? e.theme, e.id).toBeUndefined();
+      if (e.engine === 'wired') expect(e.cue ?? e.theme ?? e.region, e.id).toBeTruthy();
+      else expect(e.cue ?? e.theme ?? e.region, e.id).toBeUndefined();
     }
   });
   it('covers every sound id named in the creative handoff (UI sounds are renamed sfx_ui_*)', () => {

@@ -31,12 +31,12 @@ must be #4 → #5 → #6. Branch CI is green (docs only). Mergeable. Recommendat
 | --- | --- | --- |
 | **Pack 01 visuals (38 files)** | Whole pipeline: manifest ids, sheet planner, world-size independence, validation/assembly CLI, loader with fallbacks, renderer hooks for every one of the 38 (verified in a browser with synthetic art). All 38 are `swap-ready`. | **The art itself.** Real-device check of sharpness/performance with painted art. |
 | Pipeline polish | `assets:build`, atlas, manifest merge, reports; **new:** `--pack pack-01` completeness report, `art/incoming/pack-01`, empty `public/assets/final/manifest.json`, ledger + tests. | — |
-| **Music** | 11 procedural themes (title, 6 regions, boss, finalBoss, ending, silence), cross-fade, volume setting. | File playback, loop points, layered combat music, per-boss theme, stingers (victory, game over, Backtrace motif), safe-room state. |
-| **SFX** | 36 procedural cues mapped from game events (`Sfx.handle`), master volume. | File playback with variations, pitch variation, voice limits; hooks for footsteps, door close, relay link, hound/drone windups, heavy hits, Backtrace charge/arrival/ready/cooldown, integrity pickup. |
-| **Ambience** | None. | Ambience channel (region beds + randomised one-shots). |
+| **Music** | 11 procedural themes, cross-fade, volume; **recorded-track playback with loop regions (audio branch)**. | Layered combat music (needs an in-combat signal), per-boss theme, stingers (victory, game over, Backtrace motif), safe-room state. |
+| **SFX** | 36 procedural cues mapped from game events; **recorded playback with variations, pitch variation, voice limits (audio branch)**. | Hooks for footsteps, door close, relay link, hound/drone windups, heavy hits, Backtrace charge/arrival/ready/cooldown, integrity pickup. |
+| **Ambience** | **Region beds (rainline, transit, precinct) on their own channel (audio branch)**. | Randomised one-shots / atmosphere layers scheduler. |
 | **UI sounds** | `menu` and `confirm` cues only. | back, pause, error, tab, slider, save, continue hooks in the UI scenes. |
 | **UI visuals** | HUD cell, Backtrace icon and title emblem textures are swap-ready; touch controls, buttons, panels, dialogue, boss bar and menus are Phaser shapes/text drawn in code. | A skin layer (nine-slice panels/buttons with per-state textures, icon slots, touch-control art) with code-drawn fallback; portrait slot in the dialogue panel. |
-| Tests/Android | 546 unit + 18 browser tests, CI incl. APK build. | Audio decode/loop tests (with the loader), UI skin tests, device checks. |
+| Tests/Android | 546+ unit and 18+ browser tests, CI incl. APK build; audio branch adds unit tests (catalog, files, validation, CLI) and 5 browser tests with synthetic audio. | UI skin tests, **device checks of decoded-audio memory and latency**. |
 
 Details: `docs/audio/README.md`, `docs/UI_ASSET_SPEC.md`, `docs/CREATIVE_DELIVERY_LOG.md`.
 

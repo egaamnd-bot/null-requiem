@@ -16,9 +16,9 @@
 | `music_victory` | stinger | `public/audio/music/music_victory.ogg` | 3–40 s | once | 0 dB | — | 1 / restart | — | needs-hook | Game completed (replaces the procedural victory cue + ending theme start) |
 | `music_game_over` | stinger | `public/audio/music/music_game_over.ogg` | 2–30 s | once | 0 dB | — | 1 / restart | — | needs-hook | Player death overlay |
 | `music_safe_room` | music | `public/audio/music/music_safe_room.ogg` | 30–180 s | loop | 0 dB | — | 1 / ignore | — | needs-engine | Low-intensity recovery/save ambience; no safe-room state exists (candidate: standing at a sync relay) |
-| `amb_rainline_loop` | ambience | `public/audio/ambience/amb_rainline_loop.ogg` | 20–120 s | loop | -6 dB | — | 1 / ignore | region `rainline` | needs-engine | Rainline region bed (rain, distant traffic, hum). Needs the ambience channel of the audio runtime |
-| `amb_transit_stacks_loop` | ambience | `public/audio/ambience/amb_transit_stacks_loop.ogg` | 20–120 s | loop | -6 dB | — | 1 / ignore | region `transit` | needs-engine | Transit Stacks region bed |
-| `amb_precinct_vault_loop` | ambience | `public/audio/ambience/amb_precinct_vault_loop.ogg` | 20–120 s | loop | -6 dB | — | 1 / ignore | region `precinct` | needs-engine | Precinct Vault region bed |
+| `amb_rainline_loop` | ambience | `public/audio/ambience/amb_rainline_loop.ogg` | 20–120 s | loop | -6 dB | — | 1 / ignore | region `rainline` | wired | Rainline region bed (rain, distant traffic, hum). Plays on the ambience channel (no procedural fallback: silent without a file) |
+| `amb_transit_stacks_loop` | ambience | `public/audio/ambience/amb_transit_stacks_loop.ogg` | 20–120 s | loop | -6 dB | — | 1 / ignore | region `transit` | wired | Transit Stacks region bed |
+| `amb_precinct_vault_loop` | ambience | `public/audio/ambience/amb_precinct_vault_loop.ogg` | 20–120 s | loop | -6 dB | — | 1 / ignore | region `precinct` | wired | Precinct Vault region bed |
 
 ## Sound effects
 
@@ -85,4 +85,4 @@
 
 ## Summary
 
-wired 25 · needs-hook 22 · needs-engine 12
+wired 28 · needs-hook 22 · needs-engine 9

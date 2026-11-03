@@ -16,12 +16,17 @@ docs, not executed; **[unverified]** = not checked.
 - Stack: Phaser 4.2.1, TypeScript 5.9, Vite 8, Vitest 5 (unit), Playwright 1.56.1 (browser smoke), Capacitor 7.4.3 (Android
   wrapper, installed only inside the Android workflow with `--no-save`). Node 22.12+.
 
-## Current state (2026-11-02, evening) — branch `feature/render-foundation`
+## Current state (2026-11-03) — stack of PRs, none merged
 
-- Stack of work: `main` ← `milestone/full-production` (PR #4, device-playtested OK by the Producer) ← **`feature/render-foundation`** (this PR; art-production foundation). Not merged; the Producer decides.
-- Done on this branch: Desert Man NPC (independent, wired to main-1), **R0** render scale (canvas = logical × K; Settings → Render quality; FPS guard), **R1** world-size independence (`applyWorldSize`/`planWorldSize`), **R2–R8** painted backgrounds, chunked auto-tiled terrain, foreground strips, props, Courier one-shot animations, multi-frame FX, and the **asset assembly/validation CLI** (`npm run assets:build`). Manifest sizes/keys were corrected where they disagreed with the game.
-- The game is technically ready for Gemini Pack 01: read `docs/GEMINI_PACK_01_BRIEF.md`. All 38 pack assets are drop-in.
-- **Not verified on a phone:** sharpness and frame rate at K = 2/3/4 with painted art; the benchmark so far is a software renderer only.
+`main` ← #4 `milestone/full-production` ← #5 `feature/render-foundation` ← #6 `creative/pack-01-production` (ChatGPT's handoff, docs only) ← #7 `feature/creative-readiness` ← **#8 `feature/audio-runtime`** (tip).
+
+- **Roles:** Producer approves; ChatGPT is Creative Director / asset producer and delivers validated batches; Claude owns engine integration, tests and Android verification.
+- **Nothing creative has been delivered.** `docs/CREATIVE_DELIVERY_LOG.md` lists all 38 Pack 01 files and 59 sounds as `Not delivered`; `public/assets/final/manifest.json` and `public/audio/` are empty. A test keeps the ledger honest.
+- Visuals: pipeline complete (PR #5); `npm run assets:validate:pack01` / `assets:build:pack01`; intake folder `art/incoming/pack-01/`.
+- Audio: contract `src/audio/catalog.ts` (+ generated `docs/audio/CATALOG.md`); runtime for recorded SFX/music/ambience with procedural fallback; `npm run audio:validate|audio:build`; intake `art/incoming/audio/`. Details: `docs/audio/README.md`.
+- UI: not started on the engine side (only spec): `docs/UI_ASSET_SPEC.md` §4 lists the skin layer to build when the first UI batch arrives.
+- Review of PR #6 and the implemented-vs-missing matrix: `docs/CREATIVE_HANDOFF_REVIEW.md`.
+- CI: APK job needed `--legacy-peer-deps` for the Capacitor install (see QA_STATUS); the creative branch needs a rebase on #5 to get it.
 
 ## Architecture map
 
@@ -76,9 +81,11 @@ docs, not executed; **[unverified]** = not checked.
 
 ## Next action
 
-1. Producer: install the APK of the latest green run of `feature/render-foundation`; compare Settings → Render quality (Low / Balanced / High / Max) for sharpness, FPS and heat; check the Desert Man conversation.
-2. Start Gemini Pack 01 with the style-anchor step in the brief; run `npm run assets:build` on every delivery and fix what `report.md` rejects.
-3. Later (not started): audio file loading, portraits, projectile frame animation, props/tilesets for the other regions, inner-corner tiles.
+1. Producer: review PR #6 + #7 (+ #8); tell ChatGPT the id decisions (`sfx_ui_*`), the audio format rules and the Gate order. Merge order #4 → #5 → #6 → #7 → #8.
+2. First delivery (Gate 1): Courier + one environment asset into `art/incoming/pack-01/` → `npm run assets:validate:pack01` → fix/build → ledger → browser test → phone check.
+3. Audio batch: files into `art/incoming/audio/` → `npm run audio:validate`/`audio:build`; implement the `needs-hook` triggers that batch needs (footsteps, door close, UI back/tab…), keep gameplay untouched.
+4. Engine work awaiting a Producer decision: in-combat signal (combat music), per-boss theme, safe-room definition, stingers (victory/game over/Backtrace motif), atmosphere one-shot scheduler, UI skin layer + portrait slot.
+5. Device checks: decoded-audio memory/latency, Render quality at 2×/3×/4× with painted art.
 
 ## Handover verification
 

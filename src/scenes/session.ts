@@ -3,6 +3,7 @@ import type { Sfx } from '../audio/Sfx';
 import type { SaveStore } from '../core/progression';
 import type { Progression } from '../core/progression';
 import type { GameWorld } from '../core/world';
+import type { Ambience } from '../audio/Ambience';
 import type { Music } from '../audio/Music';
 import type { MenuTab } from './MenuScene';
 
@@ -10,6 +11,8 @@ import type { MenuTab } from './MenuScene';
 export interface Services {
   sfx: Sfx;
   music: Music;
+  /** Recorded region ambience (optional; silent without delivered files). */
+  ambience: Ambience;
   store: SaveStore;
 }
 

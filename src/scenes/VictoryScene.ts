@@ -92,6 +92,7 @@ export class VictoryScene extends Phaser.Scene {
     this.controls.swallow();
     this.victory.services.sfx.play('victory');
     this.victory.services.music.setTheme('ending');
+    this.victory.services.ambience.setRegion(null);
     this.victory.services.sfx.stopDrone();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.controls.destroy());
   }

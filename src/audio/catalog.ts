@@ -65,9 +65,9 @@ export const AUDIO_CATALOG: readonly AudioEntry[] = [
   { ...music('music_victory', undefined, 'needs-hook', 'Game completed (replaces the procedural victory cue + ending theme start)'), kind: 'stinger', loop: false, seconds: [3, 40], retrigger: 'restart' },
   { ...music('music_game_over', undefined, 'needs-hook', 'Player death overlay'), kind: 'stinger', loop: false, seconds: [2, 30], retrigger: 'restart' },
   music('music_safe_room', undefined, 'needs-engine', 'Low-intensity recovery/save ambience; no safe-room state exists (candidate: standing at a sync relay)', { seconds: [30, 180] }),
-  amb('amb_rainline_loop', 'rainline', 'needs-engine', 'Rainline region bed (rain, distant traffic, hum). Needs the ambience channel of the audio runtime'),
-  amb('amb_transit_stacks_loop', 'transit', 'needs-engine', 'Transit Stacks region bed'),
-  amb('amb_precinct_vault_loop', 'precinct', 'needs-engine', 'Precinct Vault region bed'),
+  amb('amb_rainline_loop', 'rainline', 'wired', 'Rainline region bed (rain, distant traffic, hum). Plays on the ambience channel (no procedural fallback: silent without a file)'),
+  amb('amb_transit_stacks_loop', 'transit', 'wired', 'Transit Stacks region bed'),
+  amb('amb_precinct_vault_loop', 'precinct', 'wired', 'Precinct Vault region bed'),
 
   // ───────────────────────────────────────────────────────────────────────── player
   sfx('sfx_player_footstep_wet', undefined, 'needs-hook', 'Run-cycle foot contact (no footstep event exists; derive from the run animation frame)', [0.04, 0.4], { pitchVar: 1.5, maxVoices: 3, gainDb: -6, note: 'Provide 4 variations (_01.._04).' }),

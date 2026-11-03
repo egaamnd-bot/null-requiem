@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { ASSETS } from './assets/manifest';
 import { viewScaleOf } from './render/assetRuntime';
+import { Ambience } from './audio/Ambience';
+import { AudioBank } from './audio/AudioBank';
 import { Music } from './audio/Music';
 import { Sfx } from './audio/Sfx';
 import { canvasSize, FpsGuard } from './core/renderScale';
@@ -22,9 +24,23 @@ applyWindowView();
 const initialCanvas = canvasSize(view.width, view.height, view.renderScale);
 
 const sfx = new Sfx();
+const music = new Music(sfx);
+const ambience = new Ambience(sfx);
+// Recorded audio is optional: the bank starts loading when the AudioContext exists and everything falls back to the procedural sound.
+const bank = new AudioBank();
+sfx.bank = bank;
+music.bank = bank;
+ambience.bank = bank;
+sfx.onContext = (ctx) => bank.attach(ctx);
+bank.onManifest = () => music.notifyManifest();
+bank.onReady = (id) => {
+  music.notifyReady(id);
+  ambience.notifyReady(id);
+};
 const services: Services = {
   sfx,
-  music: new Music(sfx),
+  music,
+  ambience,
   store: new LocalSaveStore(),
 };
 
@@ -54,7 +70,10 @@ const game = new Phaser.Game({
 
 installViewportWatcher(game);
 // One global hook keeps the score scheduled regardless of which scene is active.
-game.events.on(Phaser.Core.Events.POST_STEP, () => services.music.update());
+game.events.on(Phaser.Core.Events.POST_STEP, () => {
+  services.music.update();
+  services.ambience.update();
+});
 
 // R0 safety net: `auto` quality drops to 1x if a slow device cannot hold the frame rate (one-way, per session).
 const fpsGuard = new FpsGuard();
@@ -76,5 +95,7 @@ window.addEventListener('pointerdown', unlock, { once: true });
 
 // Read-only asset introspection for browser regression tests (never read by game code).
 (window as unknown as { nullRequiemAssets?: unknown }).nullRequiemAssets = { viewScaleOf, ASSETS };
+
+(window as unknown as { nullRequiemAudio?: unknown }).nullRequiemAudio = { bank, sfx, music, ambience };
 
 export default game;

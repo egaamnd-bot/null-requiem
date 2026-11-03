@@ -1,4 +1,7 @@
 import { getSettings } from '../state/settings';
+import type { AudioBank } from './AudioBank';
+import { ENTRY_FOR_THEME } from './catalog';
+import { dbToGain, loopRegion } from './files';
 import { midiToHz, noteOfDegree, THEMES, type Theme } from './musicTheory';
 import type { Sfx } from './Sfx';
 
@@ -16,6 +19,10 @@ export class Music {
   private nextStepTime = 0;
   private stepIndex = 0;
   private fading: Theme | null = null;
+  /** Recorded music (optional). A theme with a decoded file plays that instead of the procedural score. */
+  bank: AudioBank | null = null;
+  private fileSrc: AudioBufferSourceNode | null = null;
+  private fileThemeId: string | null = null;
 
   constructor(private readonly sfx: Sfx) {
     sfx.onSettings = () => this.applyVolume();
@@ -25,6 +32,23 @@ export class Music {
     return this.theme;
   }
 
+  /** True while a recorded track (not the procedural score) is playing. */
+  get playingFile(): boolean {
+    return this.fileSrc !== null;
+  }
+
+  /** The manifest arrived after the theme started: if this theme has a recorded track, switch (procedural plays until it is decoded). */
+  notifyManifest(): void {
+    const e = ENTRY_FOR_THEME.get(this.theme);
+    if (e && this.bank?.listed(e.id) && !this.fileSrc) this.fading = this.theme;
+  }
+
+  /** The bank finished decoding `id`: if it is the current theme's track, switch to it. */
+  notifyReady(id: string): void {
+    const e = ENTRY_FOR_THEME.get(this.theme);
+    if (e && e.id === id && !this.fileSrc) this.fading = this.theme;
+  }
+
   private level(a: { muted: boolean }): number {
     return a.muted ? 0 : getSettings().musicVolume;
   }
@@ -32,7 +56,7 @@ export class Music {
   applyVolume(): void {
     const a = this.sfx.audio;
     if (!a || !this.gain) return;
-    this.gain.gain.setTargetAtTime(this.level(a), a.ctx.currentTime, 0.2);
+    this.gain.gain.setTargetAtTime(this.level(a) * this.fileTrim(), a.ctx.currentTime, 0.2);
   }
 
   setTheme(theme: Theme): void {
@@ -51,7 +75,7 @@ export class Music {
       this.rebuild(ctx, this.fading);
       this.fading = null;
     }
-    if (!this.gain || this.theme === 'silence') return;
+    if (!this.gain || this.theme === 'silence' || this.fileSrc) return;
     const def = THEMES[this.theme];
     // Schedule a short window ahead so frame hiccups never create gaps.
     while (this.nextStepTime < ctx.currentTime + 0.3) {
@@ -78,14 +102,24 @@ export class Music {
     o.stop(at + dur + 0.05);
   }
 
+  private fileTrim(): number {
+    const e = ENTRY_FOR_THEME.get(this.theme);
+    const s = e && this.bank?.pick(e, 0);
+    return e && s ? dbToGain(e.gainDb + (s.file.gainDb ?? 0)) : 1;
+  }
+
   private teardown(ctx: AudioContext): void {
-    const old = { gain: this.gain, a: this.droneA, b: this.droneB };
+    const old = { gain: this.gain, a: this.droneA, b: this.droneB, f: this.fileSrc };
+    if (this.fileThemeId && this.fileSrc) this.bank?.release(this.fileThemeId);
+    this.fileSrc = null;
+    this.fileThemeId = null;
     if (old.gain) {
       old.gain.gain.setTargetAtTime(0, ctx.currentTime, 0.25);
       window.setTimeout(() => {
         try {
           old.a?.stop();
           old.b?.stop();
+          old.f?.stop();
           old.gain?.disconnect();
         } catch {
           /* already stopped */
@@ -102,11 +136,32 @@ export class Music {
     this.stepIndex = 0;
     this.nextStepTime = ctx.currentTime + 0.1;
     if (theme === 'silence') return;
-    const def = THEMES[theme];
     const out = ctx.createGain();
     out.gain.value = 0;
     out.connect(ctx.destination);
     const a = this.sfx.audio;
+    // A recorded track replaces the procedural score when it is decoded; otherwise request it and play the score meanwhile.
+    const entry = ENTRY_FOR_THEME.get(theme);
+    if (entry && this.bank?.listed(entry.id)) {
+      const s = this.bank.pick(entry, 0);
+      if (s) {
+        const src = ctx.createBufferSource();
+        src.buffer = s.buffer;
+        src.loop = true;
+        const r = loopRegion(s.file, s.buffer.duration);
+        src.loopStart = r.start;
+        src.loopEnd = r.end;
+        src.connect(out);
+        src.start();
+        out.gain.setTargetAtTime((a ? this.level(a) : 0.6) * dbToGain(entry.gainDb + (s.file.gainDb ?? 0)), ctx.currentTime, 0.6);
+        this.gain = out;
+        this.fileSrc = src;
+        this.fileThemeId = entry.id;
+        return;
+      }
+      void this.bank.ensure(entry.id);
+    }
+    const def = THEMES[theme];
     out.gain.setTargetAtTime(a ? this.level(a) : 0.6, ctx.currentTime, 0.6);
     const lp = ctx.createBiquadFilter();
     lp.type = 'lowpass';
