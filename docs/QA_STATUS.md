@@ -3,18 +3,25 @@
 Last updated: 2026-11-02 (Claude). Labels: **verified** (command/CI result recorded here), **inferred**, **unverified**.
 Automated results below are NOT physical-device verification.
 
-## Latest CI evidence — `feature/render-foundation` (PR #5)
+## Latest CI evidence — `feature/audio-runtime` (PR #8, top of the stack #5 → #6 → #7 → #8)
 
-Code commit built and verified: **`f58900dc9919d5b8af38ab1884580bc04cf34ed3`**.
+Code commit built and verified: **`37ff0df3cc847102e810d6f48341bdda16dfcf8f`**.
 
 | Check | Result (GitHub Actions API) |
 |---|---|
-| "CI" run | **success** — https://github.com/egaamnd-bot/null-requiem/actions/runs/41472309533 |
-| "CI" (pull_request) | **success** — https://github.com/egaamnd-bot/null-requiem/actions/runs/41472349791 |
-| "Android Debug APK" run | **success** — https://github.com/egaamnd-bot/null-requiem/actions/runs/41472309703 (typecheck, unit tests, build, Playwright, Capacitor, APK build/verify, built-APK landscape check, upload) |
-| APK artifact | `null-requiem-android-debug-f58900dc9919d5b8af38ab1884580bc04cf34ed3`, 7,201,253 bytes (zip, contains `app-debug.apk`), expires 2026-11-16 — download from the run page, section **Artifacts** (GitHub login required) |
+| "CI" push / pull_request | **success** — runs 41549219796 / 41549227946 |
+| "Android Debug APK" | **success** — https://github.com/egaamnd-bot/null-requiem/actions/runs/41549219815 (typecheck, unit tests, build, Playwright, Capacitor, APK build/verify, built-APK landscape check, upload) |
+| APK artifact | `null-requiem-android-debug-37ff0df3cc847102e810d6f48341bdda16dfcf8f`, 7,220,624 bytes, expires 2026-11-17 (run page → **Artifacts**; GitHub login required) |
 
-Previous branch (`milestone/full-production`, PR #4, `be5ca3e`) was green and was playtested on a physical Android phone by the Producer ("core gameplay and controls work as intended" — Producer report, not an automated check).
+**CI incident (2026-11-02/03):** the APK job failed on every branch, including a docs-only commit, at "Install pinned Capacitor tooling": npm 10's arborist crashes
+(`Cannot read properties of null (reading 'edgesOut')`) on `npm install --no-save --package-lock=false @capacitor/…`. Reproduced locally; `--legacy-peer-deps` fixes it
+(only the packaging step; the project install is `npm ci`). Fix committed on `feature/render-foundation` (`55d686f`) and cherry-picked onto the stacked branches.
+The creative branch (PR #6, docs only) does not have it yet and will fail its APK check until it is rebased on PR #5.
+
+## Local sandbox results (2026-11-03)
+
+- `npx tsc --noEmit` pass; `npx vitest run` **571/571**; `npm run build` pass; Playwright (local Chromium, Pixel 7 landscape) **23/23** (touch 11, render scale 1, final-art 6, audio 5).
+- **Unverified:** any real audio or art (none delivered); decoded-audio memory and latency on a phone; combat/safe-room/per-boss/stinger triggers (not built).
 
 ## Local sandbox results (2026-11-02)
 
