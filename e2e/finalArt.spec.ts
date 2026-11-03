@@ -310,7 +310,10 @@ test('the Courier plays delivered interact frames when talking (R6) and effects 
   await page.keyboard.down('f');
   await page.waitForTimeout(120);
   await page.keyboard.up('f');
-  await page.waitForTimeout(900);
+  // Poll instead of a fixed wait: the software renderer on CI can be slow enough that a 900 ms window misses the short interact pose.
+  await page
+    .waitForFunction(() => (window as unknown as { __seen: Set<string> }).__seen.size > 0, null, { timeout: 8000 })
+    .catch(() => undefined);
   const seen = await page.evaluate(() => [...(window as unknown as { __seen: Set<string> }).__seen]);
   expect(seen.length, 'no interact frame was ever shown').toBeGreaterThan(0);
 });
