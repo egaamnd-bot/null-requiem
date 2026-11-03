@@ -140,3 +140,10 @@ Branch `feature/audio-hooks-intake` (stacked on `feature/audio-runtime`, PR #9).
 - Observation from the browser tests: in the software renderer the simulation runs in slow motion (dt is capped), so distance-based triggers must be awaited by sim progress, not wall-clock time.
 - Guards for the first real delivery: `tests/deliveredAssets.test.ts` and `e2e/deliveredArt.spec.ts` re-validate every delivered visual/audio file (zero today; proven once with a synthetic file that was then removed). `docs/INTEGRATION_RUNBOOK.md` describes the batch procedure (separate `integrate/*` branch per batch, APK for the Producer).
 - Nothing creative was created or delivered.
+
+## Session 2026-11-03 (later) — UI skin layer (branch `feature/ui-skin-layer`, PR #10)
+
+Nine-slice skins (`src/assets/ui9.ts`, `src/render/uiSkin.ts`) for buttons, panels and dialogue choices, applied at every menu/dialogue site, with the code-drawn rectangles as fallback.
+Finding: the R1 world-size trick (source resolution + frame size) also works for Phaser 4 NineSlice — corner margins stay exactly the declared logical px whatever the art resolution (pixel-measured).
+`ui_button_9slice` gained the states disabled/selected/destructive (it had no delivered art, so no contract changed). Ledger now lists the six UI assets that can be received today.
+Not started: icon slots, touch-control art, portrait slot, boss bar frame, title emblem at manifest size.

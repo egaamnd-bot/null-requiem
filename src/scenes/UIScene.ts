@@ -7,6 +7,7 @@ import { InputManager } from '../input/InputManager';
 import { createTapTarget, type TapTarget } from '../input/tapTarget';
 import { css, PALETTE, UI_FONT, UI_MONO } from '../render/palette';
 import { TEX } from '../render/textures';
+import { Skin } from '../render/uiSkin';
 import { WTEX } from '../render/worldTextures';
 import { getSettings } from '../state/settings';
 import { itemName } from '../world/items';
@@ -19,6 +20,7 @@ interface Menu {
   container: Phaser.GameObjects.Container;
   labels: Phaser.GameObjects.Text[];
   frames: Phaser.GameObjects.Rectangle[];
+  skins: (Skin | null)[];
   pressed: boolean[];
   targets: TapTarget[];
   actions: (() => void)[];
@@ -59,7 +61,7 @@ export class UIScene extends Phaser.Scene {
   private dlgName!: Phaser.GameObjects.Text;
   private dlgText!: Phaser.GameObjects.Text;
   private dlgHint!: Phaser.GameObjects.Text;
-  private dlgChoices: { frame: Phaser.GameObjects.Rectangle; label: Phaser.GameObjects.Text; target: TapTarget; index: number }[] = [];
+  private dlgChoices: { frame: Phaser.GameObjects.Rectangle; skin: Skin | null; label: Phaser.GameObjects.Text; target: TapTarget; index: number }[] = [];
   private dlgSelected = 0;
   private dlgShown = false;
   private dlgSig = '';
@@ -176,7 +178,9 @@ export class UIScene extends Phaser.Scene {
     const y = m.top + 46;
     this.dlgPanel = { x, y, w, h };
     const c = this.add.container(0, 0).setDepth(45).setVisible(false);
-    c.add(this.add.rectangle(x, y, w, h, PALETTE.void, 0.9).setOrigin(0).setStrokeStyle(1, PALETTE.cyan, 0.8));
+    const panelRect = this.add.rectangle(x, y, w, h, PALETTE.void, 0.9).setOrigin(0).setStrokeStyle(1, PALETTE.cyan, 0.8);
+    const panelSkin = Skin.attach(this, panelRect, 'panel');
+    c.add(panelSkin ? [panelRect, panelSkin.image] : [panelRect]);
     c.add(this.add.rectangle(x, y, w, 14, PALETTE.violet, 0.45).setOrigin(0));
     this.dlgName = this.add.text(x + 8, y + 2, '', { fontFamily: UI_FONT, fontSize: '9px', color: css(PALETTE.chrome), resolution: 2 }).setLetterSpacing(2);
     this.dlgText = this.add.text(x + 8, y + 20, '', { fontFamily: UI_FONT, fontSize: '9px', color: css(PALETTE.chrome), wordWrap: { width: w - 16 }, lineSpacing: 3, resolution: 2 });
@@ -192,7 +196,8 @@ export class UIScene extends Phaser.Scene {
       const cy = y + h - 12 - (3 - i) * 17;
       const frame = this.add.rectangle(x + 8, cy, w - 16, 15, PALETTE.ink, 0.8).setOrigin(0, 0.5).setStrokeStyle(1, PALETTE.steel, 0.7).setVisible(false);
       const label = this.add.text(x + 14, cy, '', { fontFamily: UI_FONT, fontSize: '9px', color: css(PALETTE.mist), resolution: 2 }).setOrigin(0, 0.5).setVisible(false);
-      const slot = { frame, label, index: -1, target: null as unknown as TapTarget };
+      const skin = Skin.attach(this, frame, 'choice');
+      const slot = { frame, skin, label, index: -1, target: null as unknown as TapTarget };
       slot.target = createTapTarget(this, {
         x: x + w / 2, y: cy, width: w - 16, height: 17, container: c,
         enabled: () => this.dlgShown && slot.index >= 0 && !this.session.menuOpen(),
@@ -205,7 +210,7 @@ export class UIScene extends Phaser.Scene {
           this.session.world.chooseDialogue(slot.index);
         },
       });
-      c.add([frame, label]);
+      c.add(skin ? [frame, skin.image, label] : [frame, label]);
       this.dlgChoices.push(slot);
     }
     this.dlg = c;
@@ -237,6 +242,7 @@ export class UIScene extends Phaser.Scene {
         const c = k >= 0 ? choices[k] : undefined;
         slot.index = c ? c.index : -1;
         slot.frame.setVisible(!!c);
+        slot.skin?.image.setVisible(!!c);
         slot.label.setVisible(!!c).setText(c ? c.text : '');
         const cy = y + h - 12 - (3 - i) * 17;
         slot.frame.setY(cy);
@@ -255,6 +261,7 @@ export class UIScene extends Phaser.Scene {
         const sel = i === this.dlgSelected;
         s.frame.setStrokeStyle(1, sel ? PALETTE.cyan : PALETTE.steel, sel ? 1 : 0.6).setFillStyle(sel ? PALETTE.violet : PALETTE.ink, sel ? 0.6 : 0.8);
         s.label.setColor(css(sel ? PALETTE.chrome : PALETTE.mist));
+        s.skin?.sync(sel ? 'focus' : 'idle');
       });
       if (inp.justPressed('confirm') || inp.justPressed('interact')) {
         const s = visible[this.dlgSelected];
@@ -306,12 +313,14 @@ export class UIScene extends Phaser.Scene {
         .setOrigin(0.5)
         .setLetterSpacing(5),
     );
-    const menu: Menu = { container: c, labels: [], frames: [], pressed: [], targets: [], actions: items.map(([, act]) => act), index: 0 };
+    const menu: Menu = { container: c, labels: [], frames: [], skins: [], pressed: [], targets: [], actions: items.map(([, act]) => act), index: 0 };
     items.forEach(([label], i) => {
       const y = 66 + i * 26;
       const frame = this.add.rectangle(W / 2, y, 200, 22, PALETTE.ink, 0.6).setStrokeStyle(1, PALETTE.steel, 0.6);
       const t = this.add.text(W / 2, y, label, { fontFamily: UI_FONT, fontSize: '11px', color: css(PALETTE.mist), resolution: 2 }).setOrigin(0.5);
-      c.add([frame, t]);
+      const skin = Skin.attach(this, frame, 'button');
+      c.add(skin ? [frame, skin.image, t] : [frame, t]);
+      menu.skins.push(skin);
       menu.frames.push(frame);
       menu.labels.push(t);
       menu.pressed.push(false);
@@ -368,7 +377,8 @@ export class UIScene extends Phaser.Scene {
       const y = H / 2 - 14 + i * 34;
       const frame = this.add.rectangle(W / 2, y, 210, 28, PALETTE.ink, 0.6).setStrokeStyle(1, PALETTE.steel, 0.7);
       const t = this.add.text(W / 2, y, label, { fontFamily: UI_FONT, fontSize: '11px', color: css(PALETTE.chrome), resolution: 2 }).setOrigin(0.5);
-      c.add([frame, t]);
+      const skin = Skin.attach(this, frame, 'button');
+      c.add(skin ? [frame, skin.image, t] : [frame, t]);
       this.gameOverFrames.push(frame);
       this.gameOverPressed.push(false);
       this.gameOverTargets.push(
@@ -382,6 +392,7 @@ export class UIScene extends Phaser.Scene {
           onPress: (down) => {
             this.gameOverPressed[i] = down;
             frame.setFillStyle(down ? PALETTE.violet : PALETTE.ink, down ? 0.85 : 0.6).setScale(down ? 0.97 : 1);
+            skin?.sync(down ? 'pressed' : 'idle', down ? 0.97 : 1);
           },
           onTap: () => {
             this.session.services.sfx.play('confirm');
@@ -548,6 +559,7 @@ export class UIScene extends Phaser.Scene {
         ?.setFillStyle(down ? PALETTE.violet : PALETTE.ink, down ? 0.85 : 0.6)
         .setStrokeStyle(1, sel ? PALETTE.cyan : PALETTE.steel, sel ? 0.9 : 0.6)
         .setScale(down ? 0.97 : 1);
+      menu.skins[i]?.sync(down ? 'pressed' : sel ? 'focus' : 'idle', down ? 0.97 : 1);
     });
     // Ignore input on the frame the overlay opened (the same key press that opened it).
     if (this.overlayFrames < 2) return;

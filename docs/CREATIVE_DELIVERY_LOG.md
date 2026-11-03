@@ -127,8 +127,17 @@ Canonical ids and the runtime contract are in `src/audio/catalog.ts` (see `docs/
 
 ## Workstream D — UI kit
 
-No UI file has been delivered. The component inventory and what the engine can already receive are in `docs/UI_ASSET_SPEC.md`; rows are added here when
-the first UI batch arrives.
+Only the assets below can be received today (see `docs/UI_ASSET_SPEC.md` §4: the nine-slice skin layer is built; icons, touch-control art, portraits, boss bar and map frame still need engine work and are
+listed there, not here). Validate/build with the same asset tool (`npm run assets:build`, folder `art/incoming/`).
+
+| Asset id | Group | Final path | Spec | Status | Validation |
+| --- | --- | --- | --- | --- | --- |
+| `ui_title_emblem` | ui | `public/assets/final/ui_title_emblem.png` | 640×360 sheet (640×360 cell) | Not delivered | — |
+| `ui_hud_cell` | ui | `public/assets/final/ui_hud_cell.png` | 32×96 sheet (32×48 cell) | Not delivered | — |
+| `ui_hud_backtrace` | ui | `public/assets/final/ui_hud_backtrace.png` | 64×64 sheet (64×64 cell) | Not delivered | — |
+| `ui_button_9slice` | ui | `public/assets/final/ui_button_9slice.png` | 192×576 sheet (192×96 cell) | Not delivered | — |
+| `ui_panel_9slice` | ui | `public/assets/final/ui_panel_9slice.png` | 192×192 sheet (192×192 cell) | Not delivered | — |
+| `ui_dialogue_choice` | ui | `public/assets/final/ui_dialogue_choice.png` | 800×160 sheet (800×80 cell) | Not delivered | — |
 
 ## Outstanding
 

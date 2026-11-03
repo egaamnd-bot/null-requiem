@@ -3,20 +3,23 @@
 Last updated: 2026-11-02 (Claude). Labels: **verified** (command/CI result recorded here), **inferred**, **unverified**.
 Automated results below are NOT physical-device verification.
 
-## Latest CI evidence — `feature/audio-runtime` (PR #8, top of the stack #5 → #6 → #7 → #8)
+## Latest CI evidence — `feature/ui-skin-layer` (PR #10, top of the stack #5 → … → #10)
 
-Code commit built and verified: **`37ff0df3cc847102e810d6f48341bdda16dfcf8f`**.
+Code commit built and verified: **`c80f8b9723658a846624bdef7a1e219304267018`**.
 
 | Check | Result (GitHub Actions API) |
 |---|---|
-| "CI" push / pull_request | **success** — runs 41549219796 / 41549227946 |
-| "Android Debug APK" | **success** — https://github.com/egaamnd-bot/null-requiem/actions/runs/41549219815 (typecheck, unit tests, build, Playwright, Capacitor, APK build/verify, built-APK landscape check, upload) |
-| APK artifact | `null-requiem-android-debug-37ff0df3cc847102e810d6f48341bdda16dfcf8f`, 7,220,624 bytes, expires 2026-11-17 (run page → **Artifacts**; GitHub login required) |
+| "CI" push / pull_request | **success** |
+| "Android Debug APK" | **success** — https://github.com/egaamnd-bot/null-requiem/actions/runs/41562840706 |
+| APK artifact | `null-requiem-android-debug-c80f8b9723658a846624bdef7a1e219304267018`, 7,233,540 bytes, expires 2026-11-17 (run page → **Artifacts**; GitHub login required) |
 
-**CI incident (2026-11-02/03):** the APK job failed on every branch, including a docs-only commit, at "Install pinned Capacitor tooling": npm 10's arborist crashes
-(`Cannot read properties of null (reading 'edgesOut')`) on `npm install --no-save --package-lock=false @capacitor/…`. Reproduced locally; `--legacy-peer-deps` fixes it
-(only the packaging step; the project install is `npm ci`). Fix committed on `feature/render-foundation` (`55d686f`) and cherry-picked onto the stacked branches.
-The creative branch (PR #6, docs only) does not have it yet and will fail its APK check until it is rebased on PR #5.
+Previous layer `feature/audio-hooks-intake` (PR #9, `0b713b3`): CI and APK success. The APK job needed `--legacy-peer-deps` for the Capacitor install (npm arborist crash, see below).
+PR #6 (docs only, ChatGPT's branch) lacks that CI fix until PR #5 is merged/rebased, so its APK check fails by itself.
+
+## Local sandbox results (2026-11-03, tip)
+
+- `npx tsc --noEmit` pass; `npx vitest run` **583/583**; `npm run build` pass; Playwright **26 passed, 1 skipped** (the skipped one is `e2e/deliveredArt.spec.ts`, which only runs once visual assets are delivered).
+- **Unverified:** any real art/audio/UI file (none delivered); decoded-audio memory and latency on a phone; the combat stem and every `hooked` sound with real recordings.
 
 ## Local sandbox results (2026-11-03)
 

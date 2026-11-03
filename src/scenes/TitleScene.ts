@@ -4,6 +4,7 @@ import { view } from '../config/view';
 import { VIEW_CHANGED } from '../render/viewportDom';
 import { loadProgression, Progression } from '../core/progression';
 import { InputManager } from '../input/InputManager';
+import { Skin } from '../render/uiSkin';
 import { createTapTarget, type TapTarget } from '../input/tapTarget';
 import { hasTouchScreen } from './MobileControlsScene';
 import { css, PALETTE, UI_FONT, UI_MONO } from '../render/palette';
@@ -19,6 +20,7 @@ export class TitleScene extends Phaser.Scene {
   private items: MenuItem[] = [];
   private labels: Phaser.GameObjects.Text[] = [];
   private frames: Phaser.GameObjects.Rectangle[] = [];
+  private skins: (Skin | null)[] = [];
   private pressed: boolean[] = [];
   private targets: TapTarget[] = [];
   private index = 0;
@@ -34,6 +36,7 @@ export class TitleScene extends Phaser.Scene {
     this.items = [];
     this.labels = [];
     this.frames = [];
+    this.skins = [];
     this.pressed = [];
     this.targets = [];
     this.index = 0;
@@ -101,7 +104,9 @@ export class TitleScene extends Phaser.Scene {
     const STEP = 30;
     this.items.forEach((item, i) => {
       const y = FIRST_Y + i * STEP;
-      this.frames.push(this.add.rectangle(W / 2, y, ITEM_W, ITEM_H, PALETTE.ink, 0.55).setStrokeStyle(1, PALETTE.steel, 0.6));
+      const rect = this.add.rectangle(W / 2, y, ITEM_W, ITEM_H, PALETTE.ink, 0.55).setStrokeStyle(1, PALETTE.steel, 0.6);
+      this.frames.push(rect);
+      this.skins.push(Skin.attach(this, rect, 'button'));
       this.labels.push(
         this.add.text(W / 2, y, item.label, { fontFamily: UI_MONO, fontSize: '13px', color: css(PALETTE.mist), resolution: 2 }).setOrigin(0.5),
       );
@@ -155,6 +160,7 @@ export class TitleScene extends Phaser.Scene {
         ?.setFillStyle(down ? PALETTE.violet : PALETTE.ink, down ? 0.85 : 0.55)
         .setStrokeStyle(1, sel ? PALETTE.cyan : PALETTE.steel, sel ? 0.9 : 0.6)
         .setScale(down ? 0.97 : 1);
+      this.skins[i]?.sync(down ? 'pressed' : sel ? 'focus' : 'idle', down ? 0.97 : 1);
       l.setScale(down ? 0.97 : 1);
     });
   }

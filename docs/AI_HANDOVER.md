@@ -18,13 +18,14 @@ docs, not executed; **[unverified]** = not checked.
 
 ## Current state (2026-11-03) — stack of PRs, none merged
 
-`main` ← #4 `milestone/full-production` ← #5 `feature/render-foundation` ← #6 `creative/pack-01-production` (ChatGPT's handoff, docs only) ← #7 `feature/creative-readiness` ← **#8 `feature/audio-runtime`** (tip).
+`main` ← #4 `milestone/full-production` ← #5 `feature/render-foundation` ← #6 `creative/pack-01-production` (ChatGPT's handoff, docs only) ← #7 `feature/creative-readiness` ← #8 `feature/audio-runtime` ← #9 `feature/audio-hooks-intake` ← **#10 `feature/ui-skin-layer`** (tip).
 
 - **Roles:** Producer approves; ChatGPT is Creative Director / asset producer and delivers validated batches; Claude owns engine integration, tests and Android verification.
 - **Nothing creative has been delivered.** `docs/CREATIVE_DELIVERY_LOG.md` lists all 38 Pack 01 files and 59 sounds as `Not delivered`; `public/assets/final/manifest.json` and `public/audio/` are empty. A test keeps the ledger honest.
 - Visuals: pipeline complete (PR #5); `npm run assets:validate:pack01` / `assets:build:pack01`; intake folder `art/incoming/pack-01/`.
 - Audio: contract `src/audio/catalog.ts` (+ generated `docs/audio/CATALOG.md`); runtime for recorded SFX/music/ambience with procedural fallback; `npm run audio:validate|audio:build`; intake `art/incoming/audio/`. Details: `docs/audio/README.md`.
-- UI: not started on the engine side (only spec): `docs/UI_ASSET_SPEC.md` §4 lists the skin layer to build when the first UI batch arrives.
+- UI: nine-slice skin layer built (#10) for buttons/panels/choices; icons, touch-control art, portraits, boss bar, title emblem size still to do (`docs/UI_ASSET_SPEC.md` §4).
+- Producer decisions 2026-11-03 (Ogg runtime, masters in `art/audio/masters/`, safe-room music blocked, audio-only combat signal, shared boss theme) are recorded in `docs/audio/README.md`. Batch procedure: `docs/INTEGRATION_RUNBOOK.md`.
 - Review of PR #6 and the implemented-vs-missing matrix: `docs/CREATIVE_HANDOFF_REVIEW.md`.
 - CI: APK job needed `--legacy-peer-deps` for the Capacitor install (see QA_STATUS); the creative branch needs a rebase on #5 to get it.
 

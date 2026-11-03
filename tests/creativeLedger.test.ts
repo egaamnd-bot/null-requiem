@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { PACK_01_GROUPS, PACK_01_IDS } from '../src/assets/pack01';
 import { ASSET_BY_ID } from '../src/assets/manifest';
+import { UI_READY_IDS } from '../src/assets/uiReady';
 import { AUDIO_CATALOG } from '../src/audio/catalog';
 
 const log = readFileSync('docs/CREATIVE_DELIVERY_LOG.md', 'utf8');
@@ -19,7 +20,8 @@ describe('creative delivery ledger', () => {
     expect(new Set(ids).size).toBe(ids.length);
     for (const id of PACK_01_IDS) expect(ids, id).toContain(id);
     for (const e of AUDIO_CATALOG) expect(ids, e.id).toContain(e.id);
-    expect(rows.length).toBe(PACK_01_IDS.length + AUDIO_CATALOG.length);
+    for (const id of UI_READY_IDS) expect(ids, id).toContain(id);
+    expect(rows.length).toBe(PACK_01_IDS.length + AUDIO_CATALOG.length + UI_READY_IDS.length);
   });
   it('never claims a delivery that is not in the repository', () => {
     for (const r of rows) {
@@ -34,6 +36,9 @@ describe('creative delivery ledger', () => {
       const base = f.replace(/_\d\d(\.[a-z0-9]+)$/i, '$1').replace(/\.(wav|mp3|m4a)$/i, '.ogg');
       expect(claimed.has(f) || claimed.has(base), `${f} is in public/ but not in the ledger`).toBe(true);
     }
+  });
+  it('every UI asset listed as receivable is swap-ready in the manifest', () => {
+    for (const id of UI_READY_IDS) expect(ASSET_BY_ID.get(id)?.integration, id).toBe('swap-ready');
   });
   it('Pack 01 grouping matches the handoff counts and exists in the manifest as drop-in assets', () => {
     expect(Object.values(PACK_01_GROUPS).map((g) => g.length)).toEqual([11, 2, 1, 5, 9, 7, 3]);

@@ -10,8 +10,8 @@ All UI is built in Phaser scenes from **shapes and text drawn in code**: `UIScen
 `MenuScene` (tabs: map, journal, gear, settings, vendor), `MobileControlsScene` (touch controls, Graphics), `VictoryScene`. Interaction uses
 `createTapTarget` (tap on release, one pointer, keyboard/gamepad parity). Text is runtime text (good for localisation): **do not bake text into art**.
 Only three UI bitmaps exist as manifest assets and are swap-ready: `ui_title_emblem`, `ui_hud_cell`, `ui_hud_backtrace`. Everything else in the manifest
-(`ui_panel_9slice`, `ui_button_9slice`, `ui_touch_controls`, `ui_boss_bar`, `ui_map_frame`, `ui_dialogue_choice`, 24 `icon_*`) is `placeholder` with **no
-texture keys and no renderer hook**; the 8 `ui_portrait_*` are `needs-engine-work`.
+(`ui_touch_controls`, `ui_boss_bar`, `ui_map_frame`, 24 `icon_*`) is `placeholder` with **no
+texture keys and no renderer hook**; the three nine-slice kinds (`ui_panel_9slice`, `ui_button_9slice`, `ui_dialogue_choice`) are now swap-ready (§4); the 8 `ui_portrait_*` are `needs-engine-work`.
 
 ## 2. Component inventory and real geometry
 
@@ -39,18 +39,29 @@ texture keys and no renderer hook**; the 8 `ui_portrait_*` are `needs-engine-wor
 sprites (`docs/GEMINI_PACK_01_BRIEF.md` §5, `npm run assets:build`). Caution: the title emblem placeholder is drawn at 64×64 and displayed at that world
 size; the manifest says 160×90 — **the title scene will be updated to the manifest size when the first emblem arrives** (otherwise it would shrink/stretch).
 
-## 4. Engine work required before the rest can be received (proposal — not started)
+## 4. Engine support (status)
 
-1. **UI skin layer** (`src/render/uiSkin.ts`): `panel(scene, x, y, w, h)` and `button(scene, …)` returning nine-slice images from `ui_panel_9slice` /
-   `ui_button_9slice` states (`normal`, `pressed`, `focused`, `disabled`, `selected`, `destructive`) with the current rectangle drawing as fallback.
-   Needs: nine-slice margins per asset (manifest field), per-state keys, and `createTapTarget` state callbacks (already present: `onPress`, `onFocus`).
-2. **Icon slots:** replace text/shape stand-ins with `icon_*` textures where a hook exists (scrap, Backtrace, items, upgrades, quest, map relay).
-3. **Touch-control art:** swap the Graphics circles for textures (joystick base/knob, 5 buttons × 2 states, pause) keeping hit areas independent of art.
-4. **Portrait slot** in the dialogue panel (`ui_portrait_*`, 96×96, left of the text) with `talk` frames.
-5. **Boss bar frame** around the existing fill.
-6. Tests: skin falls back when textures are missing; hit areas unchanged; safe-area layout at 16:9, 20:9 and 21:9; touch e2e unchanged.
+**Implemented (branch `feature/ui-skin-layer`, PR #10): the nine-slice skin layer.** `src/render/uiSkin.ts` + `src/assets/ui9.ts`. When the art of a kind is delivered, a
+NineSlice is placed over the existing code-drawn rectangle, the rectangle is hidden, and the state art follows the interaction; hit areas, text and layout are untouched.
+Without the art nothing changes. Verified in a browser with synthetic art (`e2e/finalArt.spec.ts`: states, size and margins independent of the art's pixel size).
 
-Each item is independent and keeps the code-drawn look until its art passes validation.
+| Kind | Asset id (cell → margins L/R/T/B, logical px) | States (one row each, in this order) | Used by |
+| --- | --- | --- | --- |
+| button | `ui_button_9slice` (48×24 → 10/10/8/8) | idle, focus, pressed, disabled, selected, destructive | title menu, pause menu, game-over buttons, every menu button, menu tabs (selected = active tab) |
+| panel | `ui_panel_9slice` (48×48 → 16/16/16/16) | panel (one row) | dialogue panel, full-screen menu panel |
+| choice | `ui_dialogue_choice` (200×20 → 14/8/6/6) | idle, focus | dialogue choice rows |
+
+Rules for the art: the art cell is drawn at its manifest size ×4; the corner slices are exactly the margins above (×4 px); the edge slices are stretched, so keep them uniform
+along the stretch direction; the centre fills. `destructive` has no caller yet (reserved for confirm-delete dialogs). A state row that is missing falls back to `idle`.
+
+**Still to engineer (not started), one change per item, each keeping the code-drawn look until its art passes validation:**
+
+1. Icon slots: `icon_*` textures where a hook exists (scrap 10×10 today, Backtrace, items, upgrades, quest, map relay).
+2. Touch-control art: joystick base/knob and the five action buttons + pause (two states each); hit areas stay independent of the art (`touchLayout.ts`).
+3. Portrait slot in the dialogue panel (`ui_portrait_*`, 96×96, `talk` frames).
+4. Boss bar frame/fill/phase pips around the existing fill.
+5. Title emblem at its manifest size 160×90 (the placeholder is 64×64 and the scene layout assumes it).
+6. Safe-area/aspect tests with painted UI at 16:9, 20:9, 21:9.
 
 ## 5. Export rules for UI art
 
