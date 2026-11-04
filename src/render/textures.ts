@@ -333,7 +333,8 @@ function drawCourier(ctx: Ctx, pose: CourierPose): void {
   ctx.save();
   ctx.translate(cx+5,top+13);
   ctx.rotate(pose.lean ? -0.58 : 0.22);
-  ctx.shadowColor='#4efff2';ctx.shadowBlur=5;
+  ctx.fillStyle='rgba(78,255,242,0.22)';
+  ctx.beginPath();ctx.moveTo(-1.8,0);ctx.lineTo(3.2,0);ctx.lineTo(2.2,11);ctx.lineTo(0,15.4);ctx.lineTo(-1.6,10);ctx.closePath();ctx.fill();
   ctx.fillStyle='rgba(54,245,239,'+bladeAlpha+')';
   ctx.beginPath();ctx.moveTo(-0.9,0);ctx.lineTo(2.1,0);ctx.lineTo(1.2,11);ctx.lineTo(0,14);ctx.lineTo(-0.7,10);ctx.closePath();ctx.fill();
   ctx.strokeStyle='#f1ffff';ctx.lineWidth=0.7;ctx.beginPath();ctx.moveTo(0,1);ctx.lineTo(0.2,10);ctx.stroke();

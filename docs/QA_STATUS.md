@@ -197,3 +197,4 @@ Producer to test on a real Android phone and mark each row. Until every row pass
 
 - [verified locally] `tsc --noEmit` clean; `npm test` 40 files / 583 tests pass; `npm run test:e2e -- --timeout=120000` 26 passed, 1 skipped; contact sheet + in-game screenshots in `docs/screenshots/sprite-04/`.
 - [unverified] CI run and APK for this branch (filled in after the push); on-device look and frame rate (hires textures add ~4x texture memory for Hound/Drone, still tiny: under 1 MB total).
+- [verified] First push (fc6cfba): CI green, but Android Debug APK #? failed twice on slow e2e start timeouts (title Start; multi-touch; interact). Local A/B of title-to-playing: old 4.9 s, new 5.0-5.4 s. Cause suspected: `shadowBlur` on the 4x Courier blade. Replaced it with a translucent halo shape; local start time is back to about 5.0 s. Re-run result recorded below once CI finishes.
