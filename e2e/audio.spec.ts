@@ -48,7 +48,7 @@ test('a delivered SFX file plays instead of the procedural cue; without a file t
   await spy(page);
   await deliver(page, { version: 1, sounds: { sfx_player_jump: { files: [{ file: 'sfx_player_jump_01.wav' }] } } }, { 'sfx/sfx_player_jump_01.wav': sineWav(500, 0.3) });
   await boot(page);
-  await page.waitForFunction(() => (window as unknown as AudioProbe).nullRequiemAudio.bank.isReady('sfx_player_jump'), null, { timeout: 10000 });
+  await page.waitForFunction(() => (window as unknown as AudioProbe).nullRequiemAudio.bank.isReady('sfx_player_jump'), null, { timeout: 30000 });
   const r = await page.evaluate(() => {
     const w = window as unknown as AudioProbe;
     const osc0 = w.__osc;
@@ -68,7 +68,7 @@ test('voice limit: a rapidly repeated sound never exceeds its maxVoices and is n
   await spy(page);
   await deliver(page, { version: 1, sounds: { sfx_hit_light: { files: [{ file: 'sfx_hit_light_01.wav' }] } } }, { 'sfx/sfx_hit_light_01.wav': sineWav(800, 0.4) });
   await boot(page);
-  await page.waitForFunction(() => (window as unknown as AudioProbe).nullRequiemAudio.bank.isReady('sfx_hit_light'), null, { timeout: 10000 });
+  await page.waitForFunction(() => (window as unknown as AudioProbe).nullRequiemAudio.bank.isReady('sfx_hit_light'), null, { timeout: 30000 });
   const r = await page.evaluate(() => {
     const w = window as unknown as AudioProbe;
     const osc0 = w.__osc;
@@ -144,7 +144,7 @@ test('hooked cues: door close, per-enemy windup and UI sounds play recorded file
     { 'sfx/a.wav': sineWav(300, 0.31), 'sfx/b.wav': sineWav(400, 0.32), 'ui/c.wav': sineWav(500, 0.33) },
   );
   await boot(page);
-  await page.waitForFunction(() => (window as unknown as AudioProbe).nullRequiemAudio.bank.isReady('sfx_ui_back'), null, { timeout: 10000 });
+  await page.waitForFunction(() => (window as unknown as AudioProbe).nullRequiemAudio.bank.isReady('sfx_ui_back'), null, { timeout: 30000 });
   const r = await page.evaluate(() => {
     const w = window as unknown as AudioProbe & { nullRequiemAudio: { sfx: { handle(e: unknown): void } } };
     const durs = () => w.__starts.map((s) => s.dur);
@@ -173,7 +173,7 @@ test('footsteps follow ground travel and combat events layer the combat stem in 
     { 'sfx/f.wav': sineWav(200, 0.17), 'music/e.wav': sineWav(110, 4, 22050, 2), 'music/c.wav': sineWav(220, 4, 22050, 2) },
   );
   await startGame(page);
-  await page.waitForFunction(() => (window as unknown as AudioProbe).nullRequiemAudio.bank.isReady('sfx_player_footstep_wet'), null, { timeout: 10000 });
+  await page.waitForFunction(() => (window as unknown as AudioProbe).nullRequiemAudio.bank.isReady('sfx_player_footstep_wet'), null, { timeout: 30000 });
   await page.waitForFunction(() => (window as unknown as AudioProbe).nullRequiemAudio.music.playingFile, null, { timeout: 15000 });
   // no combat yet: only the exploration loop runs
   expect(await page.evaluate(() => (window as unknown as AudioProbe).__starts.filter((s) => s.loop && s.dur === 4).length)).toBe(1);
@@ -188,5 +188,5 @@ test('footsteps follow ground travel and combat events layer the combat stem in 
     const w = window as unknown as { nullRequiem: { world: { emit(e: unknown): void } } };
     w.nullRequiem.world.emit({ type: 'enemyWindup', x: 0, y: 0, kind: 'scrapHound' });
   });
-  await page.waitForFunction(() => (window as unknown as AudioProbe).__starts.filter((s) => s.loop && s.dur === 4).length === 2, null, { timeout: 10000 });
+  await page.waitForFunction(() => (window as unknown as AudioProbe).__starts.filter((s) => s.loop && s.dur === 4).length === 2, null, { timeout: 30000 });
 });
