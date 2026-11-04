@@ -162,3 +162,7 @@ Producer tested APK `aa5fcbb` on a device: fine. Approved the full visual/sound 
 - Audio: `tools/audio/process_handoff.py` conditions the supplied sketches (masters FLAC in `art/audio/masters/handoff-01/`), 17 sounds validate with 0 errors / 0 warnings and ship as Ogg; ledger rows → `Delivered (preliminary)`. Details/gaps/missing triggers: `docs/AUDIO_UPGRADE_01.md`.
 - Earlier today: the interact e2e test was flaky on slow runners (also on the pre-visual branch); fixed with a fallback trigger (see QA_STATUS).
 - Container note: Playwright needs `/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell` (symlink to the installed 1243 build); a leftover CPU-hog process from an experiment skewed local runs until killed.
+
+## 2026-11-04 — Sprite style 04
+
+Branch `feature/sprite-style-04` (on audio-production-02). Redrew Scrap Hound and Security Drone at 4x vector density and upgraded the Courier render (see `VISUAL_ENHANCEMENT_01.md`). Preliminary code-drawn art only; nothing marked Delivered. Verified locally: tsc clean, 583 unit tests, 26 e2e (1 skipped) with `--timeout=120000`. Producer approved APK 5a9bd32 ("went as intended") before this work.
