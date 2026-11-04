@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { createRng } from '../core/math';
-import { noteBaseSize } from './assetRuntime';
+import { applyWorldSize, noteBaseSize } from './assetRuntime';
 import { makePlaceholderActors } from './placeholders';
 import { makeWorldTextures } from './worldTextures';
 import { css, mix, PALETTE } from './palette';
@@ -81,6 +81,21 @@ function canvasTexture(scene: Phaser.Scene, key: string, w: number, h: number, d
   ctx.imageSmoothingEnabled = false;
   draw(ctx);
   tex.refresh();
+}
+
+/** Vector sprite drawn at `res`x pixel density; the frame still reports its WORLD size so views, hitboxes and scales are unchanged. */
+function hiresTexture(scene: Phaser.Scene, key: string, w: number, h: number, res: number, draw: (ctx: Ctx) => void): void {
+  noteBaseSize(key, w, h);
+  if (scene.textures.exists(key)) scene.textures.remove(key);
+  const tex = scene.textures.createCanvas(key, w * res, h * res);
+  if (!tex) throw new Error(`Could not create texture ${key}`);
+  const ctx = tex.getContext();
+  ctx.scale(res, res);
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  draw(ctx);
+  tex.refresh();
+  applyWorldSize(tex, res, w, h);
 }
 
 function px(ctx: Ctx, color: number, x: number, y: number, w = 1, h = 1, alpha = 1): void {
@@ -241,7 +256,6 @@ function drawCourier(ctx: Ctx, pose: CourierPose): void {
   // 2x vector-rendered Courier: silver hair, long dark coat, magenta scarf and a cyan energy blade.
   // The world simulation remains in logical pixels; the source texture carries finer detail.
   ctx.save();
-  ctx.scale(2, 2);
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
   const bob = pose.bob ?? 0;
@@ -303,6 +317,17 @@ function drawCourier(ctx: Ctx, pose: CourierPose): void {
   ctx.fillRect(cx-2,top+6,5,1.5);
   ctx.fillStyle='#ffffff';ctx.fillRect(cx+1,top+6,1.6,0.7);
 
+  // Visor bloom, coat rim light (cyan from the blade side) and cloth folds for volume at 4x.
+  const vg = ctx.createRadialGradient(cx + 0.5, top + 6.7, 0, cx + 0.5, top + 6.7, 5);
+  vg.addColorStop(0, pose.pale ? 'rgba(255,134,212,0.45)' : 'rgba(85,255,242,0.45)'); vg.addColorStop(1, 'rgba(85,255,242,0)');
+  ctx.fillStyle = vg; ctx.fillRect(cx - 5, top + 2, 11, 10);
+  ctx.strokeStyle = pose.pale ? 'rgba(255,255,255,0.5)' : 'rgba(60,242,255,0.7)'; ctx.lineWidth = 0.5;
+  ctx.beginPath(); ctx.moveTo(cx + 5, top + 10); ctx.lineTo(cx + 6 + flare * 0.45, footY - 4); ctx.stroke();
+  ctx.strokeStyle = 'rgba(8,8,20,0.55)'; ctx.lineWidth = 0.45;
+  ctx.beginPath(); ctx.moveTo(cx - 1, top + 11); ctx.lineTo(cx - 2, footY - 5); ctx.moveTo(cx + 1, top + 12); ctx.lineTo(cx + 1.5, footY - 7); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,87,200,0.6)'; ctx.lineWidth = 0.4; // sodium/magenta bounce on the hem
+  ctx.beginPath(); ctx.moveTo(cx - 6 - flare * 0.4, footY - 4); ctx.lineTo(cx - 2, footY - 3); ctx.stroke();
+
   // Signature mono-blade. It brightens in attack/dash poses.
   const bladeAlpha = pose.pale ? 0.4 : (pose.flare || pose.lean ? 0.98 : 0.75);
   ctx.save();
@@ -329,76 +354,132 @@ function makePlayer(scene: Phaser.Scene): void {
     attack: { lean: 2, stride: 1, tail: 2, flare: 1 },
     hurt: { pale: true, lean: -2, flare: 2, visor: 0.3 },
   };
-  for (const f of PLAYER_FRAMES) canvasTexture(scene, playerKey(f), 48, 56, (ctx) => drawCourier(ctx, poses[f]));
+  for (const f of PLAYER_FRAMES) hiresTexture(scene, playerKey(f), 48, 56, 2, (ctx) => { ctx.scale(2, 2); drawCourier(ctx, poses[f]); });
 }
 
 // ---------------------------------------------------------------- Scrap Hound
 
 function drawHound(ctx: Ctx, f: HoundFrame): void {
   const H = 16;
-  const crouch = f === 'windup' ? 2 : 0;
-  const flat = f === 'lunge' ? -1 : 0;
-  const step = f === 'walk1' ? 1 : 0;
-  const eye = f === 'windup' ? PALETTE.white : f === 'recover' ? 0x4a2a30 : PALETTE.danger;
-  const body = 0x4a5068;
-  const dark = 0x262a3a;
-  // Legs (four thin struts)
-  for (let i = 0; i < 4; i++) {
-    const lx = 5 + i * 4;
-    const off = (i + step) % 2;
-    px(ctx, dark, lx + off, H - 4 + crouch * 0.5, 1, 4 - crouch * 0.5);
+  const crouch = f === 'windup' ? 2.2 : f === 'recover' ? 1.2 : 0;
+  const stretch = f === 'lunge' ? 1.6 : 0;
+  const dim = f === 'recover';
+  const ph = f === 'walk1' ? 1 : f === 'walk0' ? 0 : 0.5;
+  const eye = f === 'windup' ? '#ffffff' : dim ? '#5a2a34' : '#ff3b4e';
+  const top = 6.4 + crouch - (f === 'lunge' ? 0.8 : 0);
+
+  // Contact shadow-free: legs first. Four digitigrade struts with a knee joint.
+  const legs: [number, number][] = [[6, 0], [9, 1], [14, 1], [17, 0]];
+  for (const [lx, side] of legs) {
+    const sw = f === 'lunge' ? (side ? -2.4 : 2.6) : (side ? 1 : -1) * (ph - 0.5) * 2.6;
+    const hipY = top + 5;
+    const kneeX = lx + sw * 0.5 + (f === 'lunge' ? -1.2 : 0.8);
+    const kneeY = H - 3.6 + crouch * 0.4;
+    const footX = lx + sw;
+    const footY = f === 'lunge' ? H - 6 : H - 0.6;
+    ctx.strokeStyle = side ? '#1a1e2e' : '#323a52';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(lx, hipY); ctx.lineTo(kneeX, kneeY); ctx.lineTo(footX, footY); ctx.stroke();
+    ctx.strokeStyle = side ? '#3a4260' : '#6e7aa0';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(lx, hipY); ctx.lineTo(kneeX, kneeY); ctx.stroke();
+    ctx.fillStyle = dim ? '#5a2a34' : '#ffb347';
+    ctx.beginPath(); ctx.arc(kneeX, kneeY, 0.55, 0, Math.PI * 2); ctx.fill();
   }
-  // Chassis
-  poly(ctx, body, [
-    [3, H - 4 + crouch],
-    [4, 7 + crouch + flat],
-    [17, 6 + crouch + flat],
-    [20, H - 5 + crouch],
-  ]);
-  px(ctx, PALETTE.steel, 5, 7 + crouch + flat, 11, 1, 0.9);
-  // Hazard plate and exposed coil
-  px(ctx, PALETTE.sodium, 7, 9 + crouch + flat, 2, 3, f === 'recover' ? 0.3 : 0.8);
-  px(ctx, PALETTE.sodium, 11, 9 + crouch + flat, 2, 3, f === 'recover' ? 0.3 : 0.8);
-  // Head with a single sensor eye (front = right)
-  px(ctx, dark, 17, 6 + crouch + flat, 6, 5);
-  px(ctx, eye, 20, 7 + crouch + flat, 2, 2);
-  // Antenna
-  px(ctx, PALETTE.steel, 5, 3 + crouch + flat, 1, 4);
-  px(ctx, PALETTE.danger, 5, 2 + crouch + flat, 1, 1, f === 'recover' ? 0.3 : 1);
+
+  // Chassis: dark armoured wedge with a steel top plate and a sodium hazard band.
+  const bodyG = ctx.createLinearGradient(0, top, 0, top + 7);
+  bodyG.addColorStop(0, '#7b86a8'); bodyG.addColorStop(0.18, '#4a5270'); bodyG.addColorStop(1, '#1a1e2e');
+  ctx.fillStyle = bodyG;
+  ctx.beginPath();
+  ctx.moveTo(3, top + 6.5); ctx.lineTo(4.2, top + 1.4 - stretch * 0.4); ctx.lineTo(17.5, top - stretch);
+  ctx.lineTo(20.2, top + 3); ctx.lineTo(18.5, top + 6.8); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(60,242,255,0.85)'; ctx.lineWidth = 0.4; // wet-neon rim on the spine
+  ctx.beginPath(); ctx.moveTo(4.4, top + 1.3 - stretch * 0.4); ctx.lineTo(17.4, top - stretch - 0.1); ctx.stroke();
+  ctx.fillStyle = dim ? '#5a3a2a' : '#ffb347';
+  for (let i = 0; i < 3; i++) { // hazard chevrons
+    ctx.beginPath(); ctx.moveTo(6.5 + i * 2.2, top + 3.2); ctx.lineTo(7.7 + i * 2.2, top + 3.2); ctx.lineTo(8.5 + i * 2.2, top + 5.2); ctx.lineTo(7.3 + i * 2.2, top + 5.2); ctx.closePath(); ctx.fill();
+  }
+  ctx.strokeStyle = '#0c0f1a'; ctx.lineWidth = 0.35; // panel seams
+  ctx.beginPath(); ctx.moveTo(12, top + 0.4); ctx.lineTo(12.6, top + 6.6); ctx.moveTo(15.6, top); ctx.lineTo(16, top + 6.2); ctx.stroke();
+  // Exposed power coil on the haunch.
+  ctx.fillStyle = dim ? 'rgba(255,59,78,0.25)' : 'rgba(255,59,78,0.9)';
+  ctx.fillRect(4.6, top + 3, 1.6, 2);
+
+  // Tail antenna with a blinking tip.
+  ctx.strokeStyle = '#8f9bbd'; ctx.lineWidth = 0.5;
+  ctx.beginPath(); ctx.moveTo(4.6, top + 1.4); ctx.lineTo(3.2, top - 2.2 + (f === 'windup' ? 1 : 0)); ctx.stroke();
+  ctx.fillStyle = dim ? '#5a2a34' : '#ff3b4e';
+  ctx.beginPath(); ctx.arc(3.2, top - 2.4, 0.6, 0, Math.PI * 2); ctx.fill();
+
+  // Head: wedge snout, jaw plate, single sensor eye with glow (front = right).
+  const jaw = f === 'windup' || f === 'lunge' ? 1.1 : 0.2;
+  ctx.fillStyle = '#20253a';
+  ctx.beginPath(); ctx.moveTo(17.2, top - stretch - 0.6); ctx.lineTo(23.4, top + 1.6); ctx.lineTo(23.2, top + 3.4 + jaw * 0.4); ctx.lineTo(17.6, top + 4); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#10131f';
+  ctx.beginPath(); ctx.moveTo(18, top + 4); ctx.lineTo(23, top + 3.6 + jaw * 0.4); ctx.lineTo(22 , top + 5.4 + jaw); ctx.lineTo(18.4, top + 5.2 + jaw * 0.6); ctx.closePath(); ctx.fill();
+  if (f === 'windup' || f === 'lunge') { // teeth flash while the jaw is open
+    ctx.fillStyle = '#e8e8f4';
+    for (let i = 0; i < 3; i++) ctx.fillRect(19 + i * 1.3, top + 4.3 + jaw * 0.3, 0.55, 0.9);
+  }
+  const eg = ctx.createRadialGradient(21, top + 1.7, 0, 21, top + 1.7, f === 'windup' ? 3.4 : 2.4);
+  eg.addColorStop(0, eye); eg.addColorStop(0.35, dim ? 'rgba(120,50,60,0.6)' : 'rgba(255,59,78,0.85)'); eg.addColorStop(1, 'rgba(255,59,78,0)');
+  ctx.fillStyle = eg; ctx.fillRect(17, top - 2, 8, 8);
+  ctx.fillStyle = eye; ctx.fillRect(20.4, top + 1.2, 1.4, 1);
 }
 
 function makeHound(scene: Phaser.Scene): void {
-  for (const f of HOUND_FRAMES) canvasTexture(scene, houndKey(f), 24, 16, (ctx) => drawHound(ctx, f));
+  for (const f of HOUND_FRAMES) hiresTexture(scene, houndKey(f), 24, 16, 4, (ctx) => drawHound(ctx, f));
 }
 
 // ---------------------------------------------------------------- Watcher Drone
 
 function drawDrone(ctx: Ctx, f: DroneFrame): void {
-  const tilt = f === 'idle1' ? 1 : 0;
+  const tilt = f === 'idle1' ? 0.6 : 0;
   const charge = f === 'charge';
-  // Rotor arms
-  px(ctx, 0x2a3044, 1, 5 + tilt, 18, 2);
-  px(ctx, PALETTE.steel, 0, 3 + tilt, 5, 1);
-  px(ctx, PALETTE.steel, 15, 3 - tilt + 1, 5, 1);
-  // Body shell
-  poly(ctx, 0x1c2132, [[4, 7], [16, 7], [15, 16], [5, 16]]);
-  px(ctx, PALETTE.steel, 5, 7, 10, 1, 0.8);
-  // Magenta ring lights
-  px(ctx, PALETTE.magenta, 4, 9, 1, 4, 0.9);
-  px(ctx, PALETTE.magenta, 15, 9, 1, 4, 0.9);
-  // Lens
-  radial(ctx, 10, 12, charge ? 6 : 4, [
-    [0, css(PALETTE.white)],
-    [0.4, css(charge ? PALETTE.sodium : PALETTE.magenta)],
-    [1, css(PALETTE.magenta, 0)],
-  ]);
-  // Hanging sensor
-  px(ctx, PALETTE.steel, 9, 16, 2, 4);
-  px(ctx, PALETTE.danger, 9, 20, 2, 1);
+  const cx = 10;
+  // Rotor discs: translucent blur ellipses either side, with a bright leading edge.
+  for (const sx of [-1, 1]) {
+    const rx = cx + sx * 7.2;
+    const ry = 5.2 + (sx > 0 ? -tilt : tilt);
+    ctx.fillStyle = 'rgba(143,155,189,0.22)';
+    ctx.beginPath(); ctx.ellipse(rx, ry, 3.6, 0.9, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(216,225,240,0.8)'; ctx.lineWidth = 0.35;
+    ctx.beginPath(); ctx.moveTo(rx - 3.4, ry); ctx.lineTo(rx + 3.4, ry); ctx.stroke();
+    ctx.strokeStyle = '#2a3044'; ctx.lineWidth = 1.1; // arm strut
+    ctx.beginPath(); ctx.moveTo(cx + sx * 3.6, 8.4); ctx.lineTo(rx, ry + 0.4); ctx.stroke();
+  }
+  // Shell: rounded armour with steel top light and a violet underside bounce.
+  const shell = ctx.createLinearGradient(0, 6, 0, 17);
+  shell.addColorStop(0, '#8f9bbd'); shell.addColorStop(0.15, '#3c4560'); shell.addColorStop(0.7, '#1a1f30'); shell.addColorStop(1, '#2a1a3a');
+  ctx.fillStyle = shell;
+  ctx.beginPath();
+  ctx.moveTo(4.2, 11); ctx.quadraticCurveTo(4.4, 6.6, cx, 6.4); ctx.quadraticCurveTo(15.6, 6.6, 15.8, 11);
+  ctx.lineTo(14.2, 16.4); ctx.lineTo(5.8, 16.4); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(60,242,255,0.7)'; ctx.lineWidth = 0.4;
+  ctx.beginPath(); ctx.moveTo(5, 8.4); ctx.quadraticCurveTo(cx, 6.2, 15, 8.4); ctx.stroke();
+  ctx.strokeStyle = '#0c0f1a'; ctx.lineWidth = 0.35; // panel seams
+  ctx.beginPath(); ctx.moveTo(6, 9.6); ctx.lineTo(14, 9.6); ctx.moveTo(cx, 7); ctx.lineTo(cx, 9.6); ctx.stroke();
+  // Magenta ring lights down both flanks.
+  ctx.fillStyle = charge ? '#ffd080' : '#ff3ea5';
+  ctx.fillRect(4.2, 10, 0.9, 3.6); ctx.fillRect(14.9, 10, 0.9, 3.6);
+  // Lens housing and glowing eye.
+  ctx.fillStyle = '#0c0f1a';
+  ctx.beginPath(); ctx.arc(cx, 12.2, 3, 0, Math.PI * 2); ctx.fill();
+  const lr = charge ? 6.2 : 4;
+  const lg = ctx.createRadialGradient(cx, 12.2, 0, cx, 12.2, lr);
+  lg.addColorStop(0, '#ffffff'); lg.addColorStop(0.3, charge ? '#ffb347' : '#ff3ea5'); lg.addColorStop(1, 'rgba(255,62,165,0)');
+  ctx.fillStyle = lg; ctx.fillRect(cx - lr, 12.2 - lr, lr * 2, lr * 2);
+  ctx.strokeStyle = charge ? '#ffd080' : '#5b6480'; ctx.lineWidth = 0.4;
+  ctx.beginPath(); ctx.arc(cx, 12.2, 3, 0, Math.PI * 2); ctx.stroke();
+  // Hanging sensor probe.
+  ctx.strokeStyle = '#8f9bbd'; ctx.lineWidth = 0.7;
+  ctx.beginPath(); ctx.moveTo(cx, 16.4); ctx.lineTo(cx, 20.4); ctx.stroke();
+  ctx.fillStyle = '#ff3b4e'; ctx.beginPath(); ctx.arc(cx, 20.8, 0.8, 0, Math.PI * 2); ctx.fill();
 }
 
 function makeDrone(scene: Phaser.Scene): void {
-  for (const f of DRONE_FRAMES) canvasTexture(scene, droneKey(f), 20, 24, (ctx) => drawDrone(ctx, f));
+  for (const f of DRONE_FRAMES) hiresTexture(scene, droneKey(f), 20, 24, 4, (ctx) => drawDrone(ctx, f));
 }
 
 // ---------------------------------------------------------------- BULWARK-9

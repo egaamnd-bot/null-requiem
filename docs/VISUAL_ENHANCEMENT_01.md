@@ -65,3 +65,19 @@ Screenshots: `docs/screenshots/production-03/`. Presentation only; every added e
 Fixed while testing: the cable band's vertical sway wrapped the texture and drew stray dashes (removed). Not done: painted foreground/backgrounds and real sprites (ChatGPT), icon art, boss bar frame.
 
 Test note: in this container the browser suite needs `--timeout=120000` (the default 45 s is too tight for the software renderer here); with it all 26 pass (1 skipped). CI uses the normal timeout and passed on every previous branch.
+
+## Sprite style 04 (feature/sprite-style-04)
+
+Preliminary, code-drawn upgrade of the actor sprites. **Not final art**: the real Courier / Scrap Hound / Security Drone sheets
+still come from the Creative Director, and every visual row in `CREATIVE_DELIVERY_LOG.md` stays `Not delivered`.
+
+- Scrap Hound and Security Drone were 1x pixel blocks. They are now vector-drawn at 4x density: armoured wedge chassis with a
+  steel top plate and cyan wet-neon rim, hazard chevrons, panel seams, jointed digitigrade legs (swap per walk frame, tucked in
+  the lunge), open jaw with teeth on windup/lunge, glowing sensor eye (white-hot on windup, dim on recover); the drone gets rotor
+  discs, flank ring lights (sodium on charge), a lens housing and a hanging probe.
+- Courier: texture density doubled (2x -> 4x per logical pixel), plus visor bloom, cyan rim light on the coat edge, cloth fold
+  lines and a magenta hem bounce.
+- All textures report their original WORLD size (`applyWorldSize`), so hitboxes, views, scales and delivered-art replacement keys
+  are unchanged. No gameplay, AI, balance, save or Backtrace code touched. Effects that were lite-mode gated are unchanged.
+- Tools: `tools/screenshots/sprites.mjs` renders a contact sheet of the actor textures. Evidence: `docs/screenshots/sprite-04/`
+  (`before_after_sprites.png`, in-game `s04_*.png`).

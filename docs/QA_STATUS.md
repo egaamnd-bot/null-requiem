@@ -192,3 +192,8 @@ Producer to test on a real Android phone and mark each row. Until every row pass
 - `feature/audio-production-02` (`5a9bd32`, PR #15, contains both): CI #106/#107 success; **Android Debug APK #72 (run 41621602474) success**, artifact `null-requiem-android-debug-5a9bd329eef49b4088ba511ef1ba7541bc7d0ea9` (13,617,936 bytes; ≈ 6 MB of Ogg audio).
 - Verified locally: tsc clean, vitest 583/583, `npm run audio:validate` 54 accepted / 0 errors / 0 warnings, Playwright 26 passed / 1 skipped (with `--timeout=120000` in this container; the 45 s default timed out on 1–4 slow tests here, including on the previous branch tip, so that is environment speed, not a regression; CI at the default timeout is green), browser check that the music, rain bed and two ambience layers decode and play, decoded audio ≈ 30 MB (title) / ≈ 47 MB (Rainline).
 - Unverified: on-device smoothness with the extra effects, how the 37 synthesised sounds and the ambience layers sound and balance, memory ≈ 65 MB with the combat stem on low-RAM phones. Device test pending from the Producer.
+
+## Sprite style 04 (2026-11-04)
+
+- [verified locally] `tsc --noEmit` clean; `npm test` 40 files / 583 tests pass; `npm run test:e2e -- --timeout=120000` 26 passed, 1 skipped; contact sheet + in-game screenshots in `docs/screenshots/sprite-04/`.
+- [unverified] CI run and APK for this branch (filled in after the push); on-device look and frame rate (hires textures add ~4x texture memory for Hound/Drone, still tiny: under 1 MB total).
